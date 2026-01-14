@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Nuevo perfil",
+    "Projects": [
+      {
+        "Path": "VH.API\\VH.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "VH.Web\\VH.Web.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

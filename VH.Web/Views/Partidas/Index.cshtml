@@ -1,0 +1,42 @@
+﻿@model IEnumerable<VH.Services.DTOs.ConceptoPartidaResponseDto>
+
+@{
+    ViewData["Title"] = $"Partidas del Proyecto: {ViewBag.ProyectoNombre}";
+}
+
+<h2>@ViewData["Title"]</h2>
+<h4>Presupuesto Total Actual: $@ViewBag.PresupuestoTotal</h4>
+<hr />
+
+<p>
+    <a asp-controller="Partidas" asp-action="Create" asp-route-idProyecto="@ViewBag.IdProyecto" class="btn btn-success">Crear Nueva Partida</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
+            @* <th>@Html.DisplayNameFor(model => model.UnidadMedida)</th> *@
+            <th>@Html.DisplayNameFor(model => model.CantidadEstimada)</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
+                @* <td>@Html.DisplayFor(modelItem => item.UnidadMedida)</td> *@
+                <td>@Html.DisplayFor(modelItem => item.CantidadEstimada)</td>
+                <td>
+                    <a asp-controller="Partidas" asp-action="Edit" asp-route-id="@item.IdPartida" asp-route-idProyecto="@item.IdProyecto">Editar</a> |
+                    <a asp-controller="Partidas" asp-action="Delete" asp-route-id="@item.IdPartida" asp-route-idProyecto="@item.IdProyecto">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <a asp-controller="Proyectos" asp-action="Index">Volver a la Lista de Proyectos</a>
+</div>

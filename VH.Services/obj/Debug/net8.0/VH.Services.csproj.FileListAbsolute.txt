@@ -1,0 +1,13 @@
+C:\Users\User\source\repos\VH-ERP\VH.Services\bin\Debug\net8.0\VH.Services.deps.json
+C:\Users\User\source\repos\VH-ERP\VH.Services\bin\Debug\net8.0\VH.Services.dll
+C:\Users\User\source\repos\VH-ERP\VH.Services\bin\Debug\net8.0\VH.Services.pdb
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.csproj.AssemblyReference.cache
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.AssemblyInfoInputs.cache
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.AssemblyInfo.cs
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.csproj.CoreCompileInputs.cache
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.sourcelink.json
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.dll
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\refint\VH.Services.dll
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\VH.Services.pdb
+C:\Users\User\source\repos\VH-ERP\VH.Services\obj\Debug\net8.0\ref\VH.Services.dll

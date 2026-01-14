@@ -1,0 +1,35 @@
+﻿@model VH.Services.DTOs.ProveedorResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Proveedor";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">¿Estás seguro de que deseas eliminar este proveedor?</p>
+                    <p class="text-muted">Esta acción podría afectar compras o historiales asociados.</p>
+
+                    <div class="alert alert-secondary d-inline-block text-start" style="min-width: 300px;">
+                        <strong>Nombre:</strong> @Model.Nombre <br />
+                        <strong>RFC:</strong> @Model.RFC <br />
+                        <strong>Contacto:</strong> @Model.Contacto
+                    </div>
+
+                    <form asp-action="Delete" class="mt-4">
+                        <input type="hidden" asp-for="IdProveedor" />
+                        <div class="d-flex justify-content-center gap-3">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger">Sí, Eliminar Definitivamente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

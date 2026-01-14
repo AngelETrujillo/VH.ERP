@@ -1,0 +1,44 @@
+﻿@model IEnumerable<VH.Services.DTOs.ProyectoResponseDto>
+
+@{
+    ViewData["Title"] = "Lista de Proyectos";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">Crear Nuevo Proyecto</a> @* <--- AÑADIDO *@
+</p>
+
+@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+            <th>@Html.DisplayNameFor(model => model.TipoObra)</th>
+            <th>@Html.DisplayNameFor(model => model.FechaInicio)</th>
+            <th>@Html.DisplayNameFor(model => model.PresupuestoTotal)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                <td>@Html.DisplayFor(modelItem => item.TipoObra)</td>
+                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                <td>@Html.DisplayFor(modelItem => item.PresupuestoTotal)</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.IdProyecto">Detalles</a> |
+                    <a asp-action="Edit" asp-route-id="@item.IdProyecto">Editar</a> |
+                    <a asp-action="Delete" asp-route-id="@item.IdProyecto">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

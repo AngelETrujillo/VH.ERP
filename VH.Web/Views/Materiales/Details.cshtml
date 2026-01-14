@@ -1,0 +1,52 @@
+﻿@model VH.Services.DTOs.MaterialEPPResponseDto
+
+@{
+    ViewData["Title"] = "Detalles del Material";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">Detalles del Material</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2 class="text-primary">@Model.Nombre</h2>
+                    <p class="text-muted">@Model.Descripcion</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    @if (Model.Activo)
+                    {
+                        <span class="badge bg-success fs-5">Activo</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger fs-5">Inactivo</span>
+                    }
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <h5>Unidad de Medida</h5>
+                    @* <p class="fs-5">@Model.UnidadMedida</p> *@
+                </div>
+                <div class="col-md-4">
+                    <h5>Costo Unitario</h5>
+                    <p class="fs-5 text-success">$@Model.CostoUnitarioEstimado</p>
+                </div>
+                @* <div class="col-md-4">
+                    <h5>Stock Actual</h5>
+                    <p class="fs-5 fw-bold">@Model.StockActual</p>
+                </div> *@
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning">Editar</a>
+            <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,74 @@
+﻿@model IEnumerable<VH.Services.DTOs.ProveedorResponseDto>
+
+@{
+    ViewData["Title"] = "Proveedores";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-truck"></i> Directorio de Proveedores</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Registrar Proveedor
+        </a>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger shadow-sm">
+            <i class="bi bi-exclamation-circle"></i> @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary">
+                        <tr>
+                            <th class="ps-4">Razón Social / Nombre</th>
+                            <th>Contacto</th>
+                            <th>Comunicación</th>
+                            <th>Estado</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark">@item.Nombre</span>
+                                    <div class="small text-muted">@item.RFC</div>
+                                </td>
+                                <td>@item.Contacto</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Telefono))
+                                    {
+                                        <div class="small"><i class="bi bi-telephone"></i> @item.Telefono</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.IdProveedor" class="btn btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                                        <a asp-action="Details" asp-route-id="@item.IdProveedor" class="btn btn-outline-info" title="Detalles"><i class="bi bi-eye"></i></a>
+                                        <a asp-action="Delete" asp-route-id="@item.IdProveedor" class="btn btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+﻿@model VH.Services.DTOs.ProyectoResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Proyecto";
+}
+
+<h2>@ViewData["Title"]</h2>
+<h3>¿Está seguro de que desea eliminar este proyecto?</h3>
+<hr />
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Nombre)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Nombre)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.TipoObra)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.TipoObra)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.PresupuestoTotal)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.PresupuestoTotal)</dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="IdProyecto" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index">Cancelar</a>
+    </form>
+</div>

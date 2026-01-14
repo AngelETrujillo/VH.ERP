@@ -1,0 +1,50 @@
+﻿@model VH.Services.DTOs.EmpleadoResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Empleado";
+}
+
+<h1>Eliminar Empleado</h1>
+
+<h3>¿Está seguro de que desea eliminar este empleado?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Nombre)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Nombre) @Html.DisplayFor(model => model.ApellidoPaterno) @Html.DisplayFor(model => model.ApellidoMaterno)
+        </dd>
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.NumeroNomina)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.NumeroNomina)
+        </dd>
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Puesto)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Puesto)
+        </dd>
+        <dt class="col-sm-4">
+            Proyecto
+        </dt>
+       @*  <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Proyecto.Nombre)
+        </dd> *@
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Activo)
+        </dt>
+        <dd class="col-sm-8">
+            @(Model.Activo ? "Sí" : "No")
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="IdEmpleado" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

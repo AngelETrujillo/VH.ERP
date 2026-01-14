@@ -1,0 +1,87 @@
+﻿@model VH.Services.DTOs.ProveedorResponseDto
+
+@{
+    ViewData["Title"] = "Detalles del Proveedor";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 text-white"><i class="bi bi-building"></i> @Model.Nombre</h4>
+                    @if (Model.Activo)
+                    {
+                        <span class="badge bg-light text-success border border-success">Activo</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Inactivo</span>
+                    }
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 border-end">
+                            <h5 class="text-primary mb-3">Información General</h5>
+
+                            <dl class="row">
+                                <dt class="col-sm-4 text-muted">RFC</dt>
+                                <dd class="col-sm-8 fw-bold">
+                                    @if (!string.IsNullOrEmpty(Model.RFC))
+                                    {
+                                        @Model.RFC
+                                    }
+                                    else
+                                    {
+
+                                        <span class="text-muted fst-italic">No registrado</span>
+                                    }
+                                </dd>
+
+                                
+                                
+                            </dl>
+                        </div>
+
+                        <div class="col-md-6 ps-md-4">
+                            <h5 class="text-primary mb-3">Contacto Directo</h5>
+
+                            <dl class="row">
+                                <dt class="col-sm-4 text-muted">Persona</dt>
+                                <dd class="col-sm-8">
+                                    <i class="bi bi-person text-secondary"></i> @Model.Contacto
+                                </dd>
+
+                                <dt class="col-sm-4 text-muted">Teléfono</dt>
+                                <dd class="col-sm-8">
+                                    @if (!string.IsNullOrEmpty(Model.Telefono))
+                                    {
+                                        <a href="tel:@Model.Telefono" class="text-decoration-none text-dark">
+                                            <i class="bi bi-telephone text-success"></i> @Model.Telefono
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                </dd>
+
+                                
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light d-flex justify-content-between p-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al listado
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.IdProveedor" class="btn btn-warning">
+                        <i class="bi bi-pencil-square"></i> Editar Datos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

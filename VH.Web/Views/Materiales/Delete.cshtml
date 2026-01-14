@@ -1,0 +1,45 @@
+﻿@model VH.Services.DTOs.MaterialEPPResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Material";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-danger shadow-sm">
+                <h5><i class="bi bi-exclamation-triangle-fill"></i> ¿Estás seguro?</h5>
+                <p>Estás a punto de eliminar este material permanentemente. Esta acción no se puede deshacer.</p>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Datos del Material a Eliminar</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Material:</dt>
+                        <dd class="col-sm-8">@Model.Nombre</dd>
+
+                        <dt class="col-sm-4">Descripción:</dt>
+                        <dd class="col-sm-8">@Model.Descripcion</dd>
+
+                        @* <dt class="col-sm-4">Unidad:</dt>
+                        <dd class="col-sm-8">@Model.UnidadMedida</dd> *@
+
+                        <dt class="col-sm-4">Costo:</dt>
+                        <dd class="col-sm-8 text-success fw-bold">$@Model.CostoUnitarioEstimado</dd>
+                    </dl>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="IdMaterial" />
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">Sí, Eliminar Material</button>
+                            <a asp-action="Index" class="btn btn-secondary">No, Volver a la lista</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

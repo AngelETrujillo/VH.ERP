@@ -1,0 +1,30 @@
+﻿@model VH.Services.DTOs.ConceptoPartidaResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Partida";
+    var idProyecto = ViewBag.IdProyecto;
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<h3>¿Estás seguro que quieres eliminar esta Partida?</h3>
+<hr />
+
+<div>
+    <h4>Partida ID: @Model.IdPartida</h4>
+    <dl class="row">
+        <dt class="col-sm-4">Descripción:</dt>
+        <dd class="col-sm-8">@Html.DisplayFor(model => model.Descripcion)</dd>
+
+        <dt class="col-sm-4">Unidad de Medida:</dt>
+        @* <dd class="col-sm-8">@Html.DisplayFor(model => model.UnidadMedida)</dd> *@
+
+        <dt class="col-sm-4">Cantidad Estimada:</dt>
+        <dd class="col-sm-8">@Html.DisplayFor(model => model.CantidadEstimada)</dd>
+    </dl>
+
+    <form asp-action="Delete" asp-route-id="@Model.IdPartida" asp-route-idProyecto="@idProyecto">
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-idProyecto="@idProyecto">Cancelar</a>
+    </form>
+</div>
