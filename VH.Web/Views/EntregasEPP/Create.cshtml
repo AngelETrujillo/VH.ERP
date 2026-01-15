@@ -1,0 +1,96 @@
+﻿@model VH.Services.DTOs.EntregaEPPRequestDto
+
+@{
+    ViewData["Title"] = "Nueva Entrega de EPP";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-plus"></i> Registrar Nueva Entrega de EPP</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdEmpleado" class="form-label">Empleado *</label>
+                                <select asp-for="IdEmpleado" class="form-select" asp-items="@ViewBag.Empleados">
+                                    <option value="">-- Seleccionar Empleado --</option>
+                                </select>
+                                <span asp-validation-for="IdEmpleado" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FechaEntrega" class="form-label">Fecha de Entrega *</label>
+                                <input asp-for="FechaEntrega" type="date" class="form-control" />
+                                <span asp-validation-for="FechaEntrega" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdMaterial" class="form-label">Material EPP *</label>
+                                <select asp-for="IdMaterial" class="form-select" asp-items="@ViewBag.Materiales">
+                                    <option value="">-- Seleccionar Material --</option>
+                                </select>
+                                <span asp-validation-for="IdMaterial" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdProveedor" class="form-label">Proveedor *</label>
+                                <select asp-for="IdProveedor" class="form-select" asp-items="@ViewBag.Proveedores">
+                                    <option value="">-- Seleccionar Proveedor --</option>
+                                </select>
+                                <span asp-validation-for="IdProveedor" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="CantidadEntregada" class="form-label">Cantidad *</label>
+                                <input asp-for="CantidadEntregada" type="number" step="0.01" min="0.01" class="form-control" />
+                                <span asp-validation-for="CantidadEntregada" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="TallaEntregada" class="form-label">Talla</label>
+                                <select asp-for="TallaEntregada" class="form-select">
+                                    <option value="">N/A</option>
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="XXL">XXL</option>
+                                    <option value="Unitalla">Unitalla</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Observaciones" class="form-label">Observaciones</label>
+                            <textarea asp-for="Observaciones" class="form-control" rows="2"
+                                      placeholder="Observaciones adicionales sobre la entrega"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> Registrar Entrega
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

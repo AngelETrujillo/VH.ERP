@@ -1,0 +1,78 @@
+﻿@model VH.Services.DTOs.AlmacenRequestDto
+
+@{
+    ViewData["Title"] = "Editar Almacén";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Almacén</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" asp-route-id="@ViewBag.Id">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label asp-for="Nombre" class="form-label">Nombre del Almacén *</label>
+                                <input asp-for="Nombre" class="form-control" />
+                                <span asp-validation-for="Nombre" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="TipoUbicacion" class="form-label">Tipo de Ubicación</label>
+                                <select asp-for="TipoUbicacion" class="form-select">
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="Bodega">Bodega</option>
+                                    <option value="Contenedor">Contenedor</option>
+                                    <option value="Patio">Patio</option>
+                                    <option value="Oficina">Oficina</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IdProyecto" class="form-label">Proyecto Asociado *</label>
+                            <select asp-for="IdProyecto" class="form-select" asp-items="@ViewBag.Proyectos">
+                                <option value="">-- Seleccionar Proyecto --</option>
+                            </select>
+                            <span asp-validation-for="IdProyecto" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Domicilio" class="form-label">Domicilio</label>
+                            <input asp-for="Domicilio" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descripcion" class="form-label">Descripción</label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="form-check form-switch mb-4">
+                            <input asp-for="Activo" class="form-check-input" type="checkbox" />
+                            <label asp-for="Activo" class="form-check-label">Almacén Activo</label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-lg"></i> Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

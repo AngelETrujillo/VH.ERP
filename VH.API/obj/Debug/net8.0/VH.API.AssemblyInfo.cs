@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VH.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1107da46d8e9f13796fb81a09336592f1c5df9c9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6f6e1e75e1a0b4ca5c31d54d724f62d7b45f0d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("VH.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VH.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

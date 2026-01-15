@@ -1,50 +1,100 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "VH.API",
-    "version": "1.0"
+    "title": "VH.ERP API - Sistema de Gestión EPP",
+    "description": "API para el sistema ERP de gestión de equipos de protección personal",
+    "version": "v1"
   },
   "paths": {
-    "/api/proyectos": {
+    "/api/Almacenes": {
       "get": {
         "tags": [
-          "VH.API"
+          "Almacenes"
         ],
-        "operationId": "GetAllProyectos",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": [
-          "VH.API"
+          "Almacenes"
         ],
-        "operationId": "CreateProyecto",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoRequestDto"
+                "$ref": "#/components/schemas/AlmacenRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlmacenRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlmacenRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/proyectos/{id}": {
+    "/api/Almacenes/{id}": {
       "get": {
         "tags": [
-          "VH.API"
+          "Almacenes"
         ],
-        "operationId": "GetProyectoById",
         "parameters": [
           {
             "name": "id",
@@ -58,15 +108,31 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenResponseDto"
+                }
+              }
+            }
           }
         }
       },
       "put": {
         "tags": [
-          "VH.API"
+          "Almacenes"
         ],
-        "operationId": "UpdateProyecto",
         "parameters": [
           {
             "name": "id",
@@ -82,11 +148,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoRequestDto"
+                "$ref": "#/components/schemas/AlmacenRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlmacenRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlmacenRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -96,9 +171,948 @@
       },
       "delete": {
         "tags": [
-          "VH.API"
+          "Almacenes"
         ],
-        "operationId": "DeleteProyecto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Almacenes/proyecto/{idProyecto}": {
+      "get": {
+        "tags": [
+          "Almacenes"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Empleados": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmpleadoResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmpleadoResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmpleadoResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Empleados"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Empleados/{id}": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpleadoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Empleados"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpleadoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Empleados"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/EntregasEPP": {
+      "get": {
+        "tags": [
+          "EntregasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "EntregasEPP"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EntregasEPP/{id}": {
+      "get": {
+        "tags": [
+          "EntregasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "EntregasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "EntregasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Inventarios": {
+      "get": {
+        "tags": [
+          "Inventarios"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventarios"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Inventarios/{id}": {
+      "get": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventarioResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventarioRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Inventarios/almacen/{idAlmacen}": {
+      "get": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "idAlmacen",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Inventarios/material/{idMaterial}": {
+      "get": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventarioResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Inventarios/material/{idMaterial}/stock-global": {
+      "get": {
+        "tags": [
+          "Inventarios"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "number",
+                  "format": "double"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "number",
+                  "format": "double"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Materiales": {
+      "get": {
+        "tags": [
+          "Materiales"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Materiales"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Materiales/{id}": {
+      "get": {
+        "tags": [
+          "Materiales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Materiales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Materiales"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -120,9 +1134,8 @@
     "/api/proyectos/{idProyecto}/partidas": {
       "get": {
         "tags": [
-          "VH.API"
+          "Partidas"
         ],
-        "operationId": "GetPartidasByProyecto",
         "parameters": [
           {
             "name": "idProyecto",
@@ -136,15 +1149,40 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": [
-          "VH.API"
+          "Partidas"
         ],
-        "operationId": "CreateConceptoPartida",
         "parameters": [
           {
             "name": "idProyecto",
@@ -162,23 +1200,48 @@
               "schema": {
                 "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
               }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
+              }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/proyectos/{idProyecto}/partidas/{idPartida}": {
+    "/api/proyectos/{idProyecto}/partidas/{id}": {
       "get": {
         "tags": [
-          "VH.API"
+          "Partidas"
         ],
-        "operationId": "GetPartidaByProyectoAndId",
         "parameters": [
           {
             "name": "idProyecto",
@@ -190,7 +1253,7 @@
             }
           },
           {
-            "name": "idPartida",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -201,15 +1264,31 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptoPartidaResponseDto"
+                }
+              }
+            }
           }
         }
       },
       "put": {
         "tags": [
-          "VH.API"
+          "Partidas"
         ],
-        "operationId": "UpdateConceptoPartidaByProyecto",
         "parameters": [
           {
             "name": "idProyecto",
@@ -221,7 +1300,7 @@
             }
           },
           {
-            "name": "idPartida",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -236,9 +1315,18 @@
               "schema": {
                 "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
               }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConceptoPartidaRequestDto"
+              }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -248,9 +1336,8 @@
       },
       "delete": {
         "tags": [
-          "VH.API"
+          "Partidas"
         ],
-        "operationId": "DeleteConceptoPartidaByProyecto",
         "parameters": [
           {
             "name": "idProyecto",
@@ -262,7 +1349,7 @@
             }
           },
           {
-            "name": "idPartida",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -278,158 +1365,95 @@
         }
       }
     },
-    "/api/empleados": {
+    "/api/Proveedores": {
       "get": {
         "tags": [
-          "VH.API"
+          "Proveedores"
         ],
-        "operationId": "GetAllEmpleados",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProveedorResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProveedorResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProveedorResponseDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": [
-          "VH.API"
+          "Proveedores"
         ],
-        "operationId": "CreateEmpleado",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmpleadoRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/empleados/{id}": {
-      "get": {
-        "tags": [
-          "VH.API"
-        ],
-        "operationId": "GetEmpleadoById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "VH.API"
-        ],
-        "operationId": "UpdateEmpleado",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmpleadoRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "VH.API"
-        ],
-        "operationId": "DeleteEmpleado",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/proveedores": {
-      "get": {
-        "tags": [
-          "VH.API"
-        ],
-        "operationId": "GetAllProveedores",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "VH.API"
-        ],
-        "operationId": "CreateProveedor",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProveedorRequestDto"
               }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorRequestDto"
+              }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/proveedores/{id}": {
+    "/api/Proveedores/{id}": {
       "get": {
         "tags": [
-          "VH.API"
+          "Proveedores"
         ],
-        "operationId": "GetProveedorById",
         "parameters": [
           {
             "name": "id",
@@ -443,15 +1467,31 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorResponseDto"
+                }
+              }
+            }
           }
         }
       },
       "put": {
         "tags": [
-          "VH.API"
+          "Proveedores"
         ],
-        "operationId": "UpdateProveedor",
         "parameters": [
           {
             "name": "id",
@@ -469,9 +1509,18 @@
               "schema": {
                 "$ref": "#/components/schemas/ProveedorRequestDto"
               }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorRequestDto"
+              }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -481,9 +1530,8 @@
       },
       "delete": {
         "tags": [
-          "VH.API"
+          "Proveedores"
         ],
-        "operationId": "DeleteProveedor",
         "parameters": [
           {
             "name": "id",
@@ -502,46 +1550,95 @@
         }
       }
     },
-    "/api/materiales": {
+    "/api/Proyectos": {
       "get": {
         "tags": [
-          "VH.API"
+          "Proyectos"
         ],
-        "operationId": "GetAllMaterialesEPP",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoResponseDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": [
-          "VH.API"
+          "Proyectos"
         ],
-        "operationId": "CreateMaterialEPP",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+                "$ref": "#/components/schemas/ProyectoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProyectoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProyectoRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/materiales/{id}": {
+    "/api/Proyectos/{id}": {
       "get": {
         "tags": [
-          "VH.API"
+          "Proyectos"
         ],
-        "operationId": "GetMaterialEPPById",
         "parameters": [
           {
             "name": "id",
@@ -555,15 +1652,31 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoResponseDto"
+                }
+              }
+            }
           }
         }
       },
       "put": {
         "tags": [
-          "VH.API"
+          "Proyectos"
         ],
-        "operationId": "UpdateMaterialEPP",
         "parameters": [
           {
             "name": "id",
@@ -579,11 +1692,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MaterialEPPRequestDto"
+                "$ref": "#/components/schemas/ProyectoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProyectoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProyectoRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -593,9 +1715,8 @@
       },
       "delete": {
         "tags": [
-          "VH.API"
+          "Proyectos"
         ],
-        "operationId": "DeleteMaterialEPP",
         "parameters": [
           {
             "name": "id",
@@ -614,56 +1735,95 @@
         }
       }
     },
-    "/api/entregas": {
+    "/api/UnidadesMedida": {
       "get": {
         "tags": [
-          "VH.API"
-        ],
-        "operationId": "GetAllEntregasEPP",
-        "parameters": [
-          {
-            "name": "idEmpleado",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
+          "UnidadesMedida"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": [
-          "VH.API"
+          "UnidadesMedida"
         ],
-        "operationId": "CreateEntregaEPP",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/entregas/{id}": {
+    "/api/UnidadesMedida/{id}": {
       "get": {
         "tags": [
-          "VH.API"
+          "UnidadesMedida"
         ],
-        "operationId": "GetEntregaEPPById",
         "parameters": [
           {
             "name": "id",
@@ -677,15 +1837,31 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadMedidaResponseDto"
+                }
+              }
+            }
           }
         }
       },
       "put": {
         "tags": [
-          "VH.API"
+          "UnidadesMedida"
         ],
-        "operationId": "UpdateEntregaEPP",
         "parameters": [
           {
             "name": "id",
@@ -701,11 +1877,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EntregaEPPRequestDto"
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnidadMedidaRequestDto"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -715,9 +1900,8 @@
       },
       "delete": {
         "tags": [
-          "VH.API"
+          "UnidadesMedida"
         ],
-        "operationId": "DeleteEntregaEPP",
         "parameters": [
           {
             "name": "id",
@@ -739,6 +1923,72 @@
   },
   "components": {
     "schemas": {
+      "AlmacenRequestDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "domicilio": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoUbicacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlmacenResponseDto": {
+        "type": "object",
+        "properties": {
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "domicilio": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoUbicacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreProyecto": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ConceptoPartidaRequestDto": {
         "type": "object",
         "properties": {
@@ -753,6 +2003,45 @@
           "cantidadEstimada": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConceptoPartidaResponseDto": {
+        "type": "object",
+        "properties": {
+          "idPartida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUnidadMedida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreUnidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "abreviaturaUnidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadEstimada": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoTotalEstimado": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -786,6 +2075,52 @@
           "idProyecto": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmpleadoResponseDto": {
+        "type": "object",
+        "properties": {
+          "idEmpleado": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "apellidoPaterno": {
+            "type": "string",
+            "nullable": true
+          },
+          "apellidoMaterno": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreCompleto": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "numeroNomina": {
+            "type": "string",
+            "nullable": true
+          },
+          "puesto": {
+            "type": "string",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreProyecto": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -824,6 +2159,152 @@
         },
         "additionalProperties": false
       },
+      "EntregaEPPResponseDto": {
+        "type": "object",
+        "properties": {
+          "idEntrega": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cantidadEntregada": {
+            "type": "number",
+            "format": "double"
+          },
+          "tallaEntregada": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "idEmpleado": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreCompletoEmpleado": {
+            "type": "string",
+            "nullable": true
+          },
+          "numeroNominaEmpleado": {
+            "type": "string",
+            "nullable": true
+          },
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidadMedidaMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "idProveedor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreProveedor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventarioRequestDto": {
+        "type": "object",
+        "properties": {
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "existencia": {
+            "type": "number",
+            "format": "double"
+          },
+          "stockMinimo": {
+            "type": "number",
+            "format": "double"
+          },
+          "stockMaximo": {
+            "type": "number",
+            "format": "double"
+          },
+          "ubicacionPasillo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventarioResponseDto": {
+        "type": "object",
+        "properties": {
+          "idInventario": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreAlmacen": {
+            "type": "string",
+            "nullable": true
+          },
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidadMedidaMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "existencia": {
+            "type": "number",
+            "format": "double"
+          },
+          "stockMinimo": {
+            "type": "number",
+            "format": "double"
+          },
+          "stockMaximo": {
+            "type": "number",
+            "format": "double"
+          },
+          "ubicacionPasillo": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaUltimoMovimiento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bajoStock": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "sobreStock": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
       "MaterialEPPRequestDto": {
         "type": "object",
         "properties": {
@@ -849,9 +2330,79 @@
         },
         "additionalProperties": false
       },
+      "MaterialEPPResponseDto": {
+        "type": "object",
+        "properties": {
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUnidadMedida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreUnidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "abreviaturaUnidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "costoUnitarioEstimado": {
+            "type": "number",
+            "format": "double"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "stockGlobal": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "ProveedorRequestDto": {
         "type": "object",
         "properties": {
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "rfc": {
+            "type": "string",
+            "nullable": true
+          },
+          "contacto": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefono": {
+            "type": "string",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProveedorResponseDto": {
+        "type": "object",
+        "properties": {
+          "idProveedor": {
+            "type": "integer",
+            "format": "int32"
+          },
           "nombre": {
             "type": "string",
             "nullable": true
@@ -892,6 +2443,72 @@
           "presupuestoTotal": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoResponseDto": {
+        "type": "object",
+        "properties": {
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoObra": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaInicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "presupuestoTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnidadMedidaRequestDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "abreviatura": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnidadMedidaResponseDto": {
+        "type": "object",
+        "properties": {
+          "idUnidadMedida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "abreviatura": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

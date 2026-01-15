@@ -10,7 +10,7 @@ namespace VH.Services.Interfaces
     public interface IMaterialEPPService
     {
         Task<IEnumerable<MaterialEPP>> GetAllMaterialesEPPAsync();
-        Task<MaterialEPP> GetMaterialEPPByIdAsync(int id);
+        Task<MaterialEPP?> GetMaterialEPPByIdAsync(int id);
         Task<MaterialEPP> CreateMaterialEPPAsync(MaterialEPP material);
         Task<bool> UpdateMaterialEPPAsync(MaterialEPP material);
         Task<bool> DeleteMaterialEPPAsync(int id);

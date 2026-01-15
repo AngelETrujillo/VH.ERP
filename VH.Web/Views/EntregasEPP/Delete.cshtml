@@ -1,0 +1,39 @@
+﻿@model VH.Services.DTOs.EntregaEPPResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Entrega";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Está seguro de eliminar este registro de entrega?</p>
+
+                    <div class="alert alert-secondary">
+                        <strong>Fecha:</strong> @Model.FechaEntrega.ToString("dd/MM/yyyy")<br />
+                        <strong>Empleado:</strong> @Model.NombreCompletoEmpleado<br />
+                        <strong>Material:</strong> @Model.NombreMaterial<br />
+                        <strong>Cantidad:</strong> @Model.CantidadEntregada @Model.UnidadMedidaMaterial
+                    </div>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" value="@Model.IdEntrega" name="id" />
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Sí, Eliminar
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

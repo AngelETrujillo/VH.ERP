@@ -11,7 +11,7 @@ namespace VH.Services.Interfaces
     {
         // Obtiene todas las entregas o filtra por empleado
         Task<IEnumerable<EntregaEPP>> GetEntregasAsync(int? idEmpleado = null);
-        Task<EntregaEPP> GetEntregaEPPByIdAsync(int id);
+        Task<EntregaEPP?> GetEntregaEPPByIdAsync(int id);
         Task<EntregaEPP> CreateEntregaEPPAsync(EntregaEPP entrega);
         Task<bool> UpdateEntregaEPPAsync(EntregaEPP entrega);
         Task<bool> DeleteEntregaEPPAsync(int id);

@@ -1,0 +1,111 @@
+﻿@model IEnumerable<VH.Services.DTOs.InventarioResponseDto>
+
+@{
+    ViewData["Title"] = "Inventario";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box-seam"></i> Control de Inventario EPP</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Registro
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Material</th>
+                        <th>Almacén</th>
+                        <th class="text-center">Existencia</th>
+                        <th class="text-center">Stock Mín.</th>
+                        <th class="text-center">Stock Máx.</th>
+                        <th>Ubicación</th>
+                        <th>Último Mov.</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center" style="width: 120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var stockClass = "";
+                            var stockIcon = "";
+                            if (item.Existencia <= item.StockMinimo)
+                            {
+                                stockClass = "table-danger";
+                                stockIcon = "bi-exclamation-triangle text-danger";
+                            }
+                            else if (item.Existencia >= item.StockMaximo)
+                            {
+                                stockClass = "table-warning";
+                                stockIcon = "bi-exclamation-circle text-warning";
+                            }
+
+                            <tr class="@stockClass">
+                                <td>
+                                    <strong>@item.NombreMaterial</strong>
+                                    <div class="small text-muted">@item.UnidadMedidaMaterial</div>
+                                </td>
+                                <td>@item.NombreAlmacen</td>
+                                <td class="text-center fw-bold fs-5">@item.Existencia</td>
+                                <td class="text-center">@item.StockMinimo</td>
+                                <td class="text-center">@item.StockMaximo</td>
+                                <td>@item.UbicacionPasillo</td>
+                                <td class="small">@item.FechaUltimoMovimiento.ToString("dd/MM/yyyy")</td>
+                                <td class="text-center">
+                                    @if (!string.IsNullOrEmpty(stockIcon))
+                                    {
+                                        <i class="bi @stockIcon fs-5"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-check-circle text-success fs-5"></i>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.IdInventario"
+                                           class="btn btn-outline-warning" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.IdInventario"
+                                           class="btn btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No hay registros de inventario
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <span class="badge bg-danger">Bajo Stock</span>
+        <span class="badge bg-warning text-dark">Sobre Stock</span>
+        <span class="badge bg-success">Normal</span>
+    </div>
+</div>

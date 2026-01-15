@@ -10,7 +10,7 @@ namespace VH.Services.Interfaces
     public interface IProveedorService
     {
         Task<IEnumerable<Proveedor>> GetAllProveedoresAsync();
-        Task<Proveedor> GetProveedorByIdAsync(int id);
+        Task<Proveedor?> GetProveedorByIdAsync(int id);
         Task<Proveedor> CreateProveedorAsync(Proveedor proveedor);
         Task<bool> UpdateProveedorAsync(Proveedor proveedor);
         Task<bool> DeleteProveedorAsync(int id);

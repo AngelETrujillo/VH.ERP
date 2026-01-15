@@ -1,0 +1,77 @@
+﻿@model VH.Services.DTOs.InventarioRequestDto
+
+@{
+    ViewData["Title"] = "Nuevo Registro de Inventario";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Nuevo Registro de Inventario</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdAlmacen" class="form-label">Almacén *</label>
+                                <select asp-for="IdAlmacen" class="form-select" asp-items="@ViewBag.Almacenes">
+                                    <option value="">-- Seleccionar Almacén --</option>
+                                </select>
+                                <span asp-validation-for="IdAlmacen" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdMaterial" class="form-label">Material EPP *</label>
+                                <select asp-for="IdMaterial" class="form-select" asp-items="@ViewBag.Materiales">
+                                    <option value="">-- Seleccionar Material --</option>
+                                </select>
+                                <span asp-validation-for="IdMaterial" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Existencia" class="form-label">Existencia Inicial *</label>
+                                <input asp-for="Existencia" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="Existencia" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="StockMinimo" class="form-label">Stock Mínimo</label>
+                                <input asp-for="StockMinimo" type="number" step="0.01" class="form-control" value="0" />
+                                <span asp-validation-for="StockMinimo" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="StockMaximo" class="form-label">Stock Máximo</label>
+                                <input asp-for="StockMaximo" type="number" step="0.01" class="form-control" value="100" />
+                                <span asp-validation-for="StockMaximo" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UbicacionPasillo" class="form-label">Ubicación / Pasillo</label>
+                            <input asp-for="UbicacionPasillo" class="form-control" placeholder="Ej: Estante 4-B, Pasillo 2" />
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

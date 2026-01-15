@@ -1,50 +1,56 @@
 [
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_12",
-    "RelativePath": "api/empleados",
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "GetAll",
+    "RelativePath": "api/Almacenes",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.AlmacenResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetAllEmpleados"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_14",
-    "RelativePath": "api/empleados",
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "Create",
+    "RelativePath": "api/Almacenes",
     "HttpMethod": "POST",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "VH.Services.DTOs.EmpleadoRequestDto",
+        "Type": "VH.Services.DTOs.AlmacenRequestDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.AlmacenResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "CreateEmpleado"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_13",
-    "RelativePath": "api/empleados/{id}",
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "GetById",
+    "RelativePath": "api/Almacenes/{id}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -55,19 +61,157 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.AlmacenResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetEmpleadoById"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_15",
-    "RelativePath": "api/empleados/{id}",
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "Update",
+    "RelativePath": "api/Almacenes/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.AlmacenRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "Delete",
+    "RelativePath": "api/Almacenes/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlmacenesController",
+    "Method": "GetByProyecto",
+    "RelativePath": "api/Almacenes/proyecto/{idProyecto}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.AlmacenResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.EmpleadosController",
+    "Method": "GetAll",
+    "RelativePath": "api/Empleados",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.EmpleadoResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.EmpleadosController",
+    "Method": "Create",
+    "RelativePath": "api/Empleados",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.EmpleadoRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.EmpleadoResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.EmpleadosController",
+    "Method": "GetById",
+    "RelativePath": "api/Empleados/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.EmpleadoResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.EmpleadosController",
+    "Method": "Update",
+    "RelativePath": "api/Empleados/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -81,21 +225,14 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateEmpleado"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_16",
-    "RelativePath": "api/empleados/{id}",
+    "ContainingType": "VH.API.Controllers.EmpleadosController",
+    "Method": "Delete",
+    "RelativePath": "api/Empleados/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -104,21 +241,14 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "DeleteEmpleado"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_27",
-    "RelativePath": "api/entregas",
+    "ContainingType": "VH.API.Controllers.EntregasEPPController",
+    "Method": "GetAll",
+    "RelativePath": "api/EntregasEPP",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -129,19 +259,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.EntregaEPPResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetAllEntregasEPP"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_29",
-    "RelativePath": "api/entregas",
+    "ContainingType": "VH.API.Controllers.EntregasEPPController",
+    "Method": "Create",
+    "RelativePath": "api/EntregasEPP",
     "HttpMethod": "POST",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -152,19 +285,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.EntregaEPPResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "CreateEntregaEPP"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_28",
-    "RelativePath": "api/entregas/{id}",
+    "ContainingType": "VH.API.Controllers.EntregasEPPController",
+    "Method": "GetById",
+    "RelativePath": "api/EntregasEPP/{id}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -175,19 +311,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.EntregaEPPResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetEntregaEPPById"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_30",
-    "RelativePath": "api/entregas/{id}",
+    "ContainingType": "VH.API.Controllers.EntregasEPPController",
+    "Method": "Update",
+    "RelativePath": "api/EntregasEPP/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -201,21 +340,76 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateEntregaEPP"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_31",
-    "RelativePath": "api/entregas/{id}",
+    "ContainingType": "VH.API.Controllers.EntregasEPPController",
+    "Method": "Delete",
+    "RelativePath": "api/EntregasEPP/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "GetAll",
+    "RelativePath": "api/Inventarios",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.InventarioResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "Create",
+    "RelativePath": "api/Inventarios",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.InventarioRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.InventarioResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "GetById",
+    "RelativePath": "api/Inventarios/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -226,36 +420,157 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.InventarioResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "DeleteEntregaEPP"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_22",
-    "RelativePath": "api/materiales",
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "Update",
+    "RelativePath": "api/Inventarios/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.InventarioRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "Delete",
+    "RelativePath": "api/Inventarios/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "GetByAlmacen",
+    "RelativePath": "api/Inventarios/almacen/{idAlmacen}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idAlmacen",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.InventarioResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "GetByMaterial",
+    "RelativePath": "api/Inventarios/material/{idMaterial}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idMaterial",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.InventarioResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.InventariosController",
+    "Method": "GetStockGlobal",
+    "RelativePath": "api/Inventarios/material/{idMaterial}/stock-global",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idMaterial",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Decimal",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.MaterialesController",
+    "Method": "GetAll",
+    "RelativePath": "api/Materiales",
+    "HttpMethod": "GET",
+    "IsController": true,
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.MaterialEPPResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetAllMaterialesEPP"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_24",
-    "RelativePath": "api/materiales",
+    "ContainingType": "VH.API.Controllers.MaterialesController",
+    "Method": "Create",
+    "RelativePath": "api/Materiales",
     "HttpMethod": "POST",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -266,19 +581,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.MaterialEPPResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "CreateMaterialEPP"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_23",
-    "RelativePath": "api/materiales/{id}",
+    "ContainingType": "VH.API.Controllers.MaterialesController",
+    "Method": "GetById",
+    "RelativePath": "api/Materiales/{id}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -289,19 +607,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.MaterialEPPResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetMaterialEPPById"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_25",
-    "RelativePath": "api/materiales/{id}",
+    "ContainingType": "VH.API.Controllers.MaterialesController",
+    "Method": "Update",
+    "RelativePath": "api/Materiales/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -315,21 +636,14 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateMaterialEPP"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_26",
-    "RelativePath": "api/materiales/{id}",
+    "ContainingType": "VH.API.Controllers.MaterialesController",
+    "Method": "Delete",
+    "RelativePath": "api/Materiales/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -338,38 +652,34 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "DeleteMaterialEPP"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_17",
-    "RelativePath": "api/proveedores",
+    "ContainingType": "VH.API.Controllers.ProveedoresController",
+    "Method": "GetAll",
+    "RelativePath": "api/Proveedores",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.ProveedorResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetAllProveedores"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_19",
-    "RelativePath": "api/proveedores",
+    "ContainingType": "VH.API.Controllers.ProveedoresController",
+    "Method": "Create",
+    "RelativePath": "api/Proveedores",
     "HttpMethod": "POST",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -380,19 +690,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.ProveedorResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "CreateProveedor"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_18",
-    "RelativePath": "api/proveedores/{id}",
+    "ContainingType": "VH.API.Controllers.ProveedoresController",
+    "Method": "GetById",
+    "RelativePath": "api/Proveedores/{id}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -403,19 +716,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.ProveedorResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetProveedorById"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_20",
-    "RelativePath": "api/proveedores/{id}",
+    "ContainingType": "VH.API.Controllers.ProveedoresController",
+    "Method": "Update",
+    "RelativePath": "api/Proveedores/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -429,21 +745,14 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateProveedor"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_21",
-    "RelativePath": "api/proveedores/{id}",
+    "ContainingType": "VH.API.Controllers.ProveedoresController",
+    "Method": "Delete",
+    "RelativePath": "api/Proveedores/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -452,61 +761,60 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "DeleteProveedor"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_2",
-    "RelativePath": "api/proyectos",
+    "ContainingType": "VH.API.Controllers.ProyectosController",
+    "Method": "GetAll",
+    "RelativePath": "api/Proyectos",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.ProyectoResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetAllProyectos"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_4",
-    "RelativePath": "api/proyectos",
+    "ContainingType": "VH.API.Controllers.ProyectosController",
+    "Method": "Create",
+    "RelativePath": "api/Proyectos",
     "HttpMethod": "POST",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "proyectoDto",
+        "Name": "dto",
         "Type": "VH.Services.DTOs.ProyectoRequestDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.ProyectoResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "CreateProyecto"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_3",
-    "RelativePath": "api/proyectos/{id}",
+    "ContainingType": "VH.API.Controllers.ProyectosController",
+    "Method": "GetById",
+    "RelativePath": "api/Proyectos/{id}",
     "HttpMethod": "GET",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -517,19 +825,22 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.ProyectoResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "GetProyectoById"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_5",
-    "RelativePath": "api/proyectos/{id}",
+    "ContainingType": "VH.API.Controllers.ProyectosController",
+    "Method": "Update",
+    "RelativePath": "api/Proyectos/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -538,26 +849,216 @@
         "IsRequired": true
       },
       {
-        "Name": "proyectoDto",
+        "Name": "dto",
         "Type": "VH.Services.DTOs.ProyectoRequestDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateProyecto"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_6",
-    "RelativePath": "api/proyectos/{id}",
+    "ContainingType": "VH.API.Controllers.ProyectosController",
+    "Method": "Delete",
+    "RelativePath": "api/Proyectos/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PartidasController",
+    "Method": "GetByProyecto",
+    "RelativePath": "api/proyectos/{idProyecto}/partidas",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.ConceptoPartidaResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PartidasController",
+    "Method": "Create",
+    "RelativePath": "api/proyectos/{idProyecto}/partidas",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.ConceptoPartidaRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.ConceptoPartidaResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PartidasController",
+    "Method": "GetById",
+    "RelativePath": "api/proyectos/{idProyecto}/partidas/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.ConceptoPartidaResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PartidasController",
+    "Method": "Update",
+    "RelativePath": "api/proyectos/{idProyecto}/partidas/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.ConceptoPartidaRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PartidasController",
+    "Method": "Delete",
+    "RelativePath": "api/proyectos/{idProyecto}/partidas/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.UnidadesMedidaController",
+    "Method": "GetAll",
+    "RelativePath": "api/UnidadesMedida",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.UnidadMedidaResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.UnidadesMedidaController",
+    "Method": "Create",
+    "RelativePath": "api/UnidadesMedida",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.UnidadMedidaRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.UnidadMedidaResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.UnidadesMedidaController",
+    "Method": "GetById",
+    "RelativePath": "api/UnidadesMedida/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
@@ -568,151 +1069,51 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "System.Void",
-        "MediaTypes": [],
+        "Type": "VH.Services.DTOs.UnidadMedidaResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "StatusCode": 200
       }
-    ],
-    "EndpointName": "DeleteProyecto"
+    ]
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_7",
-    "RelativePath": "api/proyectos/{idProyecto}/partidas",
-    "HttpMethod": "GET",
-    "IsController": false,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "idProyecto",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "GetPartidasByProyecto"
-  },
-  {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_9",
-    "RelativePath": "api/proyectos/{idProyecto}/partidas",
-    "HttpMethod": "POST",
-    "IsController": false,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "idProyecto",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "partidaDto",
-        "Type": "VH.Services.DTOs.ConceptoPartidaRequestDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "CreateConceptoPartida"
-  },
-  {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_8",
-    "RelativePath": "api/proyectos/{idProyecto}/partidas/{idPartida}",
-    "HttpMethod": "GET",
-    "IsController": false,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "idProyecto",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "idPartida",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "GetPartidaByProyectoAndId"
-  },
-  {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_10",
-    "RelativePath": "api/proyectos/{idProyecto}/partidas/{idPartida}",
+    "ContainingType": "VH.API.Controllers.UnidadesMedidaController",
+    "Method": "Update",
+    "RelativePath": "api/UnidadesMedida/{id}",
     "HttpMethod": "PUT",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "idProyecto",
+        "Name": "id",
         "Type": "System.Int32",
         "IsRequired": true
       },
       {
-        "Name": "idPartida",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "partidaDto",
-        "Type": "VH.Services.DTOs.ConceptoPartidaRequestDto",
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.UnidadMedidaRequestDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "UpdateConceptoPartidaByProyecto"
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_11",
-    "RelativePath": "api/proyectos/{idProyecto}/partidas/{idPartida}",
+    "ContainingType": "VH.API.Controllers.UnidadesMedidaController",
+    "Method": "Delete",
+    "RelativePath": "api/UnidadesMedida/{id}",
     "HttpMethod": "DELETE",
-    "IsController": false,
+    "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "idProyecto",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "idPartida",
+        "Name": "id",
         "Type": "System.Int32",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ],
-    "EndpointName": "DeleteConceptoPartidaByProyecto"
+    "ReturnTypes": []
   }
 ]

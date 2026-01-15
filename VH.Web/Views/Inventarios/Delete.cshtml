@@ -1,0 +1,38 @@
+﻿@model VH.Services.DTOs.InventarioResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Registro de Inventario";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Está seguro de eliminar este registro de inventario?</p>
+
+                    <div class="alert alert-secondary">
+                        <strong>Material:</strong> @Model.NombreMaterial<br />
+                        <strong>Almacén:</strong> @Model.NombreAlmacen<br />
+                        <strong>Existencia:</strong> @Model.Existencia @Model.UnidadMedidaMaterial
+                    </div>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" value="@Model.IdInventario" name="id" />
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Sí, Eliminar
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
