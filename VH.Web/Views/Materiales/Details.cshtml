@@ -5,48 +5,53 @@
 }
 
 <div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-info text-white">
-            <h4 class="mb-0">Detalles del Material</h4>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-8">
-                    <h2 class="text-primary">@Model.Nombre</h2>
-                    <p class="text-muted">@Model.Descripcion</p>
-                </div>
-                <div class="col-md-4 text-end">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-box"></i> @Model.Nombre</h5>
                     @if (Model.Activo)
                     {
-                        <span class="badge bg-success fs-5">Activo</span>
+                        <span class="badge bg-success">Activo</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger fs-5">Inactivo</span>
+                        <span class="badge bg-secondary">Inactivo</span>
                     }
                 </div>
-            </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Información General</h6>
+                            <dl>
+                                <dt>Descripción:</dt>
+                                <dd>@(string.IsNullOrEmpty(Model.Descripcion) ? "Sin descripción" : Model.Descripcion)</dd>
 
-            <hr />
+                                <dt>Unidad de Medida:</dt>
+                                <dd><span class="badge bg-secondary">@Model.AbreviaturaUnidadMedida</span> - @Model.NombreUnidadMedida</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Datos de Costo e Inventario</h6>
+                            <dl>
+                                <dt>Costo Unitario Estimado:</dt>
+                                <dd class="fs-4 text-success">$@Model.CostoUnitarioEstimado.ToString("N2")</dd>
 
-            <div class="row mt-3">
-                <div class="col-md-4">
-                    <h5>Unidad de Medida</h5>
-                    @* <p class="fs-5">@Model.UnidadMedida</p> *@
+                                <dt>Stock Global:</dt>
+                                <dd class="fs-4">@Model.StockGlobal @Model.AbreviaturaUnidadMedida</dd>
+                            </dl>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <h5>Costo Unitario</h5>
-                    <p class="fs-5 text-success">$@Model.CostoUnitarioEstimado</p>
+                <div class="card-footer d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
                 </div>
-                @* <div class="col-md-4">
-                    <h5>Stock Actual</h5>
-                    <p class="fs-5 fw-bold">@Model.StockActual</p>
-                </div> *@
             </div>
-        </div>
-        <div class="card-footer bg-light">
-            <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning">Editar</a>
-            <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
         </div>
     </div>
 </div>
