@@ -3,19 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VH.Services.DTOs
 {
-    // DTO para creación/actualización
+    /// <summary>
+    /// DTO para registrar una nueva entrega de EPP.
+    /// Ahora requiere seleccionar el lote/compra específico de donde sale el material.
+    /// </summary>
     public record EntregaEPPRequestDto(
         [Required(ErrorMessage = "El empleado es obligatorio")]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un empleado válido")]
         int IdEmpleado,
 
-        [Required(ErrorMessage = "El material es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un material válido")]
-        int IdMaterial,
-
-        [Required(ErrorMessage = "El proveedor es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un proveedor válido")]
-        int IdProveedor,
+        [Required(ErrorMessage = "El lote/compra es obligatorio")]
+        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un lote válido")]
+        int IdCompra,
 
         [Required(ErrorMessage = "La fecha de entrega es obligatoria")]
         DateTime FechaEntrega,
@@ -25,13 +24,16 @@ namespace VH.Services.DTOs
         decimal CantidadEntregada,
 
         [MaxLength(20, ErrorMessage = "La talla no puede exceder 20 caracteres")]
-        string TallaEntregada,
+        string? TallaEntregada,
 
         [MaxLength(500, ErrorMessage = "Las observaciones no pueden exceder 500 caracteres")]
-        string Observaciones
+        string? Observaciones
     );
 
-    // DTO para lectura - Versión simplificada para evitar referencias circulares
+    /// <summary>
+    /// DTO para mostrar información de una entrega de EPP.
+    /// Incluye información del lote/compra de donde salió el material.
+    /// </summary>
     public class EntregaEPPResponseDto
     {
         public int IdEntrega { get; set; }
@@ -40,18 +42,29 @@ namespace VH.Services.DTOs
         public string TallaEntregada { get; set; } = string.Empty;
         public string Observaciones { get; set; } = string.Empty;
 
-        // Información resumida del Empleado
+        // Información del Empleado
         public int IdEmpleado { get; set; }
         public string NombreCompletoEmpleado { get; set; } = string.Empty;
         public string NumeroNominaEmpleado { get; set; } = string.Empty;
 
-        // Información resumida del Material
+        // Información del Lote/Compra
+        public int IdCompra { get; set; }
+
+        // Información del Material (obtenida desde la Compra)
         public int IdMaterial { get; set; }
         public string NombreMaterial { get; set; } = string.Empty;
         public string UnidadMedidaMaterial { get; set; } = string.Empty;
 
-        // Información resumida del Proveedor
+        // Información del Proveedor (obtenida desde la Compra)
         public int IdProveedor { get; set; }
         public string NombreProveedor { get; set; } = string.Empty;
+
+        // Información del Almacén (obtenida desde la Compra)
+        public int IdAlmacen { get; set; }
+        public string NombreAlmacen { get; set; } = string.Empty;
+
+        // Información adicional del lote
+        public decimal PrecioUnitarioCompra { get; set; }
+        public decimal CostoTotalEntrega => CantidadEntregada * PrecioUnitarioCompra;
     }
 }

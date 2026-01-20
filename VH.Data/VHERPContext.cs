@@ -9,16 +9,17 @@ namespace VH.Data
         {
         }
 
-        // ===== DB SETS (Tablas de la DB) =====
+        // ===== DB SETS (Tablas de la BD) =====
         public DbSet<Proyecto> Proyectos { get; set; }
         public DbSet<ConceptoPartida> ConceptosPartidas { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<Proveedor> Proveedores { get; set; }
-        public DbSet<MaterialEPP> MaterialesEPP { get; set; }
-        public DbSet<EntregaEPP> EntregasEPP { get; set; }
         public DbSet<UnidadMedida> UnidadesMedida { get; set; }
+        public DbSet<MaterialEPP> MaterialesEPP { get; set; }
         public DbSet<Almacen> Almacenes { get; set; }
+        public DbSet<CompraEPP> ComprasEPP { get; set; }  // ← NUEVA TABLA
         public DbSet<Inventario> Inventarios { get; set; }
+        public DbSet<EntregaEPP> EntregasEPP { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,17 +40,19 @@ namespace VH.Data
                 entity.Property(p => p.PresupuestoTotal)
                     .HasPrecision(18, 2);
 
-                // Relaciones
+                // Relación: Proyecto -> ConceptosPartidas
                 entity.HasMany(p => p.ConceptosPartidas)
                     .WithOne(cp => cp.Proyecto)
                     .HasForeignKey(cp => cp.IdProyecto)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                // Relación: Proyecto -> Empleados
                 entity.HasMany(p => p.Empleados)
                     .WithOne(e => e.Proyecto)
                     .HasForeignKey(e => e.IdProyecto)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                // Relación: Proyecto -> Almacenes
                 entity.HasMany(p => p.Almacenes)
                     .WithOne(a => a.Proyecto)
                     .HasForeignKey(a => a.IdProyecto)
@@ -72,7 +75,7 @@ namespace VH.Data
                 entity.Property(u => u.Descripcion)
                     .HasMaxLength(500);
 
-                // Índice único para evitar duplicados
+                // Índices únicos para evitar duplicados
                 entity.HasIndex(u => u.Nombre).IsUnique();
                 entity.HasIndex(u => u.Abreviatura).IsUnique();
             });
@@ -89,13 +92,13 @@ namespace VH.Data
                 entity.Property(cp => cp.CantidadEstimada)
                     .HasPrecision(18, 4);
 
-                // Relación con Proyecto
+                // Relación: ConceptoPartida -> Proyecto
                 entity.HasOne(cp => cp.Proyecto)
                     .WithMany(p => p.ConceptosPartidas)
                     .HasForeignKey(cp => cp.IdProyecto)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con UnidadMedida
+                // Relación: ConceptoPartida -> UnidadMedida
                 entity.HasOne(cp => cp.UnidadMedida)
                     .WithMany()
                     .HasForeignKey(cp => cp.IdUnidadMedida)
@@ -129,13 +132,13 @@ namespace VH.Data
                 // Índice único para número de nómina
                 entity.HasIndex(e => e.NumeroNomina).IsUnique();
 
-                // Relación con Proyecto
+                // Relación: Empleado -> Proyecto
                 entity.HasOne(e => e.Proyecto)
                     .WithMany(p => p.Empleados)
                     .HasForeignKey(e => e.IdProyecto)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con EntregasEPP
+                // Relación: Empleado -> EntregasEPP
                 entity.HasMany(e => e.EntregasEPP)
                     .WithOne(ep => ep.Empleado)
                     .HasForeignKey(ep => ep.IdEmpleado)
@@ -164,10 +167,10 @@ namespace VH.Data
                 // Índice único para RFC
                 entity.HasIndex(p => p.RFC).IsUnique();
 
-                // Relación con EntregasEPP
-                entity.HasMany(p => p.EntregasEPP)
-                    .WithOne(ep => ep.Proveedor)
-                    .HasForeignKey(ep => ep.IdProveedor)
+                // Relación: Proveedor -> ComprasEPP
+                entity.HasMany(p => p.Compras)
+                    .WithOne(c => c.Proveedor)
+                    .HasForeignKey(c => c.IdProveedor)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -186,13 +189,19 @@ namespace VH.Data
                 entity.Property(m => m.CostoUnitarioEstimado)
                     .HasPrecision(18, 2);
 
-                // Relación con UnidadMedida
+                // Relación: MaterialEPP -> UnidadMedida
                 entity.HasOne(m => m.UnidadMedida)
                     .WithMany()
                     .HasForeignKey(m => m.IdUnidadMedida)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Inventarios
+                // Relación: MaterialEPP -> ComprasEPP
+                entity.HasMany(m => m.Compras)
+                    .WithOne(c => c.Material)
+                    .HasForeignKey(c => c.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: MaterialEPP -> Inventarios
                 entity.HasMany(m => m.Inventarios)
                     .WithOne(i => i.Material)
                     .HasForeignKey(i => i.IdMaterial)
@@ -217,17 +226,72 @@ namespace VH.Data
                 entity.Property(a => a.TipoUbicacion)
                     .HasMaxLength(50);
 
-                // Relación con Proyecto
+                // Relación: Almacen -> Proyecto
                 entity.HasOne(a => a.Proyecto)
                     .WithMany(p => p.Almacenes)
                     .HasForeignKey(a => a.IdProyecto)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Inventarios
+                // Relación: Almacen -> Inventarios
                 entity.HasMany(a => a.Inventarios)
                     .WithOne(i => i.Almacen)
                     .HasForeignKey(i => i.IdAlmacen)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: Almacen -> ComprasEPP
+                entity.HasMany(a => a.Compras)
+                    .WithOne(c => c.Almacen)
+                    .HasForeignKey(c => c.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ===== CONFIGURACIÓN DE COMPRA EPP (NUEVA) =====
+            modelBuilder.Entity<CompraEPP>(entity =>
+            {
+                entity.HasKey(c => c.IdCompra);
+
+                entity.Property(c => c.FechaCompra)
+                    .IsRequired();
+
+                entity.Property(c => c.CantidadComprada)
+                    .IsRequired()
+                    .HasPrecision(18, 4);
+
+                entity.Property(c => c.CantidadDisponible)
+                    .IsRequired()
+                    .HasPrecision(18, 4);
+
+                entity.Property(c => c.PrecioUnitario)
+                    .IsRequired()
+                    .HasPrecision(18, 2);
+
+                entity.Property(c => c.NumeroDocumento)
+                    .HasMaxLength(50);
+
+                entity.Property(c => c.Observaciones)
+                    .HasMaxLength(500);
+
+                // Relación: CompraEPP -> Material
+                entity.HasOne(c => c.Material)
+                    .WithMany(m => m.Compras)
+                    .HasForeignKey(c => c.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: CompraEPP -> Proveedor
+                entity.HasOne(c => c.Proveedor)
+                    .WithMany(p => p.Compras)
+                    .HasForeignKey(c => c.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: CompraEPP -> Almacen
+                entity.HasOne(c => c.Almacen)
+                    .WithMany(a => a.Compras)
+                    .HasForeignKey(c => c.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índices para búsquedas frecuentes
+                entity.HasIndex(c => c.FechaCompra);
+                entity.HasIndex(c => new { c.IdMaterial, c.IdAlmacen }); // Búsqueda de stock por material y almacén
             });
 
             // ===== CONFIGURACIÓN DE INVENTARIO =====
@@ -247,16 +311,16 @@ namespace VH.Data
                 entity.Property(i => i.UbicacionPasillo)
                     .HasMaxLength(100);
 
-                // Índice compuesto único (un material solo puede estar una vez por almacén)
+                // Índice compuesto único: un material solo puede tener un registro de inventario por almacén
                 entity.HasIndex(i => new { i.IdAlmacen, i.IdMaterial }).IsUnique();
 
-                // Relación con Almacen
+                // Relación: Inventario -> Almacen
                 entity.HasOne(i => i.Almacen)
                     .WithMany(a => a.Inventarios)
                     .HasForeignKey(i => i.IdAlmacen)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Material
+                // Relación: Inventario -> Material
                 entity.HasOne(i => i.Material)
                     .WithMany(m => m.Inventarios)
                     .HasForeignKey(i => i.IdMaterial)
@@ -268,7 +332,11 @@ namespace VH.Data
             {
                 entity.HasKey(e => e.IdEntrega);
 
+                entity.Property(e => e.FechaEntrega)
+                    .IsRequired();
+
                 entity.Property(e => e.CantidadEntregada)
+                    .IsRequired()
                     .HasPrecision(18, 4);
 
                 entity.Property(e => e.TallaEntregada)
@@ -277,22 +345,16 @@ namespace VH.Data
                 entity.Property(e => e.Observaciones)
                     .HasMaxLength(500);
 
-                // Relación con Empleado
+                // Relación: EntregaEPP -> Empleado
                 entity.HasOne(e => e.Empleado)
                     .WithMany(emp => emp.EntregasEPP)
                     .HasForeignKey(e => e.IdEmpleado)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con MaterialEPP
-                entity.HasOne(e => e.MaterialEPP)
+                // Relación: EntregaEPP -> CompraEPP (de qué lote sale el material)
+                entity.HasOne(e => e.Compra)
                     .WithMany()
-                    .HasForeignKey(e => e.IdMaterial)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                // Relación con Proveedor
-                entity.HasOne(e => e.Proveedor)
-                    .WithMany(p => p.EntregasEPP)
-                    .HasForeignKey(e => e.IdProveedor)
+                    .HasForeignKey(e => e.IdCompra)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 // Índice para búsquedas por fecha

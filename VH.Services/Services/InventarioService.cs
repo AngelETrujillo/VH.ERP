@@ -1,9 +1,5 @@
 ﻿using VH.Services.Entities;
 using VH.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace VH.Services.Services
 {
@@ -16,75 +12,63 @@ namespace VH.Services.Services
             _unitOfWork = unitOfWork;
         }
 
+        private const string IncludeProperties = "Almacen.Proyecto,Material.UnidadMedida";
+
         public async Task<IEnumerable<Inventario>> GetAllInventariosAsync()
         {
-            return await _unitOfWork.Inventarios.GetAllAsync(
-                includeProperties: "Almacen.Proyecto,Material.UnidadMedida"
-            );
+            return await _unitOfWork.Inventarios.GetAllAsync(includeProperties: IncludeProperties);
         }
 
         public async Task<IEnumerable<Inventario>> GetInventariosByAlmacenAsync(int idAlmacen)
         {
             return await _unitOfWork.Inventarios.FindAsync(
                 filter: i => i.IdAlmacen == idAlmacen,
-                includeProperties: "Material.UnidadMedida"
-            );
+                includeProperties: IncludeProperties);
         }
 
         public async Task<IEnumerable<Inventario>> GetInventariosByMaterialAsync(int idMaterial)
         {
             return await _unitOfWork.Inventarios.FindAsync(
                 filter: i => i.IdMaterial == idMaterial,
-                includeProperties: "Almacen.Proyecto"
-            );
+                includeProperties: IncludeProperties);
         }
 
         public async Task<Inventario?> GetInventarioByIdAsync(int id)
         {
-            return await _unitOfWork.Inventarios.GetByIdAsync(
-                id,
-                includeProperties: "Almacen.Proyecto,Material.UnidadMedida"
-            );
+            return await _unitOfWork.Inventarios.GetByIdAsync(id, includeProperties: IncludeProperties);
         }
 
-        public async Task<Inventario> CreateInventarioAsync(Inventario inventario)
+        public async Task<Inventario?> GetInventarioByMaterialAlmacenAsync(int idMaterial, int idAlmacen)
         {
-            // Validar que el almacén exista
-            var almacen = await _unitOfWork.Almacenes.GetByIdAsync(inventario.IdAlmacen);
-            if (almacen == null)
+            var inventarios = await _unitOfWork.Inventarios.FindAsync(
+                filter: i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen,
+                includeProperties: IncludeProperties);
+            return inventarios.FirstOrDefault();
+        }
+
+        public async Task<Inventario> CreateOrUpdateInventarioAsync(Inventario inventario)
+        {
+            var existente = await GetInventarioByMaterialAlmacenAsync(inventario.IdMaterial, inventario.IdAlmacen);
+
+            if (existente != null)
             {
-                throw new ArgumentException($"El almacén con ID {inventario.IdAlmacen} no existe.");
+                existente.StockMinimo = inventario.StockMinimo;
+                existente.StockMaximo = inventario.StockMaximo;
+                existente.UbicacionPasillo = inventario.UbicacionPasillo;
+                _unitOfWork.Inventarios.Update(existente);
+                await _unitOfWork.CompleteAsync();
+                return existente;
             }
 
-            // Validar que el material exista
             var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(inventario.IdMaterial);
             if (material == null)
-            {
                 throw new ArgumentException($"El material con ID {inventario.IdMaterial} no existe.");
-            }
 
-            // Validar que no exista ya un registro para ese material en ese almacén
-            var inventarioExistente = await _unitOfWork.Inventarios.FindAsync(
-                i => i.IdAlmacen == inventario.IdAlmacen && i.IdMaterial == inventario.IdMaterial
-            );
+            var almacen = await _unitOfWork.Almacenes.GetByIdAsync(inventario.IdAlmacen);
+            if (almacen == null)
+                throw new ArgumentException($"El almacén con ID {inventario.IdAlmacen} no existe.");
 
-            if (inventarioExistente.Any())
-            {
-                throw new InvalidOperationException("Ya existe un registro de inventario para este material en este almacén.");
-            }
-
-            // Validaciones de negocio
-            if (inventario.StockMinimo < 0)
-            {
-                throw new ArgumentException("El stock mínimo no puede ser negativo.");
-            }
-
-            if (inventario.StockMaximo < inventario.StockMinimo)
-            {
-                throw new ArgumentException("El stock máximo no puede ser menor que el stock mínimo.");
-            }
-
-            // Establecer fecha de último movimiento
+            inventario.Existencia = await RecalcularExistenciaAsync(inventario.IdMaterial, inventario.IdAlmacen);
             inventario.FechaUltimoMovimiento = DateTime.Now;
 
             await _unitOfWork.Inventarios.AddAsync(inventario);
@@ -92,38 +76,20 @@ namespace VH.Services.Services
             return inventario;
         }
 
-        public async Task<bool> UpdateInventarioAsync(Inventario inventario)
+        public async Task<bool> UpdateConfiguracionAsync(int id, decimal stockMinimo, decimal stockMaximo, string ubicacion)
         {
-            var inventarioExistente = await _unitOfWork.Inventarios.GetByIdAsync(inventario.IdInventario);
-            if (inventarioExistente == null)
-            {
+            var inventario = await _unitOfWork.Inventarios.GetByIdAsync(id);
+            if (inventario == null)
                 return false;
-            }
 
-            // Validaciones de negocio
-            if (inventario.StockMinimo < 0)
-            {
-                throw new ArgumentException("El stock mínimo no puede ser negativo.");
-            }
+            if (stockMaximo > 0 && stockMinimo > stockMaximo)
+                throw new ArgumentException("El stock mínimo no puede ser mayor que el stock máximo.");
 
-            if (inventario.StockMaximo < inventario.StockMinimo)
-            {
-                throw new ArgumentException("El stock máximo no puede ser menor que el stock mínimo.");
-            }
+            inventario.StockMinimo = stockMinimo;
+            inventario.StockMaximo = stockMaximo;
+            inventario.UbicacionPasillo = ubicacion;
 
-            if (inventario.Existencia < 0)
-            {
-                throw new ArgumentException("La existencia no puede ser negativa.");
-            }
-
-            // Actualizar campos
-            inventarioExistente.Existencia = inventario.Existencia;
-            inventarioExistente.StockMinimo = inventario.StockMinimo;
-            inventarioExistente.StockMaximo = inventario.StockMaximo;
-            inventarioExistente.UbicacionPasillo = inventario.UbicacionPasillo;
-            inventarioExistente.FechaUltimoMovimiento = DateTime.Now;
-
-            _unitOfWork.Inventarios.Update(inventarioExistente);
+            _unitOfWork.Inventarios.Update(inventario);
             return await _unitOfWork.CompleteAsync() > 0;
         }
 
@@ -131,9 +97,14 @@ namespace VH.Services.Services
         {
             var inventario = await _unitOfWork.Inventarios.GetByIdAsync(id);
             if (inventario == null)
-            {
                 return false;
-            }
+
+            var compras = await _unitOfWork.ComprasEPP.FindAsync(
+                c => c.IdMaterial == inventario.IdMaterial && c.IdAlmacen == inventario.IdAlmacen);
+
+            if (compras.Any())
+                throw new InvalidOperationException(
+                    "No se puede eliminar el registro de inventario porque existen compras asociadas.");
 
             _unitOfWork.Inventarios.Remove(inventario);
             return await _unitOfWork.CompleteAsync() > 0;
@@ -141,11 +112,26 @@ namespace VH.Services.Services
 
         public async Task<decimal> GetStockGlobalMaterialAsync(int idMaterial)
         {
-            // Obtener todos los inventarios de un material en todos los almacenes
             var inventarios = await _unitOfWork.Inventarios.FindAsync(i => i.IdMaterial == idMaterial);
-
-            // Sumar las existencias
             return inventarios.Sum(i => i.Existencia);
+        }
+
+        public async Task<IEnumerable<Inventario>> GetInventariosConAlertasAsync()
+        {
+            var inventarios = await _unitOfWork.Inventarios.GetAllAsync(includeProperties: IncludeProperties);
+
+            return inventarios.Where(i =>
+                i.Existencia <= 0 ||
+                i.Existencia <= i.StockMinimo ||
+                (i.StockMaximo > 0 && i.Existencia >= i.StockMaximo));
+        }
+
+        public async Task<decimal> RecalcularExistenciaAsync(int idMaterial, int idAlmacen)
+        {
+            var compras = await _unitOfWork.ComprasEPP.FindAsync(
+                c => c.IdMaterial == idMaterial && c.IdAlmacen == idAlmacen);
+
+            return compras.Sum(c => c.CantidadDisponible);
         }
     }
 }

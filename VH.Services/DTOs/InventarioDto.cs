@@ -3,7 +3,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VH.Services.DTOs
 {
-    // DTO para creación/actualización
+    /// <summary>
+    /// DTO para crear o actualizar configuración de inventario.
+    /// Nota: La existencia se calcula automáticamente desde las compras y entregas.
+    /// Este DTO solo configura los parámetros de control (stock mínimo, máximo, ubicación).
+    /// </summary>
     public record InventarioRequestDto(
         [Required(ErrorMessage = "El almacén es obligatorio")]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un almacén válido")]
@@ -13,10 +17,6 @@ namespace VH.Services.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un material válido")]
         int IdMaterial,
 
-        [Required(ErrorMessage = "La existencia es obligatoria")]
-        [Range(0, double.MaxValue, ErrorMessage = "La existencia debe ser mayor o igual a 0")]
-        decimal Existencia,
-
         [Range(0, double.MaxValue, ErrorMessage = "El stock mínimo debe ser mayor o igual a 0")]
         decimal StockMinimo,
 
@@ -24,10 +24,12 @@ namespace VH.Services.DTOs
         decimal StockMaximo,
 
         [MaxLength(100, ErrorMessage = "La ubicación no puede exceder 100 caracteres")]
-        string UbicacionPasillo
+        string? UbicacionPasillo
     );
 
-    // DTO para lectura
+    /// <summary>
+    /// DTO para mostrar información de inventario con alertas de stock
+    /// </summary>
     public class InventarioResponseDto
     {
         public int IdInventario { get; set; }
@@ -35,6 +37,7 @@ namespace VH.Services.DTOs
         // Información del Almacén
         public int IdAlmacen { get; set; }
         public string NombreAlmacen { get; set; } = string.Empty;
+        public string NombreProyecto { get; set; } = string.Empty;
 
         // Información del Material
         public int IdMaterial { get; set; }
@@ -48,8 +51,85 @@ namespace VH.Services.DTOs
         public string UbicacionPasillo { get; set; } = string.Empty;
         public DateTime FechaUltimoMovimiento { get; set; }
 
-        // Indicador de estado
+        // ===== INDICADORES DE ALERTA =====
+
+        /// <summary>
+        /// True si la existencia está en o por debajo del stock mínimo
+        /// </summary>
         public bool BajoStock => Existencia <= StockMinimo;
-        public bool SobreStock => Existencia >= StockMaximo;
+
+        /// <summary>
+        /// True si la existencia está en o por encima del stock máximo
+        /// </summary>
+        public bool SobreStock => Existencia >= StockMaximo && StockMaximo > 0;
+
+        /// <summary>
+        /// True si no hay existencias
+        /// </summary>
+        public bool SinStock => Existencia <= 0;
+
+        /// <summary>
+        /// Estado del inventario: "SinStock", "Bajo", "Normal", "Excedido"
+        /// </summary>
+        public string EstadoStock
+        {
+            get
+            {
+                if (SinStock) return "SinStock";
+                if (BajoStock) return "Bajo";
+                if (SobreStock) return "Excedido";
+                return "Normal";
+            }
+        }
+
+        /// <summary>
+        /// Clase CSS para mostrar el color apropiado según el estado
+        /// </summary>
+        public string ClaseEstado
+        {
+            get
+            {
+                return EstadoStock switch
+                {
+                    "SinStock" => "danger",
+                    "Bajo" => "warning",
+                    "Excedido" => "info",
+                    _ => "success"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Mensaje descriptivo del estado para mostrar al usuario
+        /// </summary>
+        public string MensajeAlerta
+        {
+            get
+            {
+                return EstadoStock switch
+                {
+                    "SinStock" => "⚠️ SIN STOCK - Requiere reabastecimiento inmediato",
+                    "Bajo" => "⚠️ Stock bajo - Considere reabastecer",
+                    "Excedido" => "ℹ️ Stock excedido - Considere redistribuir",
+                    _ => "✅ Stock normal"
+                };
+            }
+        }
+    }
+
+    /// <summary>
+    /// DTO para resumen de alertas de inventario (Dashboard)
+    /// </summary>
+    public class AlertaInventarioDto
+    {
+        public int IdInventario { get; set; }
+        public string NombreMaterial { get; set; } = string.Empty;
+        public string NombreAlmacen { get; set; } = string.Empty;
+        public decimal Existencia { get; set; }
+        public decimal StockMinimo { get; set; }
+        public decimal StockMaximo { get; set; }
+        public string EstadoStock { get; set; } = string.Empty;
+        public string MensajeAlerta { get; set; } = string.Empty;
+        public string UnidadMedida { get; set; } = string.Empty;
     }
 }
