@@ -31,45 +31,62 @@ namespace VH.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<EntregaEPPResponseDto>> GetById(int id)
         {
-            var entrega = await _entregaService.GetEntregaEPPByIdAsync(id);
+            var entrega = await _entregaService.GetEntregaByIdAsync(id);
             if (entrega == null) return NotFound();
             return Ok(_mapper.Map<EntregaEPPResponseDto>(entrega));
         }
 
         [HttpPost]
-        public async Task<ActionResult<EntregaEPPResponseDto>> Create([FromBody] EntregaEPPRequestDto dto)
+        public async Task<ActionResult<object>> Create([FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
-                var created = await _entregaService.CreateEntregaEPPAsync(entrega);
+                var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega);
                 var response = _mapper.Map<EntregaEPPResponseDto>(created);
-                return CreatedAtAction(nameof(GetById), new { id = response.IdEntrega }, response);
+
+                return CreatedAtAction(nameof(GetById), new { id = response.IdEntrega }, new
+                {
+                    data = response,
+                    alerta = alerta
+                });
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] EntregaEPPRequestDto dto)
+        public async Task<ActionResult<object>> Update(int id, [FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var entrega = _mapper.Map<EntregaEPP>(dto);
-            entrega.IdEntrega = id;
-            var result = await _entregaService.UpdateEntregaEPPAsync(entrega);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var entrega = _mapper.Map<EntregaEPP>(dto);
+                entrega.IdEntrega = id;
+                var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega);
+                if (!success) return NotFound();
+
+                return Ok(new { alerta = alerta });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _entregaService.DeleteEntregaEPPAsync(id);
+            var result = await _entregaService.DeleteEntregaAsync(id);
             if (!result) return NotFound();
             return NoContent();
         }

@@ -91,11 +91,11 @@ namespace VH.Services.Services
                 throw new InvalidOperationException("No se puede eliminar el material porque tiene registros de inventario asociados.");
             }
 
-            // Verificar si tiene entregas EPP
-            var entregas = await _unitOfWork.EntregasEPP.FindAsync(e => e.IdMaterial == id);
-            if (entregas.Any())
+            // Verificar si tiene entregas EPP (a través de las compras)
+            var compras = await _unitOfWork.ComprasEPP.FindAsync(c => c.IdMaterial == id);
+            if (compras.Any())
             {
-                throw new InvalidOperationException("No se puede eliminar el material porque tiene entregas EPP asociadas.");
+                throw new InvalidOperationException("No se puede eliminar el material porque tiene compras/entregas EPP asociadas.");
             }
 
             _unitOfWork.MaterialesEPP.Remove(material);

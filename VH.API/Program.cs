@@ -52,6 +52,7 @@ builder.Services.AddScoped<IEntregaEPPService, EntregaEPPService>();
 builder.Services.AddScoped<IUnidadMedidaService, UnidadMedidaService>();
 builder.Services.AddScoped<IAlmacenService, AlmacenService>();
 builder.Services.AddScoped<IInventarioService, InventarioService>();
+builder.Services.AddScoped<ICompraEPPService, CompraEPPService>();
 
 // 7. CORS
 builder.Services.AddCors(options =>

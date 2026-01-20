@@ -1,0 +1,155 @@
+﻿@model IEnumerable<VH.Services.DTOs.CompraEPPResponseDto>
+
+@{
+    ViewData["Title"] = "Compras de EPP";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-cart-plus"></i> Compras de EPP</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nueva Compra
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            @TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Material</label>
+                    <select name="idMaterial" class="form-select">
+                        <option value="">-- Todos --</option>
+                        @foreach (var item in ViewBag.Materiales as List<SelectListItem> ?? new List<SelectListItem>())
+                        {
+                            <option value="@item.Value" selected="@(ViewBag.FiltroMaterial?.ToString() == item.Value)">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Proveedor</label>
+                    <select name="idProveedor" class="form-select">
+                        <option value="">-- Todos --</option>
+                        @foreach (var item in ViewBag.Proveedores as List<SelectListItem> ?? new List<SelectListItem>())
+                        {
+                            <option value="@item.Value" selected="@(ViewBag.FiltroProveedor?.ToString() == item.Value)">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Almacén</label>
+                    <select name="idAlmacen" class="form-select">
+                        <option value="">-- Todos --</option>
+                        @foreach (var item in ViewBag.Almacenes as List<SelectListItem> ?? new List<SelectListItem>())
+                        {
+                            <option value="@item.Value" selected="@(ViewBag.FiltroAlmacen?.ToString() == item.Value)">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg"></i> Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Material</th>
+                        <th>Proveedor</th>
+                        <th>Almacén</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Disponible</th>
+                        <th class="text-end">P. Unitario</th>
+                        <th class="text-end">Total</th>
+                        <th>Documento</th>
+                        <th class="text-center" style="width: 150px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.FechaCompra.ToString("dd/MM/yyyy")</td>
+                                <td>@item.NombreMaterial</td>
+                                <td>@item.NombreProveedor</td>
+                                <td>@item.NombreAlmacen</td>
+                                <td class="text-end">@item.CantidadComprada.ToString("N2")</td>
+                                <td class="text-end">
+                                    @if (item.CantidadDisponible <= 0)
+                                    {
+                                        <span class="badge bg-secondary">Agotado</span>
+                                    }
+                                    else if (item.CantidadDisponible < item.CantidadComprada)
+                                    {
+                                        <span class="text-warning">@item.CantidadDisponible.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">@item.CantidadDisponible.ToString("N2")</span>
+                                    }
+                                </td>
+                                <td class="text-end">@item.PrecioUnitario.ToString("C2")</td>
+                                <td class="text-end">@((item.CantidadComprada * item.PrecioUnitario).ToString("C2"))</td>
+                                <td>@(string.IsNullOrEmpty(item.NumeroDocumento) ? "-" : item.NumeroDocumento)</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@item.IdCompra" class="btn btn-outline-info" title="Ver">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.IdCompra" class="btn btn-outline-warning" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.IdCompra" class="btn btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                No hay compras registradas
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

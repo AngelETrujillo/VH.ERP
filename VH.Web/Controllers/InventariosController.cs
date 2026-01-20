@@ -78,7 +78,6 @@ namespace VH.Web.Controllers
                 var dto = new InventarioRequestDto(
                     inventario.IdAlmacen,
                     inventario.IdMaterial,
-                    inventario.Existencia,
                     inventario.StockMinimo,
                     inventario.StockMaximo,
                     inventario.UbicacionPasillo

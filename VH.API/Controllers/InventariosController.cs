@@ -64,7 +64,7 @@ namespace VH.API.Controllers
             try
             {
                 var inventario = _mapper.Map<Inventario>(dto);
-                var created = await _inventarioService.CreateInventarioAsync(inventario);
+                var created = await _inventarioService.CreateOrUpdateInventarioAsync(inventario);
                 var response = _mapper.Map<InventarioResponseDto>(created);
                 return CreatedAtAction(nameof(GetById), new { id = response.IdInventario }, response);
             }
@@ -81,9 +81,12 @@ namespace VH.API.Controllers
 
             try
             {
-                var inventario = _mapper.Map<Inventario>(dto);
-                inventario.IdInventario = id;
-                var result = await _inventarioService.UpdateInventarioAsync(inventario);
+                var result = await _inventarioService.UpdateConfiguracionAsync(
+                    id,
+                    dto.StockMinimo,
+                    dto.StockMaximo,
+                    dto.UbicacionPasillo ?? string.Empty
+                );
                 if (!result) return NotFound();
                 return NoContent();
             }

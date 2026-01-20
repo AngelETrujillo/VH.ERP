@@ -63,6 +63,61 @@ namespace VH.Data.Migrations
                     b.ToTable("Almacenes");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.CompraEPP", b =>
+                {
+                    b.Property<int>("IdCompra")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdCompra"));
+
+                    b.Property<decimal>("CantidadComprada")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CantidadDisponible")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("FechaCompra")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdAlmacen")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdMaterial")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdProveedor")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Observaciones")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("IdCompra");
+
+                    b.HasIndex("FechaCompra");
+
+                    b.HasIndex("IdAlmacen");
+
+                    b.HasIndex("IdProveedor");
+
+                    b.HasIndex("IdMaterial", "IdAlmacen");
+
+                    b.ToTable("ComprasEPP");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.ConceptoPartida", b =>
                 {
                     b.Property<int>("IdPartida")
@@ -159,13 +214,10 @@ namespace VH.Data.Migrations
                     b.Property<DateTime>("FechaEntrega")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("IdCompra")
+                        .HasColumnType("int");
+
                     b.Property<int>("IdEmpleado")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IdMaterial")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IdProveedor")
                         .HasColumnType("int");
 
                     b.Property<string>("Observaciones")
@@ -182,11 +234,9 @@ namespace VH.Data.Migrations
 
                     b.HasIndex("FechaEntrega");
 
+                    b.HasIndex("IdCompra");
+
                     b.HasIndex("IdEmpleado");
-
-                    b.HasIndex("IdMaterial");
-
-                    b.HasIndex("IdProveedor");
 
                     b.ToTable("EntregasEPP");
                 });
@@ -232,7 +282,7 @@ namespace VH.Data.Migrations
                     b.HasIndex("IdAlmacen", "IdMaterial")
                         .IsUnique();
 
-                    b.ToTable("Inventario");
+                    b.ToTable("Inventarios");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.MaterialEPP", b =>
@@ -384,6 +434,33 @@ namespace VH.Data.Migrations
                     b.Navigation("Proyecto");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.CompraEPP", b =>
+                {
+                    b.HasOne("VH.Services.Entities.Almacen", "Almacen")
+                        .WithMany("Compras")
+                        .HasForeignKey("IdAlmacen")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.MaterialEPP", "Material")
+                        .WithMany("Compras")
+                        .HasForeignKey("IdMaterial")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.Proveedor", "Proveedor")
+                        .WithMany("Compras")
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Material");
+
+                    b.Navigation("Proveedor");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.ConceptoPartida", b =>
                 {
                     b.HasOne("VH.Services.Entities.Proyecto", "Proyecto")
@@ -416,29 +493,21 @@ namespace VH.Data.Migrations
 
             modelBuilder.Entity("VH.Services.Entities.EntregaEPP", b =>
                 {
+                    b.HasOne("VH.Services.Entities.CompraEPP", "Compra")
+                        .WithMany()
+                        .HasForeignKey("IdCompra")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("VH.Services.Entities.Empleado", "Empleado")
                         .WithMany("EntregasEPP")
                         .HasForeignKey("IdEmpleado")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VH.Services.Entities.MaterialEPP", "MaterialEPP")
-                        .WithMany()
-                        .HasForeignKey("IdMaterial")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("VH.Services.Entities.Proveedor", "Proveedor")
-                        .WithMany("EntregasEPP")
-                        .HasForeignKey("IdProveedor")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("Compra");
 
                     b.Navigation("Empleado");
-
-                    b.Navigation("MaterialEPP");
-
-                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.Inventario", b =>
@@ -473,6 +542,8 @@ namespace VH.Data.Migrations
 
             modelBuilder.Entity("VH.Services.Entities.Almacen", b =>
                 {
+                    b.Navigation("Compras");
+
                     b.Navigation("Inventarios");
                 });
 
@@ -483,12 +554,14 @@ namespace VH.Data.Migrations
 
             modelBuilder.Entity("VH.Services.Entities.MaterialEPP", b =>
                 {
+                    b.Navigation("Compras");
+
                     b.Navigation("Inventarios");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.Proveedor", b =>
                 {
-                    b.Navigation("EntregasEPP");
+                    b.Navigation("Compras");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.Proyecto", b =>

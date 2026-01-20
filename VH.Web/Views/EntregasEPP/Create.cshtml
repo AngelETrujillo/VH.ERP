@@ -32,18 +32,28 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="IdMaterial" class="form-label">Material EPP *</label>
-                                <select asp-for="IdMaterial" class="form-select" asp-items="@ViewBag.Materiales">
+                                <label class="form-label">Material EPP *</label>
+                                <select id="selectMaterial" class="form-select" asp-items="@ViewBag.Materiales">
                                     <option value="">-- Seleccionar Material --</option>
                                 </select>
-                                <span asp-validation-for="IdMaterial" class="text-danger"></span>
+                                <small class="text-muted">Seleccione primero el material para ver los lotes disponibles</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label asp-for="IdProveedor" class="form-label">Proveedor *</label>
-                                <select asp-for="IdProveedor" class="form-select" asp-items="@ViewBag.Proveedores">
-                                    <option value="">-- Seleccionar Proveedor --</option>
+                                <label class="form-label">Almacén *</label>
+                                <select id="selectAlmacen" class="form-select" asp-items="@ViewBag.Almacenes">
+                                    <option value="">-- Seleccionar Almacén --</option>
                                 </select>
-                                <span asp-validation-for="IdProveedor" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="IdCompra" class="form-label">Lote Disponible *</label>
+                                <select asp-for="IdCompra" class="form-select" id="selectLote">
+                                    <option value="">-- Seleccione Material y Almacén primero --</option>
+                                </select>
+                                <span asp-validation-for="IdCompra" class="text-danger"></span>
+                                <small class="text-muted">Muestra lotes con existencia disponible</small>
                             </div>
                         </div>
 
@@ -93,4 +103,46 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectMaterial = document.getElementById('selectMaterial');
+            const selectAlmacen = document.getElementById('selectAlmacen');
+            const selectLote = document.getElementById('selectLote');
+
+            async function cargarLotes() {
+                const idMaterial = selectMaterial.value;
+                const idAlmacen = selectAlmacen.value;
+
+                selectLote.innerHTML = '<option value="">-- Cargando... --</option>';
+
+                if (!idMaterial || !idAlmacen) {
+                    selectLote.innerHTML = '<option value="">-- Seleccione Material y Almacén primero --</option>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`https://localhost:7088/api/comprasepp/lotes-disponibles?idMaterial=${idMaterial}&idAlmacen=${idAlmacen}`);
+                    const lotes = await response.json();
+
+                    if (lotes.length === 0) {
+                        selectLote.innerHTML = '<option value="">-- No hay lotes disponibles --</option>';
+                        return;
+                    }
+
+                    selectLote.innerHTML = '<option value="">-- Seleccionar Lote --</option>';
+                    lotes.forEach(lote => {
+                        const option = document.createElement('option');
+                        option.value = lote.idCompra;
+                        option.textContent = lote.descripcion;
+                        selectLote.appendChild(option);
+                    });
+                } catch (error) {
+                    selectLote.innerHTML = '<option value="">-- Error al cargar lotes --</option>';
+                }
+            }
+
+            selectMaterial.addEventListener('change', cargarLotes);
+            selectAlmacen.addEventListener('change', cargarLotes);
+        });
+    </script>
 }

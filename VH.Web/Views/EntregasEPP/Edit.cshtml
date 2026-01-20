@@ -31,17 +31,12 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="IdMaterial" class="form-label">Material EPP *</label>
-                                <select asp-for="IdMaterial" class="form-select" asp-items="@ViewBag.Materiales">
-                                    <option value="">-- Seleccionar Material --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="IdProveedor" class="form-label">Proveedor *</label>
-                                <select asp-for="IdProveedor" class="form-select" asp-items="@ViewBag.Proveedores">
-                                    <option value="">-- Seleccionar Proveedor --</option>
-                                </select>
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="IdCompra" class="form-label">Lote de Compra *</label>
+                                <input asp-for="IdCompra" type="hidden" />
+                                <div class="alert alert-secondary">
+                                    <small>El lote no puede modificarse. Si necesita cambiar el lote, elimine esta entrega y cree una nueva.</small>
+                                </div>
                             </div>
                         </div>
 
@@ -49,6 +44,7 @@
                             <div class="col-md-4 mb-3">
                                 <label asp-for="CantidadEntregada" class="form-label">Cantidad *</label>
                                 <input asp-for="CantidadEntregada" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="CantidadEntregada" class="text-danger"></span>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label asp-for="TallaEntregada" class="form-label">Talla</label>

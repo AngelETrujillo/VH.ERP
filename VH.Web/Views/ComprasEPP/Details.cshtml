@@ -1,0 +1,93 @@
+﻿@model VH.Services.DTOs.CompraEPPResponseDto
+
+@{
+    ViewData["Title"] = "Detalle de Compra";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-eye"></i> Detalle de Compra #@Model.IdCompra</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Información del Material</h6>
+                            <dl>
+                                <dt>Material</dt>
+                                <dd>@Model.NombreMaterial (@Model.UnidadMedidaMaterial)</dd>
+                                <dt>Proveedor</dt>
+                                <dd>@Model.NombreProveedor</dd>
+                                <dt>Almacén</dt>
+                                <dd>@Model.NombreAlmacen</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Datos de la Compra</h6>
+                            <dl>
+                                <dt>Fecha de Compra</dt>
+                                <dd>@Model.FechaCompra.ToString("dd/MM/yyyy")</dd>
+                                <dt>Cantidad Comprada</dt>
+                                <dd>@Model.CantidadComprada.ToString("N2")</dd>
+                                <dt>Cantidad Disponible</dt>
+                                <dd>
+                                    @if (Model.CantidadDisponible <= 0)
+                                    {
+                                        <span class="badge bg-secondary">Agotado</span>
+                                    }
+                                    else if (Model.CantidadDisponible < Model.CantidadComprada)
+                                    {
+                                        <span class="badge bg-warning text-dark">@Model.CantidadDisponible.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@Model.CantidadDisponible.ToString("N2")</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Información Económica</h6>
+                            <dl>
+                                <dt>Precio Unitario</dt>
+                                <dd>@Model.PrecioUnitario.ToString("C2")</dd>
+                                <dt>Total de Compra</dt>
+                                <dd class="fs-5 fw-bold text-primary">@((Model.CantidadComprada * Model.PrecioUnitario).ToString("C2"))</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Documentación</h6>
+                            <dl>
+                                <dt>Número de Documento</dt>
+                                <dd>@(string.IsNullOrEmpty(Model.NumeroDocumento) ? "No especificado" : Model.NumeroDocumento)</dd>
+                                <dt>Observaciones</dt>
+                                <dd>@(string.IsNullOrEmpty(Model.Observaciones) ? "Sin observaciones" : Model.Observaciones)</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model.IdCompra" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a asp-action="HistorialPrecios" asp-route-idMaterial="@Model.IdMaterial" class="btn btn-outline-primary">
+                            <i class="bi bi-graph-up"></i> Ver Historial de Precios
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -67,10 +67,35 @@ namespace VH.Services.Services
             material.CostoUnitarioEstimado = compra.PrecioUnitario;
             _unitOfWork.MaterialesEPP.Update(material);
 
-            var inventario = await GetOrCreateInventarioAsync(compra.IdMaterial, compra.IdAlmacen);
-            inventario.Existencia += compra.CantidadComprada;
-            inventario.FechaUltimoMovimiento = DateTime.Now;
-            _unitOfWork.Inventarios.Update(inventario);
+            // Buscar inventario existente
+            var inventarios = await _unitOfWork.Inventarios.FindAsync(
+                i => i.IdMaterial == compra.IdMaterial && i.IdAlmacen == compra.IdAlmacen);
+            var inventario = inventarios.FirstOrDefault();
+
+            bool esNuevoInventario = inventario == null;
+
+            if (esNuevoInventario)
+            {
+                // Crear nuevo inventario
+                inventario = new Inventario
+                {
+                    IdMaterial = compra.IdMaterial,
+                    IdAlmacen = compra.IdAlmacen,
+                    Existencia = compra.CantidadComprada,
+                    StockMinimo = 0,
+                    StockMaximo = 0,
+                    UbicacionPasillo = string.Empty,
+                    FechaUltimoMovimiento = DateTime.Now
+                };
+                await _unitOfWork.Inventarios.AddAsync(inventario);
+            }
+            else
+            {
+                // Actualizar inventario existente
+                inventario.Existencia += compra.CantidadComprada;
+                inventario.FechaUltimoMovimiento = DateTime.Now;
+                _unitOfWork.Inventarios.Update(inventario);
+            }
 
             await _unitOfWork.CompleteAsync();
 

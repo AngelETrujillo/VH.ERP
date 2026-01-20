@@ -240,6 +240,313 @@
         }
       }
     },
+    "/api/ComprasEPP": {
+      "get": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idProveedor",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idAlmacen",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComprasEPP/{id}": {
+      "get": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompraEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompraEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompraEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComprasEPP/lotes-disponibles": {
+      "get": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idAlmacen",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPSimpleDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPSimpleDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPSimpleDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ComprasEPP/historial-precios/{idMaterial}": {
+      "get": {
+        "tags": [
+          "ComprasEPP"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idProveedor",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompraEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Empleados": {
       "get": {
         "tags": [
@@ -497,24 +804,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntregaEPPResponseDto"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -1989,6 +2279,150 @@
         },
         "additionalProperties": false
       },
+      "CompraEPPRequestDto": {
+        "type": "object",
+        "properties": {
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idProveedor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fechaCompra": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cantidadComprada": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "numeroDocumento": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CompraEPPResponseDto": {
+        "type": "object",
+        "properties": {
+          "idCompra": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidadMedidaMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "idProveedor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreProveedor": {
+            "type": "string",
+            "nullable": true
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreAlmacen": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaCompra": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cantidadComprada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadDisponible": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "numeroDocumento": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "costoTotal": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "tieneDisponible": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "porcentajeDisponible": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CompraEPPSimpleDto": {
+        "type": "object",
+        "properties": {
+          "idCompra": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadDisponible": {
+            "type": "number",
+            "format": "double"
+          },
+          "nombreProveedor": {
+            "type": "string",
+            "nullable": true
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "fechaCompra": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "ConceptoPartidaRequestDto": {
         "type": "object",
         "properties": {
@@ -2132,11 +2566,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "idMaterial": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "idProveedor": {
+          "idCompra": {
             "type": "integer",
             "format": "int32"
           },
@@ -2194,6 +2624,10 @@
             "type": "string",
             "nullable": true
           },
+          "idCompra": {
+            "type": "integer",
+            "format": "int32"
+          },
           "idMaterial": {
             "type": "integer",
             "format": "int32"
@@ -2213,6 +2647,23 @@
           "nombreProveedor": {
             "type": "string",
             "nullable": true
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreAlmacen": {
+            "type": "string",
+            "nullable": true
+          },
+          "precioUnitarioCompra": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoTotalEntrega": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
           }
         },
         "additionalProperties": false
@@ -2227,10 +2678,6 @@
           "idMaterial": {
             "type": "integer",
             "format": "int32"
-          },
-          "existencia": {
-            "type": "number",
-            "format": "double"
           },
           "stockMinimo": {
             "type": "number",
@@ -2259,6 +2706,10 @@
             "format": "int32"
           },
           "nombreAlmacen": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreProyecto": {
             "type": "string",
             "nullable": true
           },
@@ -2300,6 +2751,25 @@
           },
           "sobreStock": {
             "type": "boolean",
+            "readOnly": true
+          },
+          "sinStock": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "estadoStock": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "claseEstado": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "mensajeAlerta": {
+            "type": "string",
+            "nullable": true,
             "readOnly": true
           }
         },

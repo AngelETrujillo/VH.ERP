@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VH.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class SistemaInventarios : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -160,36 +160,38 @@ namespace VH.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EntregasEPP",
+                name: "ComprasEPP",
                 columns: table => new
                 {
-                    IdEntrega = table.Column<int>(type: "int", nullable: false)
+                    IdCompra = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    IdEmpleado = table.Column<int>(type: "int", nullable: false),
                     IdMaterial = table.Column<int>(type: "int", nullable: false),
                     IdProveedor = table.Column<int>(type: "int", nullable: false),
-                    FechaEntrega = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CantidadEntregada = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    TallaEntregada = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    IdAlmacen = table.Column<int>(type: "int", nullable: false),
+                    FechaCompra = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CantidadComprada = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    CantidadDisponible = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    NumeroDocumento = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EntregasEPP", x => x.IdEntrega);
+                    table.PrimaryKey("PK_ComprasEPP", x => x.IdCompra);
                     table.ForeignKey(
-                        name: "FK_EntregasEPP_Empleados_IdEmpleado",
-                        column: x => x.IdEmpleado,
-                        principalTable: "Empleados",
-                        principalColumn: "IdEmpleado",
+                        name: "FK_ComprasEPP_Almacenes_IdAlmacen",
+                        column: x => x.IdAlmacen,
+                        principalTable: "Almacenes",
+                        principalColumn: "IdAlmacen",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_EntregasEPP_MaterialesEPP_IdMaterial",
+                        name: "FK_ComprasEPP_MaterialesEPP_IdMaterial",
                         column: x => x.IdMaterial,
                         principalTable: "MaterialesEPP",
                         principalColumn: "IdMaterial",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_EntregasEPP_Proveedores_IdProveedor",
+                        name: "FK_ComprasEPP_Proveedores_IdProveedor",
                         column: x => x.IdProveedor,
                         principalTable: "Proveedores",
                         principalColumn: "IdProveedor",
@@ -197,7 +199,7 @@ namespace VH.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Inventario",
+                name: "Inventarios",
                 columns: table => new
                 {
                     IdInventario = table.Column<int>(type: "int", nullable: false)
@@ -212,18 +214,48 @@ namespace VH.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Inventario", x => x.IdInventario);
+                    table.PrimaryKey("PK_Inventarios", x => x.IdInventario);
                     table.ForeignKey(
-                        name: "FK_Inventario_Almacenes_IdAlmacen",
+                        name: "FK_Inventarios_Almacenes_IdAlmacen",
                         column: x => x.IdAlmacen,
                         principalTable: "Almacenes",
                         principalColumn: "IdAlmacen",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Inventario_MaterialesEPP_IdMaterial",
+                        name: "FK_Inventarios_MaterialesEPP_IdMaterial",
                         column: x => x.IdMaterial,
                         principalTable: "MaterialesEPP",
                         principalColumn: "IdMaterial",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EntregasEPP",
+                columns: table => new
+                {
+                    IdEntrega = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IdEmpleado = table.Column<int>(type: "int", nullable: false),
+                    IdCompra = table.Column<int>(type: "int", nullable: false),
+                    FechaEntrega = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CantidadEntregada = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    TallaEntregada = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EntregasEPP", x => x.IdEntrega);
+                    table.ForeignKey(
+                        name: "FK_EntregasEPP_ComprasEPP_IdCompra",
+                        column: x => x.IdCompra,
+                        principalTable: "ComprasEPP",
+                        principalColumn: "IdCompra",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntregasEPP_Empleados_IdEmpleado",
+                        column: x => x.IdEmpleado,
+                        principalTable: "Empleados",
+                        principalColumn: "IdEmpleado",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -231,6 +263,26 @@ namespace VH.Data.Migrations
                 name: "IX_Almacenes_IdProyecto",
                 table: "Almacenes",
                 column: "IdProyecto");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComprasEPP_FechaCompra",
+                table: "ComprasEPP",
+                column: "FechaCompra");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComprasEPP_IdAlmacen",
+                table: "ComprasEPP",
+                column: "IdAlmacen");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComprasEPP_IdMaterial_IdAlmacen",
+                table: "ComprasEPP",
+                columns: new[] { "IdMaterial", "IdAlmacen" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComprasEPP_IdProveedor",
+                table: "ComprasEPP",
+                column: "IdProveedor");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ConceptosPartidas_IdProyecto",
@@ -259,29 +311,24 @@ namespace VH.Data.Migrations
                 column: "FechaEntrega");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EntregasEPP_IdCompra",
+                table: "EntregasEPP",
+                column: "IdCompra");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EntregasEPP_IdEmpleado",
                 table: "EntregasEPP",
                 column: "IdEmpleado");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EntregasEPP_IdMaterial",
-                table: "EntregasEPP",
-                column: "IdMaterial");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EntregasEPP_IdProveedor",
-                table: "EntregasEPP",
-                column: "IdProveedor");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Inventario_IdAlmacen_IdMaterial",
-                table: "Inventario",
+                name: "IX_Inventarios_IdAlmacen_IdMaterial",
+                table: "Inventarios",
                 columns: new[] { "IdAlmacen", "IdMaterial" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inventario_IdMaterial",
-                table: "Inventario",
+                name: "IX_Inventarios_IdMaterial",
+                table: "Inventarios",
                 column: "IdMaterial");
 
             migrationBuilder.CreateIndex(
@@ -318,19 +365,22 @@ namespace VH.Data.Migrations
                 name: "EntregasEPP");
 
             migrationBuilder.DropTable(
-                name: "Inventario");
+                name: "Inventarios");
+
+            migrationBuilder.DropTable(
+                name: "ComprasEPP");
 
             migrationBuilder.DropTable(
                 name: "Empleados");
-
-            migrationBuilder.DropTable(
-                name: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "Almacenes");
 
             migrationBuilder.DropTable(
                 name: "MaterialesEPP");
+
+            migrationBuilder.DropTable(
+                name: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "Proyectos");

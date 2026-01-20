@@ -1,0 +1,68 @@
+﻿@model VH.Services.DTOs.CompraEPPResponseDto
+
+@{
+    ViewData["Title"] = "Eliminar Compra";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Está seguro que desea eliminar esta compra?</p>
+
+                    @if (Model.CantidadDisponible != Model.CantidadComprada)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <strong>¡Advertencia!</strong> Esta compra tiene entregas realizadas y no puede ser eliminada.
+                        </div>
+                    }
+
+                    <dl class="row">
+                        <dt class="col-sm-4">Material</dt>
+                        <dd class="col-sm-8">@Model.NombreMaterial</dd>
+
+                        <dt class="col-sm-4">Proveedor</dt>
+                        <dd class="col-sm-8">@Model.NombreProveedor</dd>
+
+                        <dt class="col-sm-4">Almacén</dt>
+                        <dd class="col-sm-8">@Model.NombreAlmacen</dd>
+
+                        <dt class="col-sm-4">Fecha</dt>
+                        <dd class="col-sm-8">@Model.FechaCompra.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4">Cantidad</dt>
+                        <dd class="col-sm-8">@Model.CantidadComprada.ToString("N2")</dd>
+
+                        <dt class="col-sm-4">Disponible</dt>
+                        <dd class="col-sm-8">@Model.CantidadDisponible.ToString("N2")</dd>
+
+                        <dt class="col-sm-4">Precio Unit.</dt>
+                        <dd class="col-sm-8">@Model.PrecioUnitario.ToString("C2")</dd>
+
+                        <dt class="col-sm-4">Total</dt>
+                        <dd class="col-sm-8 fw-bold">@((Model.CantidadComprada * Model.PrecioUnitario).ToString("C2"))</dd>
+                    </dl>
+
+                    <form asp-action="Delete" asp-route-id="@Model.IdCompra">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            @if (Model.CantidadDisponible == Model.CantidadComprada)
+                            {
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

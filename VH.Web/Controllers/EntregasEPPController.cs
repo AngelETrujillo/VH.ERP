@@ -48,7 +48,7 @@ namespace VH.Web.Controllers
         public async Task<IActionResult> Create()
         {
             await CargarListasEnViewBag();
-            return View(new EntregaEPPRequestDto(0, 0, 0, DateTime.Today, 1, "", ""));
+            return View(new EntregaEPPRequestDto(0, 0, DateTime.Today, 1, "", ""));
         }
 
         // POST: EntregasEPP/Create
@@ -89,8 +89,7 @@ namespace VH.Web.Controllers
 
                 var dto = new EntregaEPPRequestDto(
                     entrega.IdEmpleado,
-                    entrega.IdMaterial,
-                    entrega.IdProveedor,
+                    entrega.IdCompra,
                     entrega.FechaEntrega,
                     entrega.CantidadEntregada,
                     entrega.TallaEntregada,
@@ -204,18 +203,18 @@ namespace VH.Web.Controllers
                     Text = m.Nombre
                 }).ToList() ?? new List<SelectListItem>();
 
-                var proveedores = await _httpClient.GetFromJsonAsync<IEnumerable<ProveedorResponseDto>>("api/proveedores");
-                ViewBag.Proveedores = proveedores?.Where(p => p.Activo).Select(p => new SelectListItem
+                var almacenes = await _httpClient.GetFromJsonAsync<IEnumerable<AlmacenResponseDto>>("api/almacenes");
+                ViewBag.Almacenes = almacenes?.Where(a => a.Activo).Select(a => new SelectListItem
                 {
-                    Value = p.IdProveedor.ToString(),
-                    Text = p.Nombre
+                    Value = a.IdAlmacen.ToString(),
+                    Text = a.Nombre
                 }).ToList() ?? new List<SelectListItem>();
             }
             catch
             {
                 ViewBag.Empleados = new List<SelectListItem>();
                 ViewBag.Materiales = new List<SelectListItem>();
-                ViewBag.Proveedores = new List<SelectListItem>();
+                ViewBag.Almacenes = new List<SelectListItem>();
             }
         }
 

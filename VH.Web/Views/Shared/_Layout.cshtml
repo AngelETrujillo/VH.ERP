@@ -39,13 +39,12 @@
                                 <i class="bi bi-box-seam"></i> Inventario EPP
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="Inventarios" asp-action="Index">Control de Inventario</a></li>
-                                <li><a class="dropdown-item" asp-controller="EntregasEPP" asp-action="Index">Entregas de EPP</a></li>
+                                <li><a class="dropdown-item" asp-controller="ComprasEPP" asp-action="Index"><i class="bi bi-cart-plus"></i> Compras EPP</a></li>
+                                <li><a class="dropdown-item" asp-controller="EntregasEPP" asp-action="Index"><i class="bi bi-clipboard-check"></i> Entregas EPP</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Inventarios" asp-action="Index"><i class="bi bi-boxes"></i> Control de Inventario</a></li>
                             </ul>
                         </li>
-                       @*  <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Partidas" asp-action="Index">Partidas</a>
-                        </li> *@
                     </ul>
                 </div>
             </div>
