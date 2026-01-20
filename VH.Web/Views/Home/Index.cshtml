@@ -1,8 +1,537 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard">
+    <!-- Bienvenida -->
+    <div class="welcome-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-1">¡Bienvenido al Sistema ERP!</h2>
+                <p class="text-muted mb-0">Gestión integral de Equipos de Protección Personal para tu empresa constructora.</p>
+            </div>
+            <div class="col-md-4 text-end d-none d-md-block">
+                <i class="bi bi-building display-1 text-primary opacity-25"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Estadísticas -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-value" id="totalMateriales">-</h3>
+                        <p class="stat-label">Materiales EPP</p>
+                    </div>
+                </div>
+                <a asp-controller="Materiales" asp-action="Index" class="stat-card-footer">
+                    Ver materiales <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-success">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <i class="bi bi-cart-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-value" id="totalCompras">-</h3>
+                        <p class="stat-label">Compras Registradas</p>
+                    </div>
+                </div>
+                <a asp-controller="ComprasEPP" asp-action="Index" class="stat-card-footer">
+                    Ver compras <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-info">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-value" id="totalEntregas">-</h3>
+                        <p class="stat-label">Entregas Realizadas</p>
+                    </div>
+                </div>
+                <a asp-controller="EntregasEPP" asp-action="Index" class="stat-card-footer">
+                    Ver entregas <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-warning">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-value" id="alertasStock">-</h3>
+                        <p class="stat-label">Alertas de Stock</p>
+                    </div>
+                </div>
+                <a asp-controller="Inventarios" asp-action="Index" class="stat-card-footer">
+                    Ver inventario <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Accesos Rápidos -->
+        <div class="col-lg-8">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-lightning-charge me-2"></i>Accesos Rápidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a asp-controller="ComprasEPP" asp-action="Create" class="quick-action-card">
+                                <div class="quick-action-icon bg-success-subtle text-success">
+                                    <i class="bi bi-cart-plus"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Nueva Compra</h6>
+                                    <small>Registrar compra de EPP</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="EntregasEPP" asp-action="Create" class="quick-action-card">
+                                <div class="quick-action-icon bg-info-subtle text-info">
+                                    <i class="bi bi-clipboard-plus"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Nueva Entrega</h6>
+                                    <small>Entregar EPP a empleado</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="Empleado" asp-action="Create" class="quick-action-card">
+                                <div class="quick-action-icon bg-primary-subtle text-primary">
+                                    <i class="bi bi-person-plus"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Nuevo Empleado</h6>
+                                    <small>Registrar empleado</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="Materiales" asp-action="Create" class="quick-action-card">
+                                <div class="quick-action-icon bg-warning-subtle text-warning">
+                                    <i class="bi bi-plus-square"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Nuevo Material</h6>
+                                    <small>Agregar material EPP</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="Proveedores" asp-action="Create" class="quick-action-card">
+                                <div class="quick-action-icon bg-secondary-subtle text-secondary">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Nuevo Proveedor</h6>
+                                    <small>Registrar proveedor</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="Inventarios" asp-action="Index" class="quick-action-card">
+                                <div class="quick-action-icon bg-danger-subtle text-danger">
+                                    <i class="bi bi-boxes"></i>
+                                </div>
+                                <div class="quick-action-info">
+                                    <h6>Ver Inventario</h6>
+                                    <small>Control de existencias</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Sistema -->
+        <div class="col-lg-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Módulo EPP</h5>
+                </div>
+                <div class="card-body">
+                    <div class="module-info">
+                        <div class="module-status mb-3">
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Activo</span>
+                        </div>
+                        <p class="text-muted">El módulo de Equipos de Protección Personal permite gestionar:</p>
+                        <ul class="feature-list">
+                            <li><i class="bi bi-check2 text-success"></i> Catálogo de materiales EPP</li>
+                            <li><i class="bi bi-check2 text-success"></i> Registro de compras por proveedor</li>
+                            <li><i class="bi bi-check2 text-success"></i> Control de entregas a empleados</li>
+                            <li><i class="bi bi-check2 text-success"></i> Inventario por almacén</li>
+                            <li><i class="bi bi-check2 text-success"></i> Alertas de stock mínimo/máximo</li>
+                            <li><i class="bi bi-check2 text-success"></i> Historial de precios</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>Última actualización: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Inventario -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="bi bi-exclamation-diamond me-2"></i>Alertas de Inventario</h5>
+                    <a asp-controller="Inventarios" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                        Ver todo <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="alertasContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="text-muted mt-2">Cargando alertas...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .welcome-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+    }
+
+        .welcome-card h2 {
+            color: white;
+        }
+
+        .welcome-card .text-muted {
+            color: rgba(255,255,255,0.8) !important;
+        }
+
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+    .stat-card-body {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-card-primary .stat-icon {
+        background: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+    }
+
+    .stat-card-success .stat-icon {
+        background: rgba(39, 174, 96, 0.15);
+        color: #27ae60;
+    }
+
+    .stat-card-info .stat-icon {
+        background: rgba(52, 73, 94, 0.15);
+        color: #34495e;
+    }
+
+    .stat-card-warning .stat-icon {
+        background: rgba(243, 156, 18, 0.15);
+        color: #f39c12;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.875rem;
+    }
+
+    .stat-card-footer {
+        display: block;
+        padding: 12px 20px;
+        background: #f8f9fa;
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+        .stat-card-footer:hover {
+            background: #e9ecef;
+            color: #3498db;
+        }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+        .dashboard-card .card-header {
+            background: white;
+            border-bottom: 1px solid #f1f1f1;
+            padding: 15px 20px;
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        .dashboard-card .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .dashboard-card .card-body {
+            padding: 20px;
+        }
+
+    /* Quick Action Cards */
+    .quick-action-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+        .quick-action-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .quick-action-info h6 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .quick-action-info small {
+        color: #7f8c8d;
+    }
+
+    /* Feature List */
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .feature-list li:last-child {
+                border-bottom: none;
+            }
+
+    /* Alert Table */
+    .alert-table {
+        margin: 0;
+    }
+
+        .alert-table th {
+            font-weight: 600;
+            color: #2c3e50;
+            border-top: none;
+        }
+
+    .stock-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .no-alerts {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+    }
+
+        .no-alerts i {
+            font-size: 3rem;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const apiBase = 'https://localhost:7088/api';
+
+            // Cargar estadísticas
+            async function cargarEstadisticas() {
+                try {
+                    // Materiales
+                    const materiales = await fetch(`${apiBase}/materiales`).then(r => r.json());
+                    document.getElementById('totalMateriales').textContent = materiales.length;
+
+                    // Compras
+                    const compras = await fetch(`${apiBase}/comprasepp`).then(r => r.json());
+                    document.getElementById('totalCompras').textContent = compras.length;
+
+                    // Entregas
+                    const entregas = await fetch(`${apiBase}/entregasepp`).then(r => r.json());
+                    document.getElementById('totalEntregas').textContent = entregas.length;
+
+                    // Inventario con alertas
+                    const inventarios = await fetch(`${apiBase}/inventarios`).then(r => r.json());
+                    const alertas = inventarios.filter(i => i.estadoStock !== 'Normal');
+                    document.getElementById('alertasStock').textContent = alertas.length;
+
+                    // Mostrar alertas
+                    mostrarAlertas(inventarios);
+                } catch (error) {
+                    console.error('Error cargando estadísticas:', error);
+                    document.getElementById('alertasContainer').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No se pudieron cargar las estadísticas. Verifique que la API esté en ejecución.
+                        </div>
+                    `;
+                }
+            }
+
+            function mostrarAlertas(inventarios) {
+                const container = document.getElementById('alertasContainer');
+                const alertas = inventarios.filter(i => i.estadoStock !== 'Normal');
+
+                if (alertas.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-alerts">
+                            <i class="bi bi-check-circle-fill d-block"></i>
+                            <h5>¡Todo en orden!</h5>
+                            <p>No hay alertas de inventario en este momento.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="table-responsive">
+                        <table class="table alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Almacén</th>
+                                    <th class="text-center">Existencia</th>
+                                    <th class="text-center">Stock Mín.</th>
+                                    <th class="text-center">Stock Máx.</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                alertas.forEach(alerta => {
+                    let badgeClass = '';
+                    let estadoTexto = '';
+
+                    switch (alerta.estadoStock) {
+                        case 'SinStock':
+                            badgeClass = 'bg-danger';
+                            estadoTexto = 'Sin Stock';
+                            break;
+                        case 'Bajo':
+                            badgeClass = 'bg-warning text-dark';
+                            estadoTexto = 'Stock Bajo';
+                            break;
+                        case 'Excedido':
+                            badgeClass = 'bg-info';
+                            estadoTexto = 'Excedido';
+                            break;
+                    }
+
+                    html += `
+                        <tr>
+                            <td><strong>${alerta.nombreMaterial}</strong></td>
+                            <td>${alerta.nombreAlmacen}</td>
+                            <td class="text-center">${alerta.existencia.toFixed(2)}</td>
+                            <td class="text-center">${alerta.stockMinimo.toFixed(2)}</td>
+                            <td class="text-center">${alerta.stockMaximo.toFixed(2)}</td>
+                            <td class="text-center">
+                                <span class="stock-badge ${badgeClass}">${estadoTexto}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            }
+
+            cargarEstadisticas();
+        });
+    </script>
+}
