@@ -117,6 +117,21 @@ namespace VH.Web.Controllers
             return View(proyectoDto);
         }
 
+        // GET: Proyectos/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/proyectos/{id}");
+                if (!response.IsSuccessStatusCode) return NotFound();
+                var proyecto = await response.Content.ReadFromJsonAsync<ProyectoResponseDto>();
+                return View(proyecto);
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
         public async Task<IActionResult> Delete(int id)
         {
             var response = await _httpClient.GetAsync($"api/proyectos/{id}");
@@ -150,11 +165,11 @@ namespace VH.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Details(int id)
-        {
-            // Redirige al controlador de Partidas, pasando el ID del proyecto
-            return RedirectToAction("Index", "Partidas", new { idProyecto = id });
-        }
+        //public IActionResult Details(int id)
+        //{
+        //    // Redirige al controlador de Partidas, pasando el ID del proyecto
+        //    return RedirectToAction("Index", "Partidas", new { idProyecto = id });
+        //}
 
 
 

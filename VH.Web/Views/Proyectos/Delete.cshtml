@@ -1,68 +1,89 @@
 ﻿@model VH.Services.DTOs.ProyectoResponseDto
-
 @{
     ViewData["Title"] = "Eliminar Proyecto";
 }
 
-<div class="page-content">
-    <div class="page-header">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index">Proyectos</a></li>
-                <li class="breadcrumb-item active">Eliminar</li>
-            </ol>
-        </nav>
-    </div>
-
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card form-card delete-card">
-                <div class="card-header bg-danger">
-                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="delete-icon">
-                        <i class="bi bi-trash"></i>
+            <!-- Tarjeta de confirmación -->
+            <div class="card shadow border-0">
+                <div class="card-body p-0">
+                    <!-- Header de advertencia -->
+                    <div class="bg-danger text-white p-4 text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <h3 class="mt-3 mb-0 fw-bold">¿Eliminar Proyecto?</h3>
+                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
                     </div>
 
-                    <h5 class="mb-3">¿Está seguro de eliminar este proyecto?</h5>
-                    <p class="text-muted mb-4">Esta acción no se puede deshacer.</p>
-
-                    <div class="card bg-light mb-4">
-                        <div class="card-body text-start">
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted">Proyecto</small>
-                                    <p class="mb-2 fw-semibold">@Model.Nombre</p>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted">Tipo</small>
-                                    <p class="mb-2 fw-semibold">@(string.IsNullOrEmpty(Model.TipoObra) ? "N/A" : Model.TipoObra)</p>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted">Fecha Inicio</small>
-                                    <p class="mb-0 fw-semibold">@Model.FechaInicio.ToString("dd/MM/yyyy")</p>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted">Presupuesto</small>
-                                    <p class="mb-0 fw-semibold text-success">@Model.PresupuestoTotal.ToString("C2")</p>
-                                </div>
+                    <!-- Datos del proyecto -->
+                    <div class="p-4">
+                        <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
+                            <div class="icon-circle bg-danger text-white me-3">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.Nombre</h5>
+                                <small class="text-muted">
+                                    @if (!string.IsNullOrEmpty(Model.TipoObra))
+                                    {
+                                        @Model.TipoObra
+                                    }
+                                    else
+                                    {
+                                        <span>Sin tipo especificado</span>
+                                    }
+                                </small>
                             </div>
                         </div>
-                    </div>
 
-                    <form asp-action="Delete" asp-route-id="@Model.IdProyecto">
-                        <div class="d-flex justify-content-center gap-3">
-                            <a asp-action="Index" class="btn btn-secondary px-4">
-                                <i class="bi bi-x-lg me-1"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-danger px-4">
-                                <i class="bi bi-trash me-1"></i> Sí, Eliminar
-                            </button>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="text-muted small">Fecha de Inicio</label>
+                                <p class="mb-0 fw-semibold">@Model.FechaInicio.ToString("dd/MM/yyyy")</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Presupuesto</label>
+                                <p class="mb-0 fw-semibold text-success">@Model.PresupuestoTotal.ToString("C2")</p>
+                            </div>
                         </div>
-                    </form>
+
+                        <!-- Alerta -->
+                        <div class="alert alert-warning border-0 mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Advertencia:</strong> Al eliminar este proyecto se eliminarán también:
+                            <ul class="mb-0 mt-2">
+                                <li>Partidas asociadas al proyecto</li>
+                                <li>Relaciones con empleados y almacenes</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botones -->
+                        <form asp-action="Delete" asp-route-id="@Model.IdProyecto">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                    <i class="bi bi-x-lg me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-lg px-4">
+                                    <i class="bi bi-trash me-2"></i>Sí, Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+</style>

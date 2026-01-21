@@ -1,101 +1,152 @@
 ﻿@model VH.Services.DTOs.ProyectoResponseDto
-
 @{
-    ViewData["Title"] = "Detalle del Proyecto";
+    ViewData["Title"] = "Detalles del Proyecto";
 }
 
-<div class="page-content">
-    <div class="page-header">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index">Proyectos</a></li>
-                <li class="breadcrumb-item active">Detalle</li>
-            </ol>
-        </nav>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-building text-info me-2"></i>Detalles del Proyecto
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="row">
         <div class="col-lg-8">
-            <div class="card detail-card">
-                <div class="detail-header">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-md bg-white bg-opacity-25 text-white me-3">
-                            <i class="bi bi-building"></i>
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-building display-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-1 fw-bold">@Model.Nombre</h3>
+                                <p class="mb-0 opacity-75">
+                                    @if (!string.IsNullOrEmpty(Model.TipoObra))
+                                    {
+                                        <span class="badge bg-light text-info me-2">@Model.TipoObra</span>
+                                    }
+                                    <i class="bi bi-calendar3 me-1"></i>Inicio: @Model.FechaInicio.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="mb-1">@Model.Nombre</h4>
-                            <span class="badge bg-light text-dark">@(string.IsNullOrEmpty(Model.TipoObra) ? "Sin tipo" : Model.TipoObra)</span>
+                    </div>
+
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-building me-1"></i>Nombre del Proyecto
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.Nombre</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-tag me-1"></i>Tipo de Obra
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.TipoObra))
+                                        {
+                                            <span class="badge bg-info-subtle text-info fs-6 px-3 py-2">@Model.TipoObra</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin especificar</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-calendar3 me-1"></i>Fecha de Inicio
+                                    </label>
+                                    <p class="fs-5 mb-0">@Model.FechaInicio.ToString("dddd, dd MMMM yyyy")</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-currency-dollar me-1"></i>Presupuesto Total
+                                    </label>
+                                    <p class="fs-4 mb-0 fw-bold text-success">@Model.PresupuestoTotal.ToString("C2")</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="detail-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-hash me-1"></i>ID del Proyecto
-                                </div>
-                                <div class="detail-value">@Model.IdProyecto</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-calendar3 me-1"></i>Fecha de Inicio
-                                </div>
-                                <div class="detail-value">@Model.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy")</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-currency-dollar me-1"></i>Presupuesto Total
-                                </div>
-                                <div class="detail-value text-success fs-5">@Model.PresupuestoTotal.ToString("C2")</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-toggle-on me-1"></i>Estado
-                                </div>
-                                @* <div class="detail-value">
-                                    @if (Model.Activo)
-                                    {
-                                        <span class="status-badge status-active">
-                                            <i class="bi bi-check-circle-fill"></i> Activo
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-inactive">
-                                            <i class="bi bi-x-circle-fill"></i> Inactivo
-                                        </span>
-                                    }
-                                </div> *@
-                            </div>
-                        </div>
-                    </div>
+            </div>
 
-                    <hr class="my-4">
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdProyecto" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.IdProyecto" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                    <div class="d-flex justify-content-between">
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left me-1"></i> Volver
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Partidas" asp-action="Index" asp-route-idProyecto="@Model.IdProyecto" class="btn btn-outline-primary">
+                            <i class="bi bi-list-check me-2"></i>Ver Partidas
                         </a>
-                        <div>
-                            <a asp-action="Edit" asp-route-id="@Model.IdProyecto" class="btn btn-warning">
-                                <i class="bi bi-pencil me-1"></i> Editar
-                            </a>
-                            <a asp-action="Delete" asp-route-id="@Model.IdProyecto" class="btn btn-danger">
-                                <i class="bi bi-trash me-1"></i> Eliminar
-                            </a>
-                        </div>
+                        <a asp-controller="Empleado" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-people me-2"></i>Ver Empleados
+                        </a>
+                        <a asp-controller="Almacenes" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-box-seam me-2"></i>Ver Almacenes
+                        </a>
                     </div>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-success-subtle">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-cash-stack display-6 text-success"></i>
+                    <h4 class="mt-2 mb-0 text-success fw-bold">@Model.PresupuestoTotal.ToString("C2")</h4>
+                    <small class="text-muted">Presupuesto Asignado</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
