@@ -1,0 +1,111 @@
+﻿@model VH.Services.DTOs.EmpleadoResponseDto
+
+@{
+    ViewData["Title"] = "Detalle del Empleado";
+    var iniciales = $"{Model.Nombre?.FirstOrDefault()}{Model.ApellidoPaterno?.FirstOrDefault()}".ToUpper();
+}
+
+<div class="page-content">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Empleados</a></li>
+                <li class="breadcrumb-item active">Detalle</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card detail-card">
+                <div class="detail-header">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md bg-white bg-opacity-25 text-white me-3">
+                            @iniciales
+                        </div>
+                        <div>
+                            <h4 class="mb-1">@Model.Nombre @Model.ApellidoPaterno @Model.ApellidoMaterno</h4>
+                            <span class="badge bg-light text-dark">@Model.Puesto</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    <i class="bi bi-hash me-1"></i>Número de Nómina
+                                </div>
+                                <div class="detail-value">@Model.NumeroNomina</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    <i class="bi bi-building me-1"></i>Proyecto Asignado
+                                </div>
+                                <div class="detail-value">
+                                    @if (!string.IsNullOrEmpty(Model.NombreProyecto))
+                                    {
+                                        <span class="badge bg-info-subtle text-info">@Model.NombreProyecto</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Sin asignar</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    <i class="bi bi-briefcase me-1"></i>Puesto
+                                </div>
+                                <div class="detail-value">@Model.Puesto</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    <i class="bi bi-toggle-on me-1"></i>Estado
+                                </div>
+                                <div class="detail-value">
+                                    @if (Model.Activo)
+                                    {
+                                        <span class="status-badge status-active">
+                                            <i class="bi bi-check-circle-fill"></i> Activo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-inactive">
+                                            <i class="bi bi-x-circle-fill"></i> Inactivo
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Volver
+                        </a>
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@Model.IdEmpleado" class="btn btn-warning">
+                                <i class="bi bi-pencil me-1"></i> Editar
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.IdEmpleado" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> Eliminar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

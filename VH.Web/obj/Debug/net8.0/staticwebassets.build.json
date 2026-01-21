@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "umBZ03y5NZCJyVaiyMM0wsvea21DTPbnyfB712UZCV8=",
+  "Hash": "z3IVos2Ao4+/7Y4MuPrw4/dXamgb0m+C8SyvCZxVwL8=",
   "Source": "VH.Web",
   "BasePath": "_content/VH.Web",
   "Mode": "Default",
@@ -53,6 +53,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\VH.Web.bundle.scp.css"
+    },
+    {
+      "Identity": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\css\\custom.css",
+      "SourceId": "VH.Web",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\",
+      "BasePath": "_content/VH.Web",
+      "RelativePath": "css/custom.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\custom.css"
     },
     {
       "Identity": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\css\\site.css",

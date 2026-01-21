@@ -4,25 +4,65 @@
     ViewData["Title"] = "Eliminar Proyecto";
 }
 
-<h2>@ViewData["Title"]</h2>
-<h3>¿Está seguro de que desea eliminar este proyecto?</h3>
-<hr />
+<div class="page-content">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Proyectos</a></li>
+                <li class="breadcrumb-item active">Eliminar</li>
+            </ol>
+        </nav>
+    </div>
 
-<div>
-    <dl class="row">
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Nombre)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Nombre)</dd>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card form-card delete-card">
+                <div class="card-header bg-danger">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="delete-icon">
+                        <i class="bi bi-trash"></i>
+                    </div>
 
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.TipoObra)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.TipoObra)</dd>
+                    <h5 class="mb-3">¿Está seguro de eliminar este proyecto?</h5>
+                    <p class="text-muted mb-4">Esta acción no se puede deshacer.</p>
 
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.PresupuestoTotal)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.PresupuestoTotal)</dd>
-    </dl>
+                    <div class="card bg-light mb-4">
+                        <div class="card-body text-start">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Proyecto</small>
+                                    <p class="mb-2 fw-semibold">@Model.Nombre</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Tipo</small>
+                                    <p class="mb-2 fw-semibold">@(string.IsNullOrEmpty(Model.TipoObra) ? "N/A" : Model.TipoObra)</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Fecha Inicio</small>
+                                    <p class="mb-0 fw-semibold">@Model.FechaInicio.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Presupuesto</small>
+                                    <p class="mb-0 fw-semibold text-success">@Model.PresupuestoTotal.ToString("C2")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="IdProyecto" />
-        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
-        <a asp-action="Index">Cancelar</a>
-    </form>
+                    <form asp-action="Delete" asp-route-id="@Model.IdProyecto">
+                        <div class="d-flex justify-content-center gap-3">
+                            <a asp-action="Index" class="btn btn-secondary px-4">
+                                <i class="bi bi-x-lg me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash me-1"></i> Sí, Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

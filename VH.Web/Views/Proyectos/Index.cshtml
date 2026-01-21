@@ -1,44 +1,163 @@
 ﻿@model IEnumerable<VH.Services.DTOs.ProyectoResponseDto>
 
 @{
-    ViewData["Title"] = "Lista de Proyectos";
+    ViewData["Title"] = "Proyectos";
 }
 
-<h2>@ViewData["Title"]</h2>
+<div class="page-content">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">
+                    <i class="bi bi-folder text-primary me-2"></i>Proyectos / Obras
+                </h2>
+                <p class="page-subtitle">Gestiona los proyectos y obras de construcción</p>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Nuevo Proyecto
+                </a>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a asp-action="Create" class="btn btn-success">Crear Nuevo Proyecto</a> @* <--- AÑADIDO *@
-</p>
+    <!-- Alertas -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
-{
-    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+    <!-- Contenido -->
+    <div class="card content-card">
+        <div class="card-header card-header-actions">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="input-group input-group-search">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar proyectos...">
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-primary fs-6">@Model.Count() registros</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-modern" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Nombre del Proyecto</th>
+                            <th>Tipo de Obra</th>
+                            <th class="text-center">Fecha Inicio</th>
+                            <th class="text-end">Presupuesto</th>
+                            @* <th class="text-center">Estado</th> *@
+                            <th class="text-center" style="width: 150px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary-subtle text-primary me-3">
+                                                <i class="bi bi-building"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">@item.Nombre</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary">
+                                            @(string.IsNullOrEmpty(item.TipoObra) ? "Sin especificar" : item.TipoObra)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <i class="bi bi-calendar3 text-muted me-1"></i>
+                                        @item.FechaInicio.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="fw-semibold text-success">@item.PresupuestoTotal.ToString("C2")</span>
+                                    </td>
+                                    @* <td class="text-center">
+                                        @if (item.activo)
+                                        {
+                                            <span class="status-badge status-active">
+                                                <i class="bi bi-check-circle-fill"></i> Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge status-inactive">
+                                                <i class="bi bi-x-circle-fill"></i> Inactivo
+                                            </span>
+                                        }
+                                    </td> *@
+                                    <td class="text-center">
+                                        <div class="btn-group-actions">
+                                            <a asp-action="Details" asp-route-id="@item.IdProyecto"
+                                               class="btn-action btn-action-view" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.IdProyecto"
+                                               class="btn-action btn-action-edit" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.IdProyecto"
+                                               class="btn-action btn-action-delete" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <i class="bi bi-folder-x"></i>
+                                        <h5>No hay proyectos registrados</h5>
+                                        <p>Comienza creando tu primer proyecto</p>
+                                        <a asp-action="Create" class="btn btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i> Crear Proyecto
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#dataTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
 }
-
-<table class="table ">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.TipoObra)</th>
-            <th>@Html.DisplayNameFor(model => model.FechaInicio)</th>
-            <th>@Html.DisplayNameFor(model => model.PresupuestoTotal)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
-                <td>@Html.DisplayFor(modelItem => item.TipoObra)</td>
-                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
-                <td>@Html.DisplayFor(modelItem => item.PresupuestoTotal)</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.IdProyecto">Detalles</a> |
-                    <a asp-action="Edit" asp-route-id="@item.IdProyecto">Editar</a> |
-                    <a asp-action="Delete" asp-route-id="@item.IdProyecto">Eliminar</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>

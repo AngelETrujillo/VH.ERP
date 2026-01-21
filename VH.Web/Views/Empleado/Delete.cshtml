@@ -2,49 +2,69 @@
 
 @{
     ViewData["Title"] = "Eliminar Empleado";
+    var iniciales = $"{Model.Nombre?.FirstOrDefault()}{Model.ApellidoPaterno?.FirstOrDefault()}".ToUpper();
 }
 
-<h1>Eliminar Empleado</h1>
+<div class="page-content">
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Empleados</a></li>
+                <li class="breadcrumb-item active">Eliminar</li>
+            </ol>
+        </nav>
+    </div>
 
-<h3>¿Está seguro de que desea eliminar este empleado?</h3>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-4">
-            @Html.DisplayNameFor(model => model.Nombre)
-        </dt>
-        <dd class="col-sm-8">
-            @Html.DisplayFor(model => model.Nombre) @Html.DisplayFor(model => model.ApellidoPaterno) @Html.DisplayFor(model => model.ApellidoMaterno)
-        </dd>
-        <dt class="col-sm-4">
-            @Html.DisplayNameFor(model => model.NumeroNomina)
-        </dt>
-        <dd class="col-sm-8">
-            @Html.DisplayFor(model => model.NumeroNomina)
-        </dd>
-        <dt class="col-sm-4">
-            @Html.DisplayNameFor(model => model.Puesto)
-        </dt>
-        <dd class="col-sm-8">
-            @Html.DisplayFor(model => model.Puesto)
-        </dd>
-        <dt class="col-sm-4">
-            Proyecto
-        </dt>
-       @*  <dd class="col-sm-8">
-            @Html.DisplayFor(model => model.Proyecto.Nombre)
-        </dd> *@
-        <dt class="col-sm-4">
-            @Html.DisplayNameFor(model => model.Activo)
-        </dt>
-        <dd class="col-sm-8">
-            @(Model.Activo ? "Sí" : "No")
-        </dd>
-    </dl>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card form-card delete-card">
+                <div class="card-header bg-danger">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="delete-icon">
+                        <i class="bi bi-person-x"></i>
+                    </div>
 
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="IdEmpleado" />
-        <input type="submit" value="Eliminar" class="btn btn-danger" />
-        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-    </form>
+                    <h5 class="mb-3">¿Está seguro de eliminar este empleado?</h5>
+                    <p class="text-muted mb-4">Esta acción no se puede deshacer.</p>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-center mb-3">
+                                <div class="avatar-md bg-primary-subtle text-primary me-3">
+                                    @iniciales
+                                </div>
+                                <div class="text-start">
+                                    <h6 class="mb-0">@Model.Nombre @Model.ApellidoPaterno @Model.ApellidoMaterno</h6>
+                                    <small class="text-muted">@Model.Puesto</small>
+                                </div>
+                            </div>
+                            <div class="row text-start">
+                                <div class="col-6">
+                                    <small class="text-muted">No. Nómina</small>
+                                    <p class="mb-0 fw-semibold">@Model.NumeroNomina</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Proyecto</small>
+                                    <p class="mb-0 fw-semibold">@(string.IsNullOrEmpty(Model.NombreProyecto) ? "N/A" : Model.NombreProyecto)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" asp-route-id="@Model.IdEmpleado">
+                        <div class="d-flex justify-content-center gap-3">
+                            <a asp-action="Index" class="btn btn-secondary px-4">
+                                <i class="bi bi-x-lg me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash me-1"></i> Sí, Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
