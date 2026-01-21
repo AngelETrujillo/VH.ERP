@@ -1,87 +1,172 @@
 ﻿@model VH.Services.DTOs.ProveedorResponseDto
-
 @{
     ViewData["Title"] = "Detalles del Proveedor";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-truck text-info me-2"></i>Detalles del Proveedor
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow border-0">
-                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0 text-white"><i class="bi bi-building"></i> @Model.Nombre</h4>
-                    @if (Model.Activo)
-                    {
-                        <span class="badge bg-light text-success border border-success">Activo</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Inactivo</span>
-                    }
-                </div>
-
-                <div class="card-body p-4">
-                    <div class="row">
-                        <div class="col-md-6 border-end">
-                            <h5 class="text-primary mb-3">Información General</h5>
-
-                            <dl class="row">
-                                <dt class="col-sm-4 text-muted">RFC</dt>
-                                <dd class="col-sm-8 fw-bold">
-                                    @if (!string.IsNullOrEmpty(Model.RFC))
-                                    {
-                                        @Model.RFC
-                                    }
-                                    else
-                                    {
-
-                                        <span class="text-muted fst-italic">No registrado</span>
-                                    }
-                                </dd>
-
-                                
-                                
-                            </dl>
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-truck display-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3 class="mb-1 fw-bold">@Model.Nombre</h3>
+                                <p class="mb-0 opacity-75">
+                                    <span class="badge bg-light text-info me-2">@Model.RFC</span>
+                                </p>
+                            </div>
+                            <div>
+                                @if (Model.Activo)
+                                {
+                                    <span class="badge bg-success fs-6 px-3 py-2">
+                                        <i class="bi bi-check-circle me-1"></i>Activo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger fs-6 px-3 py-2">
+                                        <i class="bi bi-x-circle me-1"></i>Inactivo
+                                    </span>
+                                }
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="col-md-6 ps-md-4">
-                            <h5 class="text-primary mb-3">Contacto Directo</h5>
-
-                            <dl class="row">
-                                <dt class="col-sm-4 text-muted">Persona</dt>
-                                <dd class="col-sm-8">
-                                    <i class="bi bi-person text-secondary"></i> @Model.Contacto
-                                </dd>
-
-                                <dt class="col-sm-4 text-muted">Teléfono</dt>
-                                <dd class="col-sm-8">
-                                    @if (!string.IsNullOrEmpty(Model.Telefono))
-                                    {
-                                        <a href="tel:@Model.Telefono" class="text-decoration-none text-dark">
-                                            <i class="bi bi-telephone text-success"></i> @Model.Telefono
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">--</span>
-                                    }
-                                </dd>
-
-                                
-                            </dl>
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-building me-1"></i>Nombre / Razón Social
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.Nombre</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-upc me-1"></i>RFC
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        <code class="bg-dark text-white px-3 py-1 rounded fs-6">@Model.RFC</code>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-person me-1"></i>Contacto
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.Contacto))
+                                        {
+                                            @Model.Contacto
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin especificar</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-telephone me-1"></i>Teléfono
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.Telefono))
+                                        {
+                                            <a href="tel:@Model.Telefono" class="text-decoration-none">
+                                                <i class="bi bi-telephone-fill text-success me-1"></i>@Model.Telefono
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin especificar</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="card-footer bg-light d-flex justify-content-between p-3">
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver al listado
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdProveedor" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
                     </a>
-                    <a asp-action="Edit" asp-route-id="@Model.IdProveedor" class="btn btn-warning">
-                        <i class="bi bi-pencil-square"></i> Editar Datos
+                    <a asp-action="Delete" asp-route-id="@Model.IdProveedor" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="ComprasEPP" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="bi bi-cart-plus me-2"></i>Ver Compras
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-info-subtle">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>Información
+                    </h6>
+                    <p class="text-muted small mb-0">
+                        Este proveedor puede suministrar materiales y EPP para los proyectos de la empresa.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
