@@ -1,39 +1,85 @@
 ﻿@model VH.Services.DTOs.EntregaEPPResponseDto
-
 @{
     ViewData["Title"] = "Eliminar Entrega";
 }
 
-<div class="container mt-4">
+<div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
-                </div>
-                <div class="card-body">
-                    <p class="lead">¿Está seguro de eliminar este registro de entrega?</p>
-
-                    <div class="alert alert-secondary">
-                        <strong>Fecha:</strong> @Model.FechaEntrega.ToString("dd/MM/yyyy")<br />
-                        <strong>Empleado:</strong> @Model.NombreCompletoEmpleado<br />
-                        <strong>Material:</strong> @Model.NombreMaterial<br />
-                        <strong>Cantidad:</strong> @Model.CantidadEntregada @Model.UnidadMedidaMaterial
+        <div class="col-lg-5">
+            <!-- Tarjeta de confirmación -->
+            <div class="card shadow border-0">
+                <div class="card-body p-0">
+                    <!-- Header de advertencia -->
+                    <div class="bg-danger text-white p-4 text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <h3 class="mt-3 mb-0 fw-bold">¿Eliminar Entrega?</h3>
+                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
                     </div>
 
-                    <form asp-action="Delete">
-                        <input type="hidden" value="@Model.IdEntrega" name="id" />
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash"></i> Sí, Eliminar
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
+                    <!-- Datos de la entrega -->
+                    <div class="p-4">
+                        <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
+                            <div class="icon-circle bg-danger text-white me-3">
+                                <i class="bi bi-clipboard-x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.NombreMaterial</h5>
+                                <small class="text-muted">@Model.FechaEntrega.ToString("dd/MM/yyyy")</small>
+                            </div>
                         </div>
-                    </form>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="text-muted small">Empleado</label>
+                                <p class="mb-0 fw-semibold">@Model.NombreCompletoEmpleado</p>
+                                <small class="text-muted">Nómina: @Model.NumeroNominaEmpleado</small>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Cantidad</label>
+                                <p class="mb-0 fw-semibold">@Model.CantidadEntregada @Model.UnidadMedidaMaterial</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Talla</label>
+                                <p class="mb-0 fw-semibold">@(string.IsNullOrEmpty(Model.TallaEntregada) ? "N/A" : Model.TallaEntregada)</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="text-muted small">Almacén</label>
+                                <p class="mb-0 fw-semibold">@Model.NombreAlmacen</p>
+                            </div>
+                        </div>
+
+                        <!-- Alerta -->
+                        <div class="alert alert-warning border-0 mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Advertencia:</strong> Al eliminar esta entrega, el material regresará al inventario del lote original.
+                        </div>
+
+                        <!-- Botones -->
+                        <form asp-action="Delete" asp-route-id="@Model.IdEntrega">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                    <i class="bi bi-x-lg me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-lg px-4">
+                                    <i class="bi bi-trash me-2"></i>Sí, Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+</style>

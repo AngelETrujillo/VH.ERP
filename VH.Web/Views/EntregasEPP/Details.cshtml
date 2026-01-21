@@ -1,65 +1,199 @@
 ﻿@model VH.Services.DTOs.EntregaEPPResponseDto
-
 @{
-    ViewData["Title"] = "Detalle de Entrega";
+    ViewData["Title"] = "Detalles de Entrega";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Detalle de Entrega EPP</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Información del Empleado</h6>
-                            <dl>
-                                <dt>Nombre:</dt>
-                                <dd>@Model.NombreCompletoEmpleado</dd>
-                                <dt>No. Nómina:</dt>
-                                <dd><span class="badge bg-secondary">@Model.NumeroNominaEmpleado</span></dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Información de la Entrega</h6>
-                            <dl>
-                                <dt>Fecha:</dt>
-                                <dd>@Model.FechaEntrega.ToString("dd/MM/yyyy")</dd>
-                                <dt>Proveedor:</dt>
-                                <dd>@Model.NombreProveedor</dd>
-                            </dl>
-                        </div>
-                    </div>
-                    <hr />
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Material Entregado</h6>
-                            <dl>
-                                <dt>Material:</dt>
-                                <dd><strong>@Model.NombreMaterial</strong></dd>
-                                <dt>Cantidad:</dt>
-                                <dd><span class="badge bg-primary fs-5">@Model.CantidadEntregada @Model.UnidadMedidaMaterial</span></dd>
-                                <dt>Talla:</dt>
-                                <dd>@(string.IsNullOrEmpty(Model.TallaEntregada) ? "N/A" : Model.TallaEntregada)</dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Observaciones</h6>
-                            <p>@(string.IsNullOrEmpty(Model.Observaciones) ? "Sin observaciones" : Model.Observaciones)</p>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-clipboard-check text-info me-2"></i>Detalles de Entrega
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-clipboard-check display-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3 class="mb-1 fw-bold">@Model.NombreMaterial</h3>
+                                <p class="mb-0 opacity-75">
+                                    <i class="bi bi-calendar3 me-1"></i>@Model.FechaEntrega.ToString("dd/MM/yyyy")
+                                    <span class="ms-3"><i class="bi bi-person me-1"></i>@Model.NombreCompletoEmpleado</span>
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <div class="fs-2 fw-bold">@Model.CantidadEntregada</div>
+                                <small class="opacity-75">@Model.UnidadMedidaMaterial</small>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <!-- Datos del Empleado -->
+                            <div class="col-12">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                                    <i class="bi bi-person-badge me-2"></i>Datos del Empleado
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">Nombre Completo</label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.NombreCompletoEmpleado</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">Número de Nómina</label>
+                                    <p class="fs-5 mb-0">
+                                        <code class="bg-dark text-white px-3 py-1 rounded">@Model.NumeroNominaEmpleado</code>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Datos del Material -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                                    <i class="bi bi-shield-check me-2"></i>Material Entregado
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">Material</label>
+                                    <p class="fs-5 mb-0">
+                                        <span class="badge bg-primary-subtle text-primary fs-6">@Model.NombreMaterial</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="detail-item text-center">
+                                    <label class="text-muted small text-uppercase fw-semibold">Cantidad</label>
+                                    <p class="fs-3 mb-0 fw-bold text-success">@Model.CantidadEntregada</p>
+                                    <small class="text-muted">@Model.UnidadMedidaMaterial</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="detail-item text-center">
+                                    <label class="text-muted small text-uppercase fw-semibold">Talla</label>
+                                    <p class="fs-4 mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.TallaEntregada))
+                                        {
+                                            <span class="badge bg-secondary fs-5">@Model.TallaEntregada</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Datos de Origen -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                                    <i class="bi bi-box-seam me-2"></i>Origen del Material
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">Almacén</label>
+                                    <p class="fs-5 mb-0">
+                                        <span class="badge bg-info-subtle text-info fs-6">@Model.NombreAlmacen</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">Fecha de Entrega</label>
+                                    <p class="fs-5 mb-0">@Model.FechaEntrega.ToString("dddd, dd MMMM yyyy")</p>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(Model.Observaciones))
+                            {
+                                <div class="col-12 mt-2">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">
+                                            <i class="bi bi-chat-text me-1"></i>Observaciones
+                                        </label>
+                                        <p class="mb-0">@Model.Observaciones</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer d-flex justify-content-between">
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdEntrega" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
                     </a>
-                    <a asp-action="Edit" asp-route-id="@Model.IdEntrega" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Editar
+                    <a asp-action="Delete" asp-route-id="@Model.IdEntrega" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-success-subtle mb-4">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-clipboard-check display-4 text-success"></i>
+                    <h3 class="mt-2 mb-0 text-success fw-bold">Entregado</h3>
+                    <p class="text-muted mb-0">@Model.FechaEntrega.ToString("dd/MM/yyyy")</p>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Index" asp-route-idEmpleado="@Model.IdEmpleado" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>Ver Entregas del Empleado
+                        </a>
+                        <a asp-controller="Empleado" asp-action="Details" asp-route-id="@Model.IdEmpleado" class="btn btn-outline-secondary">
+                            <i class="bi bi-person-badge me-2"></i>Ver Perfil del Empleado
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
