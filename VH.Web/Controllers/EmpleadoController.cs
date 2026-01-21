@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using VH.Services.DTOs;
+using System.Net.Http.Json; // Usamos esto para ReadFromJsonAsync y PostAsJsonAsync/PutAsJsonAsync
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
 using System.Text.Json;
-using System.Net.Http.Json; // Usamos esto para ReadFromJsonAsync y PostAsJsonAsync/PutAsJsonAsync
+using VH.Services.DTOs;
 
 namespace VH.Web.Controllers
 {
@@ -20,25 +21,21 @@ namespace VH.Web.Controllers
         }
 
         // --- Método de Soporte para Obtener Proyectos (Para Dropdowns) ---
-        private async Task<List<ProyectoSimpleResponseDto>> GetProyectosAsync()
+        private async Task<List<SelectListItem>> GetProyectosAsync()
         {
             try
             {
                 var response = await _httpClient.GetAsync(ApiProyectosUrl);
                 response.EnsureSuccessStatusCode();
-
-                // Usamos ReadFromJsonAsync y mapeamos a ProyectoSimpleResponseDto (requiere un DTO simple)
                 var proyectos = await response.Content.ReadFromJsonAsync<IEnumerable<ProyectoResponseDto>>();
-
-                // Mapeo manual del DTO grande al simple para el dropdown (si el API devuelve el DTO completo)
                 return proyectos?
-                    .Select(p => new ProyectoSimpleResponseDto(p.IdProyecto, p.Nombre))
-                    .ToList() ?? new List<ProyectoSimpleResponseDto>();
+                    .Select(p => new SelectListItem { Value = p.IdProyecto.ToString(), Text = p.Nombre })
+                    .ToList() ?? new List<SelectListItem>();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al cargar la lista de proyectos para el dropdown.");
-                return new List<ProyectoSimpleResponseDto>();
+                _logger.LogError(ex, "Error al cargar proyectos para dropdown.");
+                return new List<SelectListItem>();
             }
         }
 
@@ -94,6 +91,22 @@ namespace VH.Web.Controllers
             // Si hay errores, recargar la lista de proyectos
             ViewBag.Proyectos = await GetProyectosAsync();
             return View(empleadoDto);
+        }
+
+        // DETAILS (Ver información del empleado)
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{ApiBaseUrl}/{id}");
+                if (!response.IsSuccessStatusCode) return NotFound();
+                var empleado = await response.Content.ReadFromJsonAsync<EmpleadoResponseDto>();
+                return View(empleado);
+            }
+            catch
+            {
+                return NotFound();
+            }
         }
 
         // 3. EDIT (GET: Carga datos para editar)

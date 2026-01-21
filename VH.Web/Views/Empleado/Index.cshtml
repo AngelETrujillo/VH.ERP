@@ -1,76 +1,68 @@
 ﻿@model IEnumerable<VH.Services.DTOs.EmpleadoResponseDto>
-
 @{
     ViewData["Title"] = "Empleados";
 }
 
-<div class="page-content">
+<div class="container-fluid">
     <!-- Header -->
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h2 class="page-title">
-                    <i class="bi bi-people text-primary me-2"></i>Empleados
-                </h2>
-                <p class="page-subtitle">Gestiona el personal de la empresa</p>
-            </div>
-            <div class="col-auto">
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i> Nuevo Empleado
-                </a>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-people-fill text-primary me-2"></i>Gestión de Empleados
+            </h2>
+            <p class="text-muted mb-0">Administra el personal de la empresa</p>
         </div>
+        <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Empleado
+        </a>
     </div>
 
     <!-- Alertas -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
     @if (ViewBag.ErrorMessage != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-circle me-2"></i>@ViewBag.ErrorMessage
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
-    <!-- Contenido -->
-    <div class="card content-card">
-        <div class="card-header card-header-actions">
-            <div class="row align-items-center w-100">
-                <div class="col-md-4">
-                    <div class="input-group input-group-search">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar empleado...">
+    <!-- Card principal -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                               placeholder="Buscar por nombre, nómina o puesto...">
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <select id="filterEstado" class="form-select">
-                        <option value="">Todos los estados</option>
-                        <option value="activo">Activos</option>
-                        <option value="inactivo">Inactivos</option>
-                    </select>
-                </div>
-                <div class="col-md-4 text-end">
-                    <span class="badge bg-primary fs-6">@Model.Count() empleados</span>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroTodos" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroActivos">
+                        <label class="btn btn-outline-success btn-sm" for="filtroActivos">Activos</label>
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroInactivos">
+                        <label class="btn btn-outline-danger btn-sm" for="filtroInactivos">Inactivos</label>
+                    </div>
+                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
                 </div>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-modern" id="dataTable">
-                    <thead>
+                <table class="table table-hover align-middle mb-0" id="dataTable">
+                    <thead class="bg-light">
                         <tr>
-                            <th>Empleado</th>
+                            <th class="ps-4">Empleado</th>
                             <th>No. Nómina</th>
                             <th>Puesto</th>
-                            <th>Proyecto Asignado</th>
+                            <th>Proyecto</th>
                             <th class="text-center">Estado</th>
-                            <th class="text-center" style="width: 150px;">Acciones</th>
+                            <th class="text-center" style="width:140px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,21 +72,18 @@
                             {
                                 var iniciales = $"{item.Nombre?.FirstOrDefault()}{item.ApellidoPaterno?.FirstOrDefault()}".ToUpper();
                                 <tr data-estado="@(item.Activo ? "activo" : "inactivo")">
-                                    <td>
+                                    <td class="ps-4">
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary-subtle text-primary me-3">
+                                            <div class="avatar-circle me-3 @(item.Activo ? "bg-primary" : "bg-secondary")">
                                                 @iniciales
                                             </div>
                                             <div>
-                                                <h6 class="mb-0">@item.Nombre @item.ApellidoPaterno @item.ApellidoMaterno</h6>
+                                                <h6 class="mb-0 fw-semibold">@item.Nombre @item.ApellidoPaterno</h6>
+                                                <small class="text-muted">@item.ApellidoMaterno</small>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-secondary-subtle text-secondary">
-                                            <i class="bi bi-hash"></i>@item.NumeroNomina
-                                        </span>
-                                    </td>
+                                    <td><code class="bg-light px-2 py-1 rounded">@item.NumeroNomina</code></td>
                                     <td>@item.Puesto</td>
                                     <td>
                                         @if (!string.IsNullOrEmpty(item.NombreProyecto))
@@ -105,35 +94,35 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">Sin asignar</span>
+                                            <span class="text-muted fst-italic">Sin asignar</span>
                                         }
                                     </td>
                                     <td class="text-center">
                                         @if (item.Activo)
                                         {
-                                            <span class="status-badge status-active">
-                                                <i class="bi bi-check-circle-fill"></i> Activo
+                                            <span class="badge bg-success-subtle text-success px-3 py-2">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="status-badge status-inactive">
-                                                <i class="bi bi-x-circle-fill"></i> Inactivo
+                                            <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
                                             </span>
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group-actions">
+                                        <div class="btn-group btn-group-sm">
                                             <a asp-action="Details" asp-route-id="@item.IdEmpleado"
-                                               class="btn-action btn-action-view" title="Ver detalles">
+                                               class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
-                                               class="btn-action btn-action-edit" title="Editar">
+                                               class="btn btn-outline-warning" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
-                                               class="btn-action btn-action-delete" title="Eliminar">
+                                               class="btn btn-outline-danger" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         </div>
@@ -145,12 +134,12 @@
                         {
                             <tr>
                                 <td colspan="6">
-                                    <div class="empty-state">
-                                        <i class="bi bi-people"></i>
-                                        <h5>No hay empleados registrados</h5>
-                                        <p>Comienza agregando tu primer empleado</p>
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-people display-4 text-muted"></i>
+                                        <h5 class="mt-3 text-muted">No hay empleados registrados</h5>
+                                        <p class="text-muted">Comienza agregando tu primer empleado</p>
                                         <a asp-action="Create" class="btn btn-primary">
-                                            <i class="bi bi-plus-lg me-1"></i> Agregar Empleado
+                                            <i class="bi bi-plus-lg me-2"></i>Agregar Empleado
                                         </a>
                                     </div>
                                 </td>
@@ -163,23 +152,46 @@
     </div>
 </div>
 
+<style>
+    .avatar-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .table > tbody > tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-group-sm > .btn {
+        padding: 0.4rem 0.6rem;
+    }
+</style>
+
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', filterTable);
-        document.getElementById('filterEstado').addEventListener('change', filterTable);
-
-        function filterTable() {
-            const searchFilter = document.getElementById('searchInput').value.toLowerCase();
-            const estadoFilter = document.getElementById('filterEstado').value;
-            const rows = document.querySelectorAll('#dataTable tbody tr');
-
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                const estado = row.dataset.estado;
-                const matchText = text.includes(searchFilter);
-                const matchEstado = !estadoFilter || estado === estadoFilter;
-                row.style.display = matchText && matchEstado ? '' : 'none';
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
-        }
+        });
+        document.querySelectorAll('input[name="filtroEstado"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const filtro = this.id.replace('filtro', '').toLowerCase();
+                document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                    const estado = row.dataset.estado;
+                    if (filtro === 'todos') row.style.display = '';
+                    else if (filtro === 'activos') row.style.display = estado === 'activo' ? '' : 'none';
+                    else if (filtro === 'inactivos') row.style.display = estado === 'inactivo' ? '' : 'none';
+                });
+            });
+        });
     </script>
 }

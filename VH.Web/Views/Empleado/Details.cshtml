@@ -1,111 +1,172 @@
 ﻿@model VH.Services.DTOs.EmpleadoResponseDto
-
 @{
-    ViewData["Title"] = "Detalle del Empleado";
+    ViewData["Title"] = "Detalles del Empleado";
     var iniciales = $"{Model.Nombre?.FirstOrDefault()}{Model.ApellidoPaterno?.FirstOrDefault()}".ToUpper();
 }
 
-<div class="page-content">
-    <div class="page-header">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index">Empleados</a></li>
-                <li class="breadcrumb-item active">Detalle</li>
-            </ol>
-        </nav>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-person-badge text-info me-2"></i>Detalles del Empleado
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="row">
         <div class="col-lg-8">
-            <div class="card detail-card">
-                <div class="detail-header">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-md bg-white bg-opacity-25 text-white me-3">
-                            @iniciales
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera con avatar -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-lg me-4">@iniciales</div>
+                            <div>
+                                <h3 class="mb-1 fw-bold">@Model.Nombre @Model.ApellidoPaterno @Model.ApellidoMaterno</h3>
+                                <p class="mb-0 opacity-75">
+                                    <i class="bi bi-briefcase me-2"></i>@Model.Puesto
+                                </p>
+                            </div>
+                            <div class="ms-auto">
+                                @if (Model.Activo)
+                                {
+                                    <span class="badge bg-success fs-6 px-3 py-2">
+                                        <i class="bi bi-check-circle me-1"></i>Activo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger fs-6 px-3 py-2">
+                                        <i class="bi bi-x-circle me-1"></i>Inactivo
+                                    </span>
+                                }
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="mb-1">@Model.Nombre @Model.ApellidoPaterno @Model.ApellidoMaterno</h4>
-                            <span class="badge bg-light text-dark">@Model.Puesto</span>
+                    </div>
+
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-hash me-1"></i>Número de Nómina
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">
+                                        <code class="bg-light px-3 py-1 rounded">@Model.NumeroNomina</code>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-building me-1"></i>Proyecto Asignado
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.NombreProyecto))
+                                        {
+                                            <span class="badge bg-info-subtle text-info fs-6 px-3 py-2">
+                                                <i class="bi bi-building me-1"></i>@Model.NombreProyecto
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin proyecto asignado</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-person me-1"></i>Nombre Completo
+                                    </label>
+                                    <p class="fs-5 mb-0">@Model.Nombre @Model.ApellidoPaterno @Model.ApellidoMaterno</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-briefcase me-1"></i>Puesto
+                                    </label>
+                                    <p class="fs-5 mb-0">@Model.Puesto</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="detail-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-hash me-1"></i>Número de Nómina
-                                </div>
-                                <div class="detail-value">@Model.NumeroNomina</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-building me-1"></i>Proyecto Asignado
-                                </div>
-                                <div class="detail-value">
-                                    @if (!string.IsNullOrEmpty(Model.NombreProyecto))
-                                    {
-                                        <span class="badge bg-info-subtle text-info">@Model.NombreProyecto</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Sin asignar</span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-briefcase me-1"></i>Puesto
-                                </div>
-                                <div class="detail-value">@Model.Puesto</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="bi bi-toggle-on me-1"></i>Estado
-                                </div>
-                                <div class="detail-value">
-                                    @if (Model.Activo)
-                                    {
-                                        <span class="status-badge status-active">
-                                            <i class="bi bi-check-circle-fill"></i> Activo
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-inactive">
-                                            <i class="bi bi-x-circle-fill"></i> Inactivo
-                                        </span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
 
-                    <hr class="my-4">
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdEmpleado" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.IdEmpleado" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                    <div class="d-flex justify-content-between">
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left me-1"></i> Volver
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-clipboard-data me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-box-seam me-2"></i>Ver Entregas de EPP
                         </a>
-                        <div>
-                            <a asp-action="Edit" asp-route-id="@Model.IdEmpleado" class="btn btn-warning">
-                                <i class="bi bi-pencil me-1"></i> Editar
-                            </a>
-                            <a asp-action="Delete" asp-route-id="@Model.IdEmpleado" class="btn btn-danger">
-                                <i class="bi bi-trash me-1"></i> Eliminar
-                            </a>
-                        </div>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-2"></i>Generar Reporte
+                        </a>
                     </div>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-info-subtle">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>Información
+                    </h6>
+                    <p class="text-muted small mb-0">
+                        Este empleado puede recibir entregas de EPP según el proyecto al que está asignado.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
