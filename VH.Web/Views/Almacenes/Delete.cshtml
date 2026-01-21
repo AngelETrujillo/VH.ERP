@@ -1,43 +1,105 @@
 ﻿@model VH.Services.DTOs.AlmacenResponseDto
-
 @{
     ViewData["Title"] = "Eliminar Almacén";
 }
 
-<div class="container mt-4">
+<div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
-                </div>
-                <div class="card-body">
-                    <p class="lead">¿Está seguro de eliminar este almacén?</p>
-
-                    <div class="alert alert-secondary">
-                        <strong>Nombre:</strong> @Model.Nombre<br />
-                        <strong>Proyecto:</strong> @Model.NombreProyecto<br />
-                        <strong>Tipo:</strong> @Model.TipoUbicacion
+        <div class="col-lg-6">
+            <!-- Tarjeta de confirmación -->
+            <div class="card shadow border-0">
+                <div class="card-body p-0">
+                    <!-- Header de advertencia -->
+                    <div class="bg-danger text-white p-4 text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <h3 class="mt-3 mb-0 fw-bold">¿Eliminar Almacén?</h3>
+                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
                     </div>
 
-                    <div class="alert alert-warning">
-                        <i class="bi bi-info-circle"></i>
-                        Si el almacén tiene inventario asociado, no podrá eliminarse.
-                    </div>
-
-                    <form asp-action="Delete">
-                        <input type="hidden" value="@Model.IdAlmacen" name="id" />
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash"></i> Sí, Eliminar
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
+                    <!-- Datos del almacén -->
+                    <div class="p-4">
+                        <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
+                            <div class="icon-circle bg-danger text-white me-3">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.Nombre</h5>
+                                <small class="text-muted">
+                                    @if (!string.IsNullOrEmpty(Model.TipoUbicacion))
+                                    {
+                                        @Model.TipoUbicacion
+                                    }
+                                    else
+                                    {
+                                        <span>Sin tipo especificado</span>
+                                    }
+                                </small>
+                            </div>
                         </div>
-                    </form>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="text-muted small">Proyecto</label>
+                                <p class="mb-0 fw-semibold">@(string.IsNullOrEmpty(Model.NombreProyecto) ? "Sin asignar" : Model.NombreProyecto)</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Estado</label>
+                                <p class="mb-0">
+                                    @if (Model.Activo)
+                                    {
+                                        <span class="badge bg-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    }
+                                </p>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Domicilio))
+                            {
+                                <div class="col-12">
+                                    <label class="text-muted small">Domicilio</label>
+                                    <p class="mb-0 fw-semibold">@Model.Domicilio</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Alerta -->
+                        <div class="alert alert-warning border-0 mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Advertencia:</strong> Al eliminar este almacén:
+                            <ul class="mb-0 mt-2">
+                                <li>Se perderá el registro del inventario asociado</li>
+                                <li>Las compras y entregas registradas mantendrán su historial</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botones -->
+                        <form asp-action="Delete" asp-route-id="@Model.IdAlmacen">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                    <i class="bi bi-x-lg me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-lg px-4">
+                                    <i class="bi bi-trash me-2"></i>Sí, Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+</style>

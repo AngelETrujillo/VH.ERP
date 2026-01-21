@@ -1,89 +1,225 @@
 ﻿@model IEnumerable<VH.Services.DTOs.AlmacenResponseDto>
-
 @{
     ViewData["Title"] = "Almacenes";
 }
 
-<div class="container mt-4">
+<div class="container-fluid">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-house-door"></i> Gestión de Almacenes</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Nuevo Almacén
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-box-seam-fill text-primary me-2"></i>Gestión de Almacenes
+            </h2>
+            <p class="text-muted mb-0">Administra los almacenes y bodegas por proyecto</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Almacén
         </a>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
+    <!-- Alertas -->
+    @if (ViewBag.ErrorMessage != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
-            @TempData["ErrorMessage"]
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Proyecto</th>
-                        <th>Tipo Ubicación</th>
-                        <th>Domicilio</th>
-                        <th>Estado</th>
-                        <th class="text-center" style="width: 180px;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        @foreach (var item in Model)
+    <!-- Card principal -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                               placeholder="Buscar por nombre, proyecto o tipo...">
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroTodos" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroActivos">
+                        <label class="btn btn-outline-success btn-sm" for="filtroActivos">Activos</label>
+                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroInactivos">
+                        <label class="btn btn-outline-danger btn-sm" for="filtroInactivos">Inactivos</label>
+                    </div>
+                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="dataTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Almacén</th>
+                            <th>Tipo</th>
+                            <th>Proyecto</th>
+                            <th>Domicilio</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center" style="width:140px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr data-estado="@(item.Activo ? "activo" : "inactivo")">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-circle bg-primary-subtle text-primary me-3">
+                                                <i class="bi bi-box-seam"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold">@item.Nombre</h6>
+                                                @if (!string.IsNullOrEmpty(item.Descripcion))
+                                                {
+                                                    <small class="text-muted">@item.Descripcion.Truncate(30)</small>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.TipoUbicacion))
+                                        {
+                                            var badgeClass = item.TipoUbicacion switch
+                                            {
+                                                "Bodega" => "bg-info-subtle text-info",
+                                                "Contenedor" => "bg-warning-subtle text-warning",
+                                                "Patio" => "bg-success-subtle text-success",
+                                                "Oficina" => "bg-secondary-subtle text-secondary",
+                                                _ => "bg-light text-dark"
+                                            };
+                                            <span class="badge @badgeClass">
+                                                <i class="bi bi-geo-alt me-1"></i>@item.TipoUbicacion
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin tipo</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.NombreProyecto))
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary">
+                                                <i class="bi bi-building me-1"></i>@item.NombreProyecto
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin asignar</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Domicilio))
+                                        {
+                                            <small><i class="bi bi-geo text-muted me-1"></i>@item.Domicilio.Truncate(25)</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Activo)
+                                        {
+                                            <span class="badge bg-success-subtle text-success px-3 py-2">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.IdAlmacen"
+                                               class="btn btn-outline-info" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.IdAlmacen"
+                                               class="btn btn-outline-warning" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.IdAlmacen"
+                                               class="btn btn-outline-danger" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
-                                <td><strong>@item.Nombre</strong></td>
-                                <td>
-                                    <span class="badge bg-info">@item.NombreProyecto</span>
-                                </td>
-                                <td>@item.TipoUbicacion</td>
-                                <td class="text-muted small">@item.Domicilio</td>
-                                <td>
-                                    @if (item.Activo)
-                                    {
-                                        <span class="badge bg-success">Activo</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">Inactivo</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a asp-action="Details" asp-route-id="@item.IdAlmacen"
-                                           class="btn btn-outline-info" title="Ver">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.IdAlmacen"
-                                           class="btn btn-outline-warning" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.IdAlmacen"
-                                           class="btn btn-outline-danger" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
+                                <td colspan="6">
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-box-seam display-4 text-muted"></i>
+                                        <h5 class="mt-3 text-muted">No hay almacenes registrados</h5>
+                                        <p class="text-muted">Comienza creando tu primer almacén</p>
+                                        <a asp-action="Create" class="btn btn-primary">
+                                            <i class="bi bi-plus-lg me-2"></i>Crear Almacén
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                No hay almacenes registrados
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .table > tbody > tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-group-sm > .btn {
+        padding: 0.4rem 0.6rem;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+            });
+        });
+        document.querySelectorAll('input[name="filtroEstado"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const filtro = this.id.replace('filtro', '').toLowerCase();
+                document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                    const estado = row.dataset.estado;
+                    if (filtro === 'todos') row.style.display = '';
+                    else if (filtro === 'activos') row.style.display = estado === 'activo' ? '' : 'none';
+                    else if (filtro === 'inactivos') row.style.display = estado === 'inactivo' ? '' : 'none';
+                });
+            });
+        });
+    </script>
+}

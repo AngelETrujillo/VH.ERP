@@ -1,48 +1,92 @@
 ﻿@model VH.Services.DTOs.UnidadMedidaRequestDto
-
 @{
     ViewData["Title"] = "Nueva Unidad de Medida";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Nueva Unidad de Medida</h5>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-rulers text-primary me-2"></i>Nueva Unidad de Medida
+            </h2>
+            <p class="text-muted mb-0">Registre una nueva unidad para el sistema</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información de la Unidad</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label asp-for="Nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                                <input asp-for="Nombre" class="form-control form-control-lg" placeholder="Ej: Kilogramo" />
+                                <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-5">
+                                <label asp-for="Abreviatura" class="form-label fw-semibold">Abreviatura <span class="text-danger">*</span></label>
+                                <input asp-for="Abreviatura" class="form-control form-control-lg text-uppercase" placeholder="Ej: KG" maxlength="20" />
+                                <span asp-validation-for="Abreviatura" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Descripcion" class="form-label fw-semibold">Descripción</label>
+                                <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Descripción opcional de la unidad..."></textarea>
+                                <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="mb-3">
-                            <label asp-for="Nombre" class="form-label">Nombre *</label>
-                            <input asp-for="Nombre" class="form-control" placeholder="Ej: Pieza, Kilogramo, Metro" />
-                            <span asp-validation-for="Nombre" class="text-danger"></span>
-                        </div>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-check-lg me-2"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Abreviatura" class="form-label">Abreviatura *</label>
-                            <input asp-for="Abreviatura" class="form-control" placeholder="Ej: Pza, Kg, m" />
-                            <span asp-validation-for="Abreviatura" class="text-danger"></span>
-                        </div>
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-info-circle me-2"></i>Información
+                    </h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>El nombre y abreviatura deben ser únicos</li>
+                        <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>La abreviatura se usará en reportes y listados</li>
+                        <li><i class="bi bi-check2 text-success me-2"></i>Ejemplos: Metro (M), Pieza (PZA), Litro (L)</li>
+                    </ul>
+                </div>
+            </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Descripcion" class="form-label">Descripción</label>
-                            <textarea asp-for="Descripcion" class="form-control" rows="2"
-                                      placeholder="Descripción opcional"></textarea>
-                            <span asp-validation-for="Descripcion" class="text-danger"></span>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check-lg"></i> Guardar
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                        </div>
-                    </form>
+            <div class="card border-0 bg-info-subtle mt-3">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-2">
+                        <i class="bi bi-lightbulb me-2"></i>Ejemplos comunes
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-white text-dark border">PZA - Pieza</span>
+                        <span class="badge bg-white text-dark border">M - Metro</span>
+                        <span class="badge bg-white text-dark border">KG - Kilogramo</span>
+                        <span class="badge bg-white text-dark border">L - Litro</span>
+                        <span class="badge bg-white text-dark border">PAR - Par</span>
+                        <span class="badge bg-white text-dark border">ROLLO - Rollo</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,7 +94,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

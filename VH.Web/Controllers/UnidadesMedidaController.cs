@@ -64,6 +64,21 @@ namespace VH.Web.Controllers
             return View(dto);
         }
 
+        // GET: UnidadesMedida/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var unidad = await _httpClient.GetFromJsonAsync<UnidadMedidaResponseDto>($"api/unidadesmedida/{id}");
+                if (unidad == null) return NotFound();
+                return View(unidad);
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
         // GET: UnidadesMedida/Edit/5
         public async Task<IActionResult> Edit(int id)
         {

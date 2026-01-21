@@ -1,70 +1,119 @@
 ﻿@model VH.Services.DTOs.AlmacenRequestDto
-
 @{
     ViewData["Title"] = "Editar Almacén";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-warning">
-                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Almacén</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Edit" asp-route-id="@ViewBag.Id">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-pencil-square text-warning me-2"></i>Editar Almacén
+            </h2>
+            <p class="text-muted mb-0">Modifique la información del almacén</p>
+        </div>
+    </div>
 
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label asp-for="Nombre" class="form-label">Nombre del Almacén *</label>
-                                <input asp-for="Nombre" class="form-control" />
-                                <span asp-validation-for="Nombre" class="text-danger"></span>
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="Edit" asp-route-id="@ViewBag.Id" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Información General -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-warning text-dark py-3">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información General</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="Nombre" class="form-label fw-semibold">Nombre del Almacén <span class="text-danger">*</span></label>
+                                <input asp-for="Nombre" class="form-control form-control-lg" />
+                                <span asp-validation-for="Nombre" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="TipoUbicacion" class="form-label">Tipo de Ubicación</label>
-                                <select asp-for="TipoUbicacion" class="form-select">
+                            <div class="col-md-4">
+                                <label asp-for="TipoUbicacion" class="form-label fw-semibold">Tipo de Ubicación</label>
+                                <select asp-for="TipoUbicacion" class="form-select form-select-lg">
                                     <option value="">-- Seleccionar --</option>
                                     <option value="Bodega">Bodega</option>
                                     <option value="Contenedor">Contenedor</option>
                                     <option value="Patio">Patio</option>
                                     <option value="Oficina">Oficina</option>
                                 </select>
+                                <span asp-validation-for="TipoUbicacion" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Descripcion" class="form-label fw-semibold">Descripción</label>
+                                <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
+                                <span asp-validation-for="Descripcion" class="text-danger small"></span>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="IdProyecto" class="form-label">Proyecto Asociado *</label>
-                            <select asp-for="IdProyecto" class="form-select" asp-items="@ViewBag.Proyectos">
-                                <option value="">-- Seleccionar Proyecto --</option>
-                            </select>
-                            <span asp-validation-for="IdProyecto" class="text-danger"></span>
+                <!-- Ubicación y Proyecto -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación y Asignación</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="IdProyecto" class="form-label fw-semibold">Proyecto <span class="text-danger">*</span></label>
+                                <select asp-for="IdProyecto" class="form-select form-select-lg" asp-items="@ViewBag.Proyectos">
+                                    <option value="">-- Seleccionar Proyecto --</option>
+                                </select>
+                                <span asp-validation-for="IdProyecto" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Domicilio" class="form-label fw-semibold">Domicilio</label>
+                                <input asp-for="Domicilio" class="form-control form-control-lg" />
+                                <span asp-validation-for="Domicilio" class="text-danger small"></span>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Domicilio" class="form-label">Domicilio</label>
-                            <input asp-for="Domicilio" class="form-control" />
+                <!-- Estado -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="Activo" class="form-check-input" type="checkbox" role="switch" id="switchActivo">
+                            <label class="form-check-label fw-semibold" for="switchActivo">
+                                <i class="bi bi-toggle-on text-success me-2"></i>Almacén Activo
+                            </label>
+                            <p class="text-muted small mb-0 ms-4">El almacén estará disponible para recibir y entregar materiales</p>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Descripcion" class="form-label">Descripción</label>
-                            <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
-                        </div>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-warning btn-lg px-5">
+                        <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
 
-                        <div class="form-check form-switch mb-4">
-                            <input asp-for="Activo" class="form-check-input" type="checkbox" />
-                            <label asp-for="Activo" class="form-check-label">Almacén Activo</label>
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-check-lg"></i> Actualizar
-                            </button>
-                        </div>
-                    </form>
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-warning mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Advertencia
+                    </h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li class="mb-2"><i class="bi bi-dot text-warning me-1"></i>Cambiar el proyecto afectará los reportes de inventario</li>
+                        <li class="mb-2"><i class="bi bi-dot text-warning me-1"></i>Desactivar el almacén bloqueará nuevos movimientos</li>
+                        <li><i class="bi bi-dot text-warning me-1"></i>El inventario existente se mantendrá sin cambios</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -72,7 +121,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

@@ -1,0 +1,124 @@
+﻿@model VH.Services.DTOs.UnidadMedidaResponseDto
+@{
+    ViewData["Title"] = "Detalles de Unidad de Medida";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-rulers text-info me-2"></i>Detalles de Unidad de Medida
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-rulers display-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-1 fw-bold">@Model.Nombre</h3>
+                                <span class="badge bg-light text-info fs-5 px-3 py-2">@Model.Abreviatura</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-type me-1"></i>Nombre
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.Nombre</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-hash me-1"></i>Abreviatura
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        <span class="badge bg-dark fs-5 px-3 py-2">@Model.Abreviatura</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-text-paragraph me-1"></i>Descripción
+                                    </label>
+                                    <p class="mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.Descripcion))
+                                        {
+                                            @Model.Descripcion
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin descripción</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdUnidadMedida" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.IdUnidadMedida" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Uso en el Sistema
+                    </h6>
+                    <p class="text-muted small mb-0">
+                        Esta unidad de medida puede estar asociada a materiales EPP y partidas de presupuesto.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
