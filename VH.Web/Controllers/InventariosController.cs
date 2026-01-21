@@ -67,6 +67,21 @@ namespace VH.Web.Controllers
             return View(dto);
         }
 
+        // GET: Inventarios/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var inventario = await _httpClient.GetFromJsonAsync<InventarioResponseDto>($"api/inventarios/{id}");
+                if (inventario == null) return NotFound();
+                return View(inventario);
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
         // GET: Inventarios/Edit/5
         public async Task<IActionResult> Edit(int id)
         {

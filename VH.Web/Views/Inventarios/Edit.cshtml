@@ -1,55 +1,119 @@
 ﻿@model VH.Services.DTOs.InventarioRequestDto
-
 @{
     ViewData["Title"] = "Editar Inventario";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-warning">
-                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Configuración de Inventario</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-3">
-                        <strong>Material:</strong> @ViewBag.NombreMaterial<br />
-                        <strong>Almacén:</strong> @ViewBag.NombreAlmacen
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-pencil-square text-warning me-2"></i>Editar Configuración de Inventario
+            </h2>
+            <p class="text-muted mb-0">Modifique los parámetros de stock</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="Edit" asp-route-id="@ViewBag.Id" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Material y Almacén (Solo lectura) -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-secondary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Material y Almacén</h5>
                     </div>
-
-                    <form asp-action="Edit" asp-route-id="@ViewBag.Id">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                        <input type="hidden" asp-for="IdAlmacen" />
-                        <input type="hidden" asp-for="IdMaterial" />
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="StockMinimo" class="form-label">Stock Mínimo</label>
-                                <input asp-for="StockMinimo" type="number" step="0.01" class="form-control" />
-                                <span asp-validation-for="StockMinimo" class="text-danger"></span>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Almacén</label>
+                                <div class="form-control form-control-lg bg-light">
+                                    <i class="bi bi-box-seam text-info me-2"></i>@ViewBag.NombreAlmacen
+                                </div>
+                                <input type="hidden" asp-for="IdAlmacen" />
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="StockMaximo" class="form-label">Stock Máximo</label>
-                                <input asp-for="StockMaximo" type="number" step="0.01" class="form-control" />
-                                <span asp-validation-for="StockMaximo" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Material EPP</label>
+                                <div class="form-control form-control-lg bg-light">
+                                    <i class="bi bi-shield-check text-primary me-2"></i>@ViewBag.NombreMaterial
+                                </div>
+                                <input type="hidden" asp-for="IdMaterial" />
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="UbicacionPasillo" class="form-label">Ubicación / Pasillo</label>
-                            <input asp-for="UbicacionPasillo" class="form-control" />
+                <!-- Configuración de Stock -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-warning text-dark py-3">
+                        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Configuración de Stock</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="StockMinimo" class="form-label fw-semibold">Stock Mínimo <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-warning-subtle text-warning">
+                                        <i class="bi bi-arrow-down"></i>
+                                    </span>
+                                    <input asp-for="StockMinimo" type="number" step="1" min="0" class="form-control" />
+                                </div>
+                                <span asp-validation-for="StockMinimo" class="text-danger small"></span>
+                                <small class="text-muted">Alerta cuando baje de este nivel</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="StockMaximo" class="form-label fw-semibold">Stock Máximo</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-info-subtle text-info">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </span>
+                                    <input asp-for="StockMaximo" type="number" step="1" min="0" class="form-control" />
+                                </div>
+                                <span asp-validation-for="StockMaximo" class="text-danger small"></span>
+                                <small class="text-muted">Dejar en 0 para sin límite</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="UbicacionPasillo" class="form-label fw-semibold">Ubicación / Pasillo</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </span>
+                                    <input asp-for="UbicacionPasillo" class="form-control" />
+                                </div>
+                                <span asp-validation-for="UbicacionPasillo" class="text-danger small"></span>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-check-lg"></i> Actualizar
-                            </button>
-                        </div>
-                    </form>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-warning btn-lg px-5">
+                        <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-warning mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Información
+                    </h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li class="mb-2"><i class="bi bi-dot text-warning me-1"></i>No puede cambiar el material ni almacén</li>
+                        <li class="mb-2"><i class="bi bi-dot text-warning me-1"></i>La existencia se modifica con compras/entregas</li>
+                        <li><i class="bi bi-dot text-warning me-1"></i>Los cambios de stock mínimo/máximo son inmediatos</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -57,7 +121,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }
