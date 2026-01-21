@@ -1,57 +1,176 @@
 ﻿@model VH.Services.DTOs.MaterialEPPResponseDto
-
 @{
     ViewData["Title"] = "Detalles del Material";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-box"></i> @Model.Nombre</h5>
-                    @if (Model.Activo)
-                    {
-                        <span class="badge bg-success">Activo</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Inactivo</span>
-                    }
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Información General</h6>
-                            <dl>
-                                <dt>Descripción:</dt>
-                                <dd>@(string.IsNullOrEmpty(Model.Descripcion) ? "Sin descripción" : Model.Descripcion)</dd>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-shield-check text-info me-2"></i>Detalles del Material
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
+    </div>
 
-                                <dt>Unidad de Medida:</dt>
-                                <dd><span class="badge bg-secondary">@Model.AbreviaturaUnidadMedida</span> - @Model.NombreUnidadMedida</dd>
-                            </dl>
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-shield-check display-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3 class="mb-1 fw-bold">@Model.Nombre</h3>
+                                <p class="mb-0 opacity-75">
+                                    <span class="badge bg-light text-info me-2">@Model.AbreviaturaUnidadMedida</span>
+                                    Costo estimado: @Model.CostoUnitarioEstimado.ToString("C2")
+                                </p>
+                            </div>
+                            <div>
+                                @if (Model.Activo)
+                                {
+                                    <span class="badge bg-success fs-6 px-3 py-2">
+                                        <i class="bi bi-check-circle me-1"></i>Activo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger fs-6 px-3 py-2">
+                                        <i class="bi bi-x-circle me-1"></i>Inactivo
+                                    </span>
+                                }
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Datos de Costo e Inventario</h6>
-                            <dl>
-                                <dt>Costo Unitario Estimado:</dt>
-                                <dd class="fs-4 text-success">$@Model.CostoUnitarioEstimado.ToString("N2")</dd>
+                    </div>
 
-                                <dt>Stock Global:</dt>
-                                <dd class="fs-4">@Model.StockGlobal @Model.AbreviaturaUnidadMedida</dd>
-                            </dl>
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-shield-check me-1"></i>Nombre
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.Nombre</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-rulers me-1"></i>Unidad de Medida
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        <span class="badge bg-secondary fs-6 px-3 py-2">@Model.AbreviaturaUnidadMedida</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-currency-dollar me-1"></i>Costo Unitario Estimado
+                                    </label>
+                                    <p class="fs-4 mb-0 fw-bold text-success">@Model.CostoUnitarioEstimado.ToString("C2")</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-box-seam me-1"></i>Stock Global
+                                    </label>
+                                    <p class="fs-4 mb-0">
+                                        @if (Model.StockGlobal > 0)
+                                        {
+                                            <span class="badge bg-info fs-5 px-3 py-2">@Model.StockGlobal @Model.AbreviaturaUnidadMedida</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger fs-6 px-3 py-2">Sin stock</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Descripcion))
+                            {
+                                <div class="col-12">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">
+                                            <i class="bi bi-text-paragraph me-1"></i>Descripción
+                                        </label>
+                                        <p class="mb-0">@Model.Descripcion</p>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-between">
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
                     </a>
-                    <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Editar
+                    <a asp-action="Delete" asp-route-id="@Model.IdMaterial" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="ComprasEPP" asp-action="Create" class="btn btn-outline-success">
+                            <i class="bi bi-cart-plus me-2"></i>Registrar Compra
+                        </a>
+                        <a asp-controller="Inventarios" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="bi bi-boxes me-2"></i>Ver Inventario
+                        </a>
+                        <a asp-controller="ComprasEPP" asp-action="HistorialPrecios" asp-route-idMaterial="@Model.IdMaterial" class="btn btn-outline-secondary">
+                            <i class="bi bi-graph-up me-2"></i>Historial de Precios
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-success-subtle">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-box-seam display-6 text-success"></i>
+                    <h4 class="mt-2 mb-0 text-success fw-bold">@Model.StockGlobal</h4>
+                    <small class="text-muted">@Model.AbreviaturaUnidadMedida en inventario</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
