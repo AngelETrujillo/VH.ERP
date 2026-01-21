@@ -1,96 +1,142 @@
 ﻿@model VH.Services.DTOs.CompraEPPRequestDto
-
 @{
-    ViewData["Title"] = "Nueva Compra de EPP";
+    ViewData["Title"] = "Nueva Compra EPP";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-cart-plus"></i> Registrar Nueva Compra de EPP</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-cart-plus text-primary me-2"></i>Nueva Compra de EPP
+            </h2>
+            <p class="text-muted mb-0">Registre una nueva compra de equipos de protección</p>
+        </div>
+    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="IdMaterial" class="form-label">Material EPP *</label>
-                                <select asp-for="IdMaterial" class="form-select" asp-items="@ViewBag.Materiales">
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Información del Material -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Material y Proveedor</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="IdMaterial" class="form-label fw-semibold">Material EPP <span class="text-danger">*</span></label>
+                                <select asp-for="IdMaterial" class="form-select form-select-lg" asp-items="@ViewBag.Materiales">
                                     <option value="">-- Seleccionar Material --</option>
                                 </select>
-                                <span asp-validation-for="IdMaterial" class="text-danger"></span>
+                                <span asp-validation-for="IdMaterial" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="IdProveedor" class="form-label">Proveedor *</label>
-                                <select asp-for="IdProveedor" class="form-select" asp-items="@ViewBag.Proveedores">
+                            <div class="col-md-6">
+                                <label asp-for="IdProveedor" class="form-label fw-semibold">Proveedor <span class="text-danger">*</span></label>
+                                <select asp-for="IdProveedor" class="form-select form-select-lg" asp-items="@ViewBag.Proveedores">
                                     <option value="">-- Seleccionar Proveedor --</option>
                                 </select>
-                                <span asp-validation-for="IdProveedor" class="text-danger"></span>
+                                <span asp-validation-for="IdProveedor" class="text-danger small"></span>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="IdAlmacen" class="form-label">Almacén Destino *</label>
-                                <select asp-for="IdAlmacen" class="form-select" asp-items="@ViewBag.Almacenes">
+                            <div class="col-md-6">
+                                <label asp-for="IdAlmacen" class="form-label fw-semibold">Almacén Destino <span class="text-danger">*</span></label>
+                                <select asp-for="IdAlmacen" class="form-select form-select-lg" asp-items="@ViewBag.Almacenes">
                                     <option value="">-- Seleccionar Almacén --</option>
                                 </select>
-                                <span asp-validation-for="IdAlmacen" class="text-danger"></span>
+                                <span asp-validation-for="IdAlmacen" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="FechaCompra" class="form-label">Fecha de Compra *</label>
-                                <input asp-for="FechaCompra" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                                <span asp-validation-for="FechaCompra" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <label asp-for="FechaCompra" class="form-label fw-semibold">Fecha de Compra <span class="text-danger">*</span></label>
+                                <input asp-for="FechaCompra" type="date" class="form-control form-control-lg" />
+                                <span asp-validation-for="FechaCompra" class="text-danger small"></span>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="CantidadComprada" class="form-label">Cantidad *</label>
-                                <input asp-for="CantidadComprada" type="number" step="0.01" min="0.01" class="form-control" />
-                                <span asp-validation-for="CantidadComprada" class="text-danger"></span>
+                <!-- Cantidades y Precios -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Cantidad y Precio</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="CantidadComprada" class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
+                                <input asp-for="CantidadComprada" type="number" step="0.01" min="0.01" class="form-control form-control-lg" placeholder="0" id="cantidad" />
+                                <span asp-validation-for="CantidadComprada" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="PrecioUnitario" class="form-label">Precio Unitario *</label>
-                                <div class="input-group">
+                            <div class="col-md-6">
+                                <label asp-for="PrecioUnitario" class="form-label fw-semibold">Precio Unitario <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-lg">
                                     <span class="input-group-text">$</span>
-                                    <input asp-for="PrecioUnitario" type="number" step="0.01" min="0.01" class="form-control" />
+                                    <input asp-for="PrecioUnitario" type="number" step="0.01" min="0.01" class="form-control" placeholder="0.00" id="precio" />
                                 </div>
-                                <span asp-validation-for="PrecioUnitario" class="text-danger"></span>
+                                <span asp-validation-for="PrecioUnitario" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Total</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="text" id="totalCompra" class="form-control" readonly />
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-calculator me-2"></i>Total de la compra:</span>
+                                        <span class="fs-4 fw-bold" id="totalCompra">$0.00</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="NumeroDocumento" class="form-label">Número de Documento/Factura</label>
-                                <input asp-for="NumeroDocumento" class="form-control" placeholder="Ej: FAC-001234" />
+                <!-- Información Adicional -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-secondary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Información Adicional</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="NumeroDocumento" class="form-label fw-semibold">No. Factura / Documento</label>
+                                <input asp-for="NumeroDocumento" class="form-control" placeholder="Ej: FAC-2024-001" />
+                                <span asp-validation-for="NumeroDocumento" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Observaciones" class="form-label fw-semibold">Observaciones</label>
+                                <input asp-for="Observaciones" class="form-control" placeholder="Notas adicionales..." />
+                                <span asp-validation-for="Observaciones" class="text-danger small"></span>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Observaciones" class="form-label">Observaciones</label>
-                            <textarea asp-for="Observaciones" class="form-control" rows="2" placeholder="Observaciones adicionales"></textarea>
-                        </div>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-check-lg me-2"></i>Registrar Compra
+                    </button>
+                </div>
+            </form>
+        </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check-lg"></i> Registrar Compra
-                            </button>
-                        </div>
-                    </form>
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-info-circle me-2"></i>Información
+                    </h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>Los campos con <span class="text-danger">*</span> son obligatorios</li>
+                        <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>El inventario se actualiza automáticamente</li>
+                        <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>Las entregas se harán desde este lote</li>
+                        <li><i class="bi bi-check2 text-success me-2"></i>Se generará alerta si el stock excede el máximo</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -98,23 +144,15 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const cantidad = document.getElementById('CantidadComprada');
-            const precio = document.getElementById('PrecioUnitario');
-            const total = document.getElementById('totalCompra');
-
-            function calcularTotal() {
-                const c = parseFloat(cantidad.value) || 0;
-                const p = parseFloat(precio.value) || 0;
-                total.value = (c * p).toFixed(2);
-            }
-
-            cantidad.addEventListener('input', calcularTotal);
-            precio.addEventListener('input', calcularTotal);
-        });
+        function calcularTotal() {
+            const cantidad = parseFloat(document.getElementById('cantidad').value) || 0;
+            const precio = parseFloat(document.getElementById('precio').value) || 0;
+            const total = cantidad * precio;
+            document.getElementById('totalCompra').textContent = '$' + total.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        document.getElementById('cantidad').addEventListener('input', calcularTotal);
+        document.getElementById('precio').addEventListener('input', calcularTotal);
     </script>
 }

@@ -1,122 +1,267 @@
 ﻿@model IEnumerable<VH.Services.DTOs.CompraEPPResponseDto>
-
 @{
     ViewData["Title"] = "Historial de Precios";
+    var precioPromedio = Model?.Any() == true ? Model.Average(c => c.PrecioUnitario) : 0;
+    var precioMinimo = Model?.Any() == true ? Model.Min(c => c.PrecioUnitario) : 0;
+    var precioMaximo = Model?.Any() == true ? Model.Max(c => c.PrecioUnitario) : 0;
+    var totalComprado = Model?.Any() == true ? Model.Sum(c => c.CantidadComprada) : 0;
+    var totalInvertido = Model?.Any() == true ? Model.Sum(c => c.CostoTotal) : 0;
 }
 
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-graph-up"></i> Historial de Precios: @ViewBag.NombreMaterial</h2>
-        <a asp-action="Index" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Volver
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
         </a>
-    </div>
-
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <input type="hidden" name="idMaterial" value="@ViewBag.IdMaterial" />
-                <div class="col-md-4">
-                    <label class="form-label">Filtrar por Proveedor</label>
-                    <select name="idProveedor" class="form-select">
-                        <option value="">-- Todos los Proveedores --</option>
-                        @foreach (var item in ViewBag.ProveedoresFiltro as List<SelectListItem> ?? new List<SelectListItem>())
-                        {
-                            <option value="@item.Value" selected="@(ViewBag.FiltroProveedor?.ToString() == item.Value)">@item.Text</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="bi bi-search"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Proveedor</th>
-                        <th>Almacén</th>
-                        <th class="text-end">Cantidad</th>
-                        <th class="text-end">Precio Unitario</th>
-                        <th class="text-end">Total</th>
-                        <th>Documento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        decimal? precioAnterior = null;
-                        @foreach (var item in Model.OrderByDescending(c => c.FechaCompra))
-                        {
-                            var variacion = precioAnterior.HasValue
-                            ? ((item.PrecioUnitario - precioAnterior.Value) / precioAnterior.Value) * 100
-                            : 0;
-
-                            <tr>
-                                <td>@item.FechaCompra.ToString("dd/MM/yyyy")</td>
-                                <td>@item.NombreProveedor</td>
-                                <td>@item.NombreAlmacen</td>
-                                <td class="text-end">@item.CantidadComprada.ToString("N2")</td>
-                                <td class="text-end">
-                                    @item.PrecioUnitario.ToString("C2")
-                                    @if (precioAnterior.HasValue && variacion != 0)
-                                    {
-                                        if (variacion > 0)
-                                        {
-                                            <span class="badge bg-danger ms-1">+@variacion.ToString("N1")%</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success ms-1">@variacion.ToString("N1")%</span>
-                                        }
-                                    }
-                                </td>
-                                <td class="text-end">@((item.CantidadComprada * item.PrecioUnitario).ToString("C2"))</td>
-                                <td>@(string.IsNullOrEmpty(item.NumeroDocumento) ? "-" : item.NumeroDocumento)</td>
-                            </tr>
-                            precioAnterior = item.PrecioUnitario;
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                No hay historial de compras para este material
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-graph-up-arrow text-primary me-2"></i>Historial de Precios
+            </h2>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary-subtle text-primary fs-6">@ViewBag.NombreMaterial</span>
+            </p>
         </div>
     </div>
 
     @if (Model != null && Model.Any())
     {
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6>Resumen</h6>
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Total Compras:</strong> @Model.Count()
+        <!-- Tarjetas de Resumen -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="icon-circle-lg bg-primary-subtle text-primary mx-auto mb-3">
+                            <i class="bi bi-cart-check fs-4"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0">@Model.Count()</h3>
+                        <small class="text-muted">Total Compras</small>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Precio Promedio:</strong> @Model.Average(c => c.PrecioUnitario).ToString("C2")
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="icon-circle-lg bg-info-subtle text-info mx-auto mb-3">
+                            <i class="bi bi-calculator fs-4"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0">@precioPromedio.ToString("C2")</h3>
+                        <small class="text-muted">Precio Promedio</small>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Precio Mínimo:</strong> @Model.Min(c => c.PrecioUnitario).ToString("C2")
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="icon-circle-lg bg-success-subtle text-success mx-auto mb-3">
+                            <i class="bi bi-arrow-down-circle fs-4"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0 text-success">@precioMinimo.ToString("C2")</h3>
+                        <small class="text-muted">Precio Mínimo</small>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Precio Máximo:</strong> @Model.Max(c => c.PrecioUnitario).ToString("C2")
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="icon-circle-lg bg-danger-subtle text-danger mx-auto mb-3">
+                            <i class="bi bi-arrow-up-circle fs-4"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0 text-danger">@precioMaximo.ToString("C2")</h3>
+                        <small class="text-muted">Precio Máximo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjetas adicionales -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm bg-gradient-light">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Total Unidades Compradas</h6>
+                                <h2 class="fw-bold mb-0">@totalComprado.ToString("N0")</h2>
+                            </div>
+                            <div class="icon-circle-lg bg-secondary-subtle text-secondary">
+                                <i class="bi bi-boxes fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm bg-success-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Inversión Total</h6>
+                                <h2 class="fw-bold mb-0 text-success">@totalInvertido.ToString("C2")</h2>
+                            </div>
+                            <div class="icon-circle-lg bg-success text-white">
+                                <i class="bi bi-currency-dollar fs-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     }
+
+    <!-- Tabla de Historial -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-clock-history text-primary me-2"></i>Detalle de Compras
+                    </h5>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge bg-secondary">@(Model?.Count() ?? 0) registros</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Fecha</th>
+                            <th>Proveedor</th>
+                            <th>Almacén</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">P. Unitario</th>
+                            <th class="text-center">Variación</th>
+                            <th class="text-end">Total</th>
+                            <th>Documento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            decimal? precioAnterior = null;
+                            @foreach (var item in Model.OrderByDescending(c => c.FechaCompra))
+                            {
+                                var variacion = precioAnterior.HasValue
+                                ? ((item.PrecioUnitario - precioAnterior.Value) / precioAnterior.Value) * 100
+                                : (decimal?)null;
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-circle bg-primary-subtle text-primary me-3">
+                                                <i class="bi bi-calendar3"></i>
+                                            </div>
+                                            <div>
+                                                <span class="fw-semibold">@item.FechaCompra.ToString("dd/MM/yyyy")</span>
+                                                <br><small class="text-muted">@item.FechaCompra.ToString("dddd")</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@item.NombreProveedor</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info-subtle text-info">
+                                            <i class="bi bi-box-seam me-1"></i>@item.NombreAlmacen
+                                        </span>
+                                    </td>
+                                    <td class="text-center fw-semibold">@item.CantidadComprada</td>
+                                    <td class="text-end">
+                                        <span class="fw-bold">@item.PrecioUnitario.ToString("C2")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (variacion.HasValue)
+                                        {
+                                            if (variacion > 0)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">
+                                                    <i class="bi bi-arrow-up"></i> +@variacion.Value.ToString("N1")%
+                                                </span>
+                                            }
+                                            else if (variacion < 0)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">
+                                                    <i class="bi bi-arrow-down"></i> @variacion.Value.ToString("N1")%
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary">
+                                                    <i class="bi bi-dash"></i> 0%
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-muted">Primera</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-success">@item.CostoTotal.ToString("C2")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.NumeroDocumento))
+                                        {
+                                            <code class="bg-light px-2 py-1 rounded small">@item.NumeroDocumento</code>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                                precioAnterior = item.PrecioUnitario;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8">
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-graph-up display-4 text-muted"></i>
+                                        <h5 class="mt-3 text-muted">No hay historial de compras</h5>
+                                        <p class="text-muted">Aún no se han registrado compras para este material</p>
+                                        <a asp-action="Create" class="btn btn-primary">
+                                            <i class="bi bi-plus-lg me-2"></i>Registrar Compra
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón volver -->
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="bi bi-arrow-left me-2"></i>Volver a Compras
+        </a>
+    </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-circle-lg {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .table > tbody > tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>

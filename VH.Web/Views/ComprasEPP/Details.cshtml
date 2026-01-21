@@ -1,89 +1,173 @@
 ﻿@model VH.Services.DTOs.CompraEPPResponseDto
-
 @{
-    ViewData["Title"] = "Detalle de Compra";
+    ViewData["Title"] = "Detalles de Compra";
+    var porcentajeDisponible = Model.CantidadComprada > 0
+        ? (Model.CantidadDisponible / Model.CantidadComprada) * 100 : 0;
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-cart-check text-info me-2"></i>Detalles de Compra
+            </h2>
+            <p class="text-muted mb-0">Información completa del registro</p>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-eye"></i> Detalle de Compra #@Model.IdCompra</h5>
+            <!-- Tarjeta Principal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <!-- Cabecera -->
+                    <div class="bg-info bg-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-lg me-4">
+                                <i class="bi bi-cart-check display-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3 class="mb-1 fw-bold">@Model.NombreMaterial</h3>
+                                <p class="mb-0 opacity-75">
+                                    <i class="bi bi-calendar3 me-1"></i>@Model.FechaCompra.ToString("dd/MM/yyyy")
+                                    @if (!string.IsNullOrEmpty(Model.NumeroDocumento))
+                                    {
+                                        <span class="ms-3"><i class="bi bi-file-text me-1"></i>@Model.NumeroDocumento</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <div class="fs-3 fw-bold">@Model.CostoTotal.ToString("C2")</div>
+                                <small class="opacity-75">Total compra</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles -->
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-shield-check me-1"></i>Material
+                                    </label>
+                                    <p class="fs-5 mb-0 fw-semibold">@Model.NombreMaterial</p>
+                                    <small class="text-muted">@Model.UnidadMedidaMaterial</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-truck me-1"></i>Proveedor
+                                    </label>
+                                    <p class="fs-5 mb-0">@Model.NombreProveedor</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-box-seam me-1"></i>Almacén
+                                    </label>
+                                    <p class="fs-5 mb-0">
+                                        <span class="badge bg-info-subtle text-info fs-6">@Model.NombreAlmacen</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted small text-uppercase fw-semibold">
+                                        <i class="bi bi-calendar3 me-1"></i>Fecha de Compra
+                                    </label>
+                                    <p class="fs-5 mb-0">@Model.FechaCompra.ToString("dddd, dd MMMM yyyy")</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="detail-item text-center">
+                                    <label class="text-muted small text-uppercase fw-semibold">Cantidad</label>
+                                    <p class="fs-4 mb-0 fw-bold">@Model.CantidadComprada</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="detail-item text-center">
+                                    <label class="text-muted small text-uppercase fw-semibold">P. Unitario</label>
+                                    <p class="fs-4 mb-0 fw-bold">@Model.PrecioUnitario.ToString("C2")</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="detail-item text-center bg-success-subtle">
+                                    <label class="text-muted small text-uppercase fw-semibold">Total</label>
+                                    <p class="fs-4 mb-0 fw-bold text-success">@Model.CostoTotal.ToString("C2")</p>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Observaciones))
+                            {
+                                <div class="col-12">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">
+                                            <i class="bi bi-chat-text me-1"></i>Observaciones
+                                        </label>
+                                        <p class="mb-0">@Model.Observaciones</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Información del Material</h6>
-                            <dl>
-                                <dt>Material</dt>
-                                <dd>@Model.NombreMaterial (@Model.UnidadMedidaMaterial)</dd>
-                                <dt>Proveedor</dt>
-                                <dd>@Model.NombreProveedor</dd>
-                                <dt>Almacén</dt>
-                                <dd>@Model.NombreAlmacen</dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Datos de la Compra</h6>
-                            <dl>
-                                <dt>Fecha de Compra</dt>
-                                <dd>@Model.FechaCompra.ToString("dd/MM/yyyy")</dd>
-                                <dt>Cantidad Comprada</dt>
-                                <dd>@Model.CantidadComprada.ToString("N2")</dd>
-                                <dt>Cantidad Disponible</dt>
-                                <dd>
-                                    @if (Model.CantidadDisponible <= 0)
-                                    {
-                                        <span class="badge bg-secondary">Agotado</span>
-                                    }
-                                    else if (Model.CantidadDisponible < Model.CantidadComprada)
-                                    {
-                                        <span class="badge bg-warning text-dark">@Model.CantidadDisponible.ToString("N2")</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-success">@Model.CantidadDisponible.ToString("N2")</span>
-                                    }
-                                </dd>
-                            </dl>
-                        </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.IdCompra" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.IdCompra" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <!-- Estado del lote -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4 text-center">
+                    <h6 class="fw-bold text-secondary mb-3">Estado del Lote</h6>
+                    <div class="mb-3">
+                        <span class="display-5 fw-bold @(Model.CantidadDisponible > 0 ? "text-success" : "text-danger")">
+                            @Model.CantidadDisponible
+                        </span>
+                        <span class="text-muted">/ @Model.CantidadComprada</span>
                     </div>
-
-                    <hr />
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Información Económica</h6>
-                            <dl>
-                                <dt>Precio Unitario</dt>
-                                <dd>@Model.PrecioUnitario.ToString("C2")</dd>
-                                <dt>Total de Compra</dt>
-                                <dd class="fs-5 fw-bold text-primary">@((Model.CantidadComprada * Model.PrecioUnitario).ToString("C2"))</dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Documentación</h6>
-                            <dl>
-                                <dt>Número de Documento</dt>
-                                <dd>@(string.IsNullOrEmpty(Model.NumeroDocumento) ? "No especificado" : Model.NumeroDocumento)</dd>
-                                <dt>Observaciones</dt>
-                                <dd>@(string.IsNullOrEmpty(Model.Observaciones) ? "Sin observaciones" : Model.Observaciones)</dd>
-                            </dl>
-                        </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar @(porcentajeDisponible > 50 ? "bg-success" : porcentajeDisponible > 20 ? "bg-warning" : "bg-danger")"
+                             style="width: @porcentajeDisponible%"></div>
                     </div>
+                    <small class="text-muted mt-2 d-block">
+                        @(Model.TieneDisponible ? $"{porcentajeDisponible:N0}% disponible" : "Lote agotado")
+                    </small>
+                </div>
+            </div>
 
-                    <hr />
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-info mb-3">
+                        <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="EntregasEPP" asp-action="Create" class="btn btn-outline-primary">
+                            <i class="bi bi-clipboard-check me-2"></i>Registrar Entrega
                         </a>
-                        <a asp-action="Edit" asp-route-id="@Model.IdCompra" class="btn btn-warning">
-                            <i class="bi bi-pencil"></i> Editar
-                        </a>
-                        <a asp-action="HistorialPrecios" asp-route-idMaterial="@Model.IdMaterial" class="btn btn-outline-primary">
-                            <i class="bi bi-graph-up"></i> Ver Historial de Precios
+                        <a asp-action="HistorialPrecios" asp-route-idMaterial="@Model.IdMaterial" class="btn btn-outline-secondary">
+                            <i class="bi bi-graph-up me-2"></i>Historial de Precios
                         </a>
                     </div>
                 </div>
@@ -91,3 +175,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    .icon-lg {
+        font-size: 3rem;
+        opacity: 0.9;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>

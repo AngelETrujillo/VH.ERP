@@ -1,68 +1,97 @@
 ﻿@model VH.Services.DTOs.CompraEPPResponseDto
-
 @{
     ViewData["Title"] = "Eliminar Compra";
 }
 
-<div class="container mt-4">
+<div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card shadow border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
-                </div>
-                <div class="card-body">
-                    <p class="lead">¿Está seguro que desea eliminar esta compra?</p>
+        <div class="col-lg-5">
+            <!-- Tarjeta de confirmación -->
+            <div class="card shadow border-0">
+                <div class="card-body p-0">
+                    <!-- Header de advertencia -->
+                    <div class="bg-danger text-white p-4 text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <h3 class="mt-3 mb-0 fw-bold">¿Eliminar Compra?</h3>
+                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
+                    </div>
 
-                    @if (Model.CantidadDisponible != Model.CantidadComprada)
-                    {
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <strong>¡Advertencia!</strong> Esta compra tiene entregas realizadas y no puede ser eliminada.
+                    <!-- Datos de la compra -->
+                    <div class="p-4">
+                        <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
+                            <div class="icon-circle bg-danger text-white me-3">
+                                <i class="bi bi-cart-x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.NombreMaterial</h5>
+                                <small class="text-muted">@Model.FechaCompra.ToString("dd/MM/yyyy") - @Model.NombreProveedor</small>
+                            </div>
                         </div>
-                    }
 
-                    <dl class="row">
-                        <dt class="col-sm-4">Material</dt>
-                        <dd class="col-sm-8">@Model.NombreMaterial</dd>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="text-muted small">Cantidad Comprada</label>
+                                <p class="mb-0 fw-semibold">@Model.CantidadComprada @Model.UnidadMedidaMaterial</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Disponible</label>
+                                <p class="mb-0 fw-semibold">@Model.CantidadDisponible @Model.UnidadMedidaMaterial</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Precio Unitario</label>
+                                <p class="mb-0 fw-semibold">@Model.PrecioUnitario.ToString("C2")</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-muted small">Total</label>
+                                <p class="mb-0 fw-semibold text-success">@Model.CostoTotal.ToString("C2")</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="text-muted small">Almacén</label>
+                                <p class="mb-0 fw-semibold">@Model.NombreAlmacen</p>
+                            </div>
+                        </div>
 
-                        <dt class="col-sm-4">Proveedor</dt>
-                        <dd class="col-sm-8">@Model.NombreProveedor</dd>
-
-                        <dt class="col-sm-4">Almacén</dt>
-                        <dd class="col-sm-8">@Model.NombreAlmacen</dd>
-
-                        <dt class="col-sm-4">Fecha</dt>
-                        <dd class="col-sm-8">@Model.FechaCompra.ToString("dd/MM/yyyy")</dd>
-
-                        <dt class="col-sm-4">Cantidad</dt>
-                        <dd class="col-sm-8">@Model.CantidadComprada.ToString("N2")</dd>
-
-                        <dt class="col-sm-4">Disponible</dt>
-                        <dd class="col-sm-8">@Model.CantidadDisponible.ToString("N2")</dd>
-
-                        <dt class="col-sm-4">Precio Unit.</dt>
-                        <dd class="col-sm-8">@Model.PrecioUnitario.ToString("C2")</dd>
-
-                        <dt class="col-sm-4">Total</dt>
-                        <dd class="col-sm-8 fw-bold">@((Model.CantidadComprada * Model.PrecioUnitario).ToString("C2"))</dd>
-                    </dl>
-
-                    <form asp-action="Delete" asp-route-id="@Model.IdCompra">
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            @if (Model.CantidadDisponible == Model.CantidadComprada)
+                        <!-- Alerta -->
+                        <div class="alert alert-warning border-0 mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Advertencia:</strong>
+                            @if (Model.CantidadDisponible < Model.CantidadComprada)
                             {
-                                <button type="submit" class="btn btn-danger">
-                                    <i class="bi bi-trash"></i> Eliminar
-                                </button>
+                                <span>Este lote tiene entregas registradas. No podrá eliminarse.</span>
+                            }
+                            else
+                            {
+                                <span>Se eliminará el registro y se actualizará el inventario.</span>
                             }
                         </div>
-                    </form>
+
+                        <!-- Botones -->
+                        <form asp-action="Delete" asp-route-id="@Model.IdCompra">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                    <i class="bi bi-x-lg me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-lg px-4"
+                                        @(Model.CantidadDisponible < Model.CantidadComprada ? "disabled" : "")>
+                                    <i class="bi bi-trash me-2"></i>Sí, Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+</style>
