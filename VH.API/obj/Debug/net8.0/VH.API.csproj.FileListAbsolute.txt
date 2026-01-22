@@ -142,3 +142,9 @@ C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\refint\VH.API.dll
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.pdb
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.genruntimeconfig.cache
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\ref\VH.API.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.AspNetCore.Cryptography.Internal.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.Extensions.Identity.Core.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.Extensions.Identity.Stores.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.Extensions.Options.dll

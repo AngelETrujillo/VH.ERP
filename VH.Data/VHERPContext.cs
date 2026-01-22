@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using VH.Services.Entities;
 
 namespace VH.Data
 {
-    public class VHERPContext : DbContext
+    public class VHERPContext : IdentityDbContext<Usuario, Rol, string>
     {
         public VHERPContext(DbContextOptions<VHERPContext> options) : base(options)
         {
@@ -20,6 +21,7 @@ namespace VH.Data
         public DbSet<CompraEPP> ComprasEPP { get; set; }  // ← NUEVA TABLA
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
+        public DbSet<LogActividad> LogsActividad { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -359,6 +361,25 @@ namespace VH.Data
 
                 // Índice para búsquedas por fecha
                 entity.HasIndex(e => e.FechaEntrega);
+            });
+
+            // ===== CONFIGURACIÓN DE LOG ACTIVIDAD =====
+            modelBuilder.Entity<LogActividad>(entity =>
+            {
+                entity.HasKey(l => l.IdLog);
+
+                entity.Property(l => l.Accion).IsRequired().HasMaxLength(100);
+                entity.Property(l => l.Entidad).HasMaxLength(100);
+                entity.Property(l => l.Descripcion).HasMaxLength(500);
+                entity.Property(l => l.DireccionIP).HasMaxLength(50);
+
+                entity.HasOne(l => l.Usuario)
+                    .WithMany(u => u.LogsActividad)
+                    .HasForeignKey(l => l.IdUsuario)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => l.Fecha);
+                entity.HasIndex(l => l.IdUsuario);
             });
         }
     }
