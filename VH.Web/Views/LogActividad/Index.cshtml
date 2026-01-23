@@ -1,0 +1,73 @@
+﻿@model IEnumerable<VH.Services.DTOs.LogActividad.LogActividadResponseDto>
+@{
+    ViewData["Title"] = "Log de Actividad";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-journal-text"></i> Log de Actividad</h4>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Desde</label>
+                <input type="date" name="desde" class="form-control" value="@(ViewBag.Desde?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Hasta</label>
+                <input type="date" name="hasta" class="form-control" value="@(ViewBag.Hasta?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Usuario ID</label>
+                <input type="text" name="userId" class="form-control" value="@ViewBag.UserId" placeholder="ID del usuario" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Entidad</th>
+                        <th>Descripción</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td>@log.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>@log.NombreUsuario</td>
+                            <td>
+                                <span class="badge bg-@(log.Accion switch {
+                                    "Login" => "success",
+                                    "Logout" => "secondary",
+                                    "Crear" => "primary",
+                                    "Actualizar" => "warning",
+                                    "Eliminar" => "danger",
+                                    _ => "info"
+                                })">@log.Accion</span>
+                            </td>
+                            <td>@log.Entidad</td>
+                            <td>@log.Descripcion</td>
+                            <td><small class="text-muted">@log.DireccionIP</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

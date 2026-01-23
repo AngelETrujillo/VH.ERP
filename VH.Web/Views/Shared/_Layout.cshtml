@@ -393,7 +393,7 @@
                 </ul>
             </li>
         </ul>
-
+        
         <p class="sidebar-section-title">Operaciones EPP</p>
         <ul class="sidebar-menu">
             <li>
@@ -414,6 +414,37 @@
                     <span class="menu-text">Control Inventario</span>
                 </a>
             </li>
+        </ul>
+
+        <p class="sidebar-section-title">Administración</p>
+        <ul class="sidebar-menu">
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+            {
+                <li>
+                    <a asp-controller="GestionUsuarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionUsuarios" ? "active" : "")">
+                        <i class="bi bi-people"></i>
+                        <span class="menu-text">Usuarios</span>
+                    </a>
+                </li>
+            }
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                <li>
+                    <a asp-controller="GestionRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionRoles" ? "active" : "")">
+                        <i class="bi bi-shield-lock"></i>
+                        <span class="menu-text">Roles</span>
+                    </a>
+                </li>
+            }
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+            {
+                <li>
+                    <a asp-controller="LogActividad" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "LogActividad" ? "active" : "")">
+                        <i class="bi bi-journal-text"></i>
+                        <span class="menu-text">Log Actividad</span>
+                    </a>
+                </li>
+            }
         </ul>
     </nav>
 
