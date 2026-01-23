@@ -1,0 +1,68 @@
+﻿@model VH.Services.DTOs.Usuario.UsuarioResponseDto
+@{
+    ViewData["Title"] = "Mi Perfil";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-circle"></i> Mi Perfil</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["Mensaje"]</div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Nombre Completo:</div>
+                        <div class="col-md-8">@Model.NombreCompleto</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Usuario:</div>
+                        <div class="col-md-8">@Model.UserName</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Email:</div>
+                        <div class="col-md-8">@Model.Email</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Roles:</div>
+                        <div class="col-md-8">
+                            @foreach (var rol in Model.Roles)
+                            {
+                                <span class="badge bg-info me-1">@rol</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Fecha de Registro:</div>
+                        <div class="col-md-8">@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Último Acceso:</div>
+                        <div class="col-md-8">@(Model.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex gap-2">
+                        <a asp-action="CambiarPassword" class="btn btn-warning">
+                            <i class="bi bi-key"></i> Cambiar Contraseña
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
