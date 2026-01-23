@@ -29,6 +29,7 @@ namespace VH.Data.Repositories
         private IGenericRepository<CompraEPP>? _comprasEPP;  // ← NUEVO
         private IGenericRepository<Inventario>? _inventarios;
         private IGenericRepository<EntregaEPP>? _entregasEPP;
+        private IGenericRepository<LogActividad>? _logsActividad;
 
         public UnitOfWork(VHERPContext context)
         {
@@ -71,19 +72,14 @@ namespace VH.Data.Repositories
         public IGenericRepository<EntregaEPP> EntregasEPP =>
             _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
 
-        // ===== MÉTODOS DE CONTROL =====
+        public IGenericRepository<LogActividad> LogsActividad =>
+            _logsActividad ??= new GenericRepository<LogActividad>(_context);
 
-        /// <summary>
-        /// Persiste todos los cambios pendientes en la base de datos.
-        /// </summary>
+        // ===== MÉTODOS DE CONTROL =====
         public async Task<int> CompleteAsync()
         {
             return await _context.SaveChangesAsync();
         }
-
-        /// <summary>
-        /// Libera los recursos del contexto de base de datos.
-        /// </summary>
         public void Dispose()
         {
             _context.Dispose();
