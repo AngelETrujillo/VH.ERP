@@ -148,3 +148,4 @@ C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\refint\VH.API.dll
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.pdb
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.genruntimeconfig.cache
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\ref\VH.API.dll
+C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
