@@ -65,7 +65,9 @@ namespace VH.Services.Services
                 FechaCreacion = DateTime.UtcNow
             };
 
-            var result = await _userManager.CreateAsync(usuario, request.Password ?? "Temporal123!");
+            var password = string.IsNullOrWhiteSpace(request.Password) ? "Temporal123!" : request.Password;
+            var result = await _userManager.CreateAsync(usuario, password);
+
             if (!result.Succeeded)
                 return (false, string.Join(", ", result.Errors.Select(e => e.Description)), null);
 
