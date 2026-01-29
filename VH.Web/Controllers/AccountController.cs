@@ -73,6 +73,9 @@ namespace VH.Web.Controllers
                 // Guardar token en sesión
                 HttpContext.Session.SetString("JwtToken", result.Token!);
 
+                // Cargar permisos del usuario
+                await CargarPermisosEnSesion(result.Token!);
+
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
 
@@ -177,6 +180,35 @@ namespace VH.Web.Controllers
                 ModelState.AddModelError("", "Error: " + ex.Message);
                 return View(request);
             }
+        }
+
+        private async Task CargarPermisosEnSesion(string token)
+        {
+            try
+            {
+                var client = new HttpClient();
+                client.BaseAddress = new Uri("https://localhost:7088/");
+                client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await client.GetAsync("api/Permisos/mis-permisos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var permisosJson = await response.Content.ReadAsStringAsync();
+                    HttpContext.Session.SetString("PermisosUsuario", permisosJson);
+                }
+            }
+            catch { }
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult VerPermisos()
+        {
+            var permisosJson = HttpContext.Session.GetString("PermisosUsuario");
+            var token = HttpContext.Session.GetString("JwtToken");
+
+            return Content($"Token: {(string.IsNullOrEmpty(token) ? "NO HAY" : "SI HAY")}\n\nPermisos en sesión:\n{permisosJson ?? "NO HAY PERMISOS"}");
         }
     }
 }

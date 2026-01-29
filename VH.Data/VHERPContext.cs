@@ -22,6 +22,8 @@ namespace VH.Data
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
         public DbSet<LogActividad> LogsActividad { get; set; }
+        public DbSet<Modulo> Modulos { get; set; }
+        public DbSet<RolPermiso> RolPermisos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -380,6 +382,43 @@ namespace VH.Data
 
                 entity.HasIndex(l => l.Fecha);
                 entity.HasIndex(l => l.IdUsuario);
+            });
+
+            // ===== CONFIGURACIÓN DE MODULO =====
+            modelBuilder.Entity<Modulo>(entity =>
+            {
+                entity.HasKey(m => m.IdModulo);
+
+                entity.Property(m => m.Codigo).IsRequired().HasMaxLength(50);
+                entity.Property(m => m.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(m => m.Descripcion).HasMaxLength(200);
+                entity.Property(m => m.Icono).HasMaxLength(50);
+                entity.Property(m => m.ControllerName).HasMaxLength(100);
+
+                entity.HasIndex(m => m.Codigo).IsUnique();
+
+                entity.HasOne(m => m.ModuloPadre)
+                    .WithMany(m => m.SubModulos)
+                    .HasForeignKey(m => m.IdModuloPadre)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ===== CONFIGURACIÓN DE ROL PERMISO =====
+            modelBuilder.Entity<RolPermiso>(entity =>
+            {
+                entity.HasKey(rp => rp.IdRolPermiso);
+
+                entity.HasIndex(rp => new { rp.IdRol, rp.IdModulo }).IsUnique();
+
+                entity.HasOne(rp => rp.Rol)
+                    .WithMany(r => r.RolPermisos)
+                    .HasForeignKey(rp => rp.IdRol)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(rp => rp.Modulo)
+                    .WithMany(m => m.RolPermisos)
+                    .HasForeignKey(rp => rp.IdModulo)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

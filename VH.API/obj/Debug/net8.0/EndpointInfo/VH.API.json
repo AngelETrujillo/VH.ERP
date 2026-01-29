@@ -1905,6 +1905,217 @@
         }
       }
     },
+    "/api/Permisos/modulos": {
+      "get": {
+        "tags": [
+          "Permisos"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuloResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuloResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuloResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Permisos/rol/{idRol}": {
+      "get": {
+        "tags": [
+          "Permisos"
+        ],
+        "parameters": [
+          {
+            "name": "idRol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermisosRolResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermisosRolResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermisosRolResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Permisos"
+        ],
+        "parameters": [
+          {
+            "name": "idRol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AsignarPermisoRequestDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AsignarPermisoRequestDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AsignarPermisoRequestDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Permisos/usuario/{userId}": {
+      "get": {
+        "tags": [
+          "Permisos"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Permisos/mis-permisos": {
+      "get": {
+        "tags": [
+          "Permisos"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoModuloDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Proveedores": {
       "get": {
         "tags": [
@@ -2915,6 +3126,32 @@
         },
         "additionalProperties": false
       },
+      "AsignarPermisoRequestDto": {
+        "type": "object",
+        "properties": {
+          "idRol": {
+            "type": "string",
+            "nullable": true
+          },
+          "idModulo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puedeVer": {
+            "type": "boolean"
+          },
+          "puedeCrear": {
+            "type": "boolean"
+          },
+          "puedeEditar": {
+            "type": "boolean"
+          },
+          "puedeEliminar": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "CambioPasswordDto": {
         "required": [
           "confirmarPassword",
@@ -3585,6 +3822,112 @@
           "stockGlobal": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ModuloResponseDto": {
+        "type": "object",
+        "properties": {
+          "idModulo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "icono": {
+            "type": "string",
+            "nullable": true
+          },
+          "controllerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "idModuloPadre": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "nombreModuloPadre": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermisoModuloDto": {
+        "type": "object",
+        "properties": {
+          "idModulo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "icono": {
+            "type": "string",
+            "nullable": true
+          },
+          "idModuloPadre": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "puedeVer": {
+            "type": "boolean"
+          },
+          "puedeCrear": {
+            "type": "boolean"
+          },
+          "puedeEditar": {
+            "type": "boolean"
+          },
+          "puedeEliminar": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermisosRolResponseDto": {
+        "type": "object",
+        "properties": {
+          "idRol": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreRol": {
+            "type": "string",
+            "nullable": true
+          },
+          "permisos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermisoModuloDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

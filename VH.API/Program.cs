@@ -127,6 +127,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<ILogActividadService, LogActividadService>();
+builder.Services.AddScoped<IPermisoService, PermisoService>();
 
 // 10. CORS
 builder.Services.AddCors(options =>
@@ -146,7 +147,10 @@ using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Rol>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+    var context = scope.ServiceProvider.GetRequiredService<VHERPContext>();
+
     await VH.Data.Seeders.IdentitySeeder.SeedAsync(roleManager, userManager);
+    await VH.Data.Seeders.ModuloSeeder.SeedAsync(context);
 }
 
 // ===== CONFIGURACIÓN DEL PIPELINE =====

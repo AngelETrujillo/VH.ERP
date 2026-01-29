@@ -9,5 +9,6 @@ namespace VH.Services.Entities
         public string? Descripcion { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public virtual ICollection<RolPermiso> RolPermisos { get; set; } = new List<RolPermiso>();
     }
 }

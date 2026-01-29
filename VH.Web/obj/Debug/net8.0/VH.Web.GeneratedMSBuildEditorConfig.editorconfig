@@ -126,6 +126,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW50cmVnYXNFUFBcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/GestionPermisos/Asignar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2VzdGlvblBlcm1pc29zXEFzaWduYXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/GestionPermisos/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2VzdGlvblBlcm1pc29zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/GestionRoles/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2VzdGlvblJvbGVzXENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 

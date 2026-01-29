@@ -962,6 +962,119 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "VH.API.Controllers.PermisosController",
+    "Method": "GetMisPermisos",
+    "RelativePath": "api/Permisos/mis-permisos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[VH.Services.DTOs.Permiso.PermisoModuloDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PermisosController",
+    "Method": "GetModulos",
+    "RelativePath": "api/Permisos/modulos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[VH.Services.DTOs.Modulo.ModuloResponseDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PermisosController",
+    "Method": "GetPermisosByRol",
+    "RelativePath": "api/Permisos/rol/{idRol}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idRol",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "VH.Services.DTOs.Permiso.PermisosRolResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PermisosController",
+    "Method": "AsignarPermisos",
+    "RelativePath": "api/Permisos/rol/{idRol}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idRol",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "permisos",
+        "Type": "System.Collections.Generic.List\u00601[[VH.Services.DTOs.Permiso.AsignarPermisoRequestDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PermisosController",
+    "Method": "GetPermisosUsuario",
+    "RelativePath": "api/Permisos/usuario/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[VH.Services.DTOs.Permiso.PermisoModuloDto, VH.Services, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "VH.API.Controllers.ProveedoresController",
     "Method": "GetAll",
     "RelativePath": "api/Proveedores",

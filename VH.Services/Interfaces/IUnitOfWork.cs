@@ -25,6 +25,9 @@ namespace VH.Services.Interfaces
         IGenericRepository<EntregaEPP> EntregasEPP { get; }
         IGenericRepository<LogActividad> LogsActividad { get; }
 
+        IGenericRepository<Modulo> Modulos { get; }
+        IGenericRepository<RolPermiso> RolPermisos { get; }
+
         // ===== MÉTODO DE PERSISTENCIA =====
         Task<int> CompleteAsync();
     }

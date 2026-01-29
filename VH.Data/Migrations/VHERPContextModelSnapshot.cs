@@ -470,6 +470,55 @@ namespace VH.Data.Migrations
                     b.ToTable("MaterialesEPP");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.Modulo", b =>
+                {
+                    b.Property<int>("IdModulo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdModulo"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ControllerName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Icono")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("IdModuloPadre")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdModulo");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.HasIndex("IdModuloPadre");
+
+                    b.ToTable("Modulos");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.Proveedor", b =>
                 {
                     b.Property<int>("IdProveedor")
@@ -573,6 +622,43 @@ namespace VH.Data.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.RolPermiso", b =>
+                {
+                    b.Property<int>("IdRolPermiso")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdRolPermiso"));
+
+                    b.Property<int>("IdModulo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IdRol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("PuedeCrear")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeEditar")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeEliminar")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeVer")
+                        .HasColumnType("bit");
+
+                    b.HasKey("IdRolPermiso");
+
+                    b.HasIndex("IdModulo");
+
+                    b.HasIndex("IdRol", "IdModulo")
+                        .IsUnique();
+
+                    b.ToTable("RolPermisos");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.UnidadMedida", b =>
@@ -883,6 +969,35 @@ namespace VH.Data.Migrations
                     b.Navigation("UnidadMedida");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.Modulo", b =>
+                {
+                    b.HasOne("VH.Services.Entities.Modulo", "ModuloPadre")
+                        .WithMany("SubModulos")
+                        .HasForeignKey("IdModuloPadre")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ModuloPadre");
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.RolPermiso", b =>
+                {
+                    b.HasOne("VH.Services.Entities.Modulo", "Modulo")
+                        .WithMany("RolPermisos")
+                        .HasForeignKey("IdModulo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.Rol", "Rol")
+                        .WithMany("RolPermisos")
+                        .HasForeignKey("IdRol")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Modulo");
+
+                    b.Navigation("Rol");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.Almacen", b =>
                 {
                     b.Navigation("Compras");
@@ -902,6 +1017,13 @@ namespace VH.Data.Migrations
                     b.Navigation("Inventarios");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.Modulo", b =>
+                {
+                    b.Navigation("RolPermisos");
+
+                    b.Navigation("SubModulos");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.Proveedor", b =>
                 {
                     b.Navigation("Compras");
@@ -914,6 +1036,11 @@ namespace VH.Data.Migrations
                     b.Navigation("ConceptosPartidas");
 
                     b.Navigation("Empleados");
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.Rol", b =>
+                {
+                    b.Navigation("RolPermisos");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.Usuario", b =>

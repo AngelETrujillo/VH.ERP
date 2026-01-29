@@ -1,0 +1,119 @@
+﻿@model VH.Services.DTOs.Permiso.PermisosRolResponseDto
+@{
+    ViewData["Title"] = $"Permisos - {Model.NombreRol}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-key"></i> Permisos del Rol: <span class="text-primary">@Model.NombreRol</span></h4>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Asignar" asp-route-id="@Model.IdRol" method="post">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Módulo</th>
+                            <th class="text-center" width="100">Ver</th>
+                            <th class="text-center" width="100">Crear</th>
+                            <th class="text-center" width="100">Editar</th>
+                            <th class="text-center" width="100">Eliminar</th>
+                            <th class="text-center" width="100">Todos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var index = 0;
+                        }
+                        @foreach (var permiso in Model.Permisos)
+                        {
+                            var esPadre = Model.Permisos.Any(p => p.IdModuloPadre == permiso.IdModulo);
+                            var esHijo = permiso.IdModuloPadre.HasValue;
+                            <tr class="@(esPadre ? "table-secondary fw-bold" : "")">
+                                <td class="@(esHijo ? "ps-5" : "")">
+                                    @if (esHijo)
+                                    {
+                                        <i class="bi bi-arrow-return-right me-2 text-muted"></i>
+                                    }
+                                    @if (!string.IsNullOrEmpty(permiso.Icono))
+                                    {
+                                        <i class="bi @permiso.Icono me-2"></i>
+                                    }
+                                    @permiso.Nombre
+                                    <input type="hidden" name="permisos[@index].IdModulo" value="@permiso.IdModulo" />
+                                    <input type="hidden" name="permisos[@index].IdRol" value="@Model.IdRol" />
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input permiso-check"
+                                           name="permisos[@index].PuedeVer" value="true"
+                                           @(permiso.PuedeVer ? "checked" : "") data-row="@index" data-type="ver" />
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input permiso-check"
+                                           name="permisos[@index].PuedeCrear" value="true"
+                                           @(permiso.PuedeCrear ? "checked" : "") data-row="@index" data-type="crear" />
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input permiso-check"
+                                           name="permisos[@index].PuedeEditar" value="true"
+                                           @(permiso.PuedeEditar ? "checked" : "") data-row="@index" data-type="editar" />
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input permiso-check"
+                                           name="permisos[@index].PuedeEliminar" value="true"
+                                           @(permiso.PuedeEliminar ? "checked" : "") data-row="@index" data-type="eliminar" />
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input check-all-row" data-row="@index"
+                                           @(permiso.PuedeVer && permiso.PuedeCrear && permiso.PuedeEditar && permiso.PuedeEliminar ? "checked" : "") />
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <hr />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> Guardar Permisos
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Marcar/desmarcar todos los permisos de una fila
+            document.querySelectorAll('.check-all-row').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const row = this.dataset.row;
+                    const checked = this.checked;
+                    document.querySelectorAll(`.permiso-check[data-row="${row}"]`).forEach(function (cb) {
+                        cb.checked = checked;
+                    });
+                });
+            });
+
+            // Actualizar checkbox "Todos" cuando cambian los individuales
+            document.querySelectorAll('.permiso-check').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const row = this.dataset.row;
+                    const allChecks = document.querySelectorAll(`.permiso-check[data-row="${row}"]`);
+                    const allChecked = Array.from(allChecks).every(cb => cb.checked);
+                    document.querySelector(`.check-all-row[data-row="${row}"]`).checked = allChecked;
+                });
+            });
+        });
+    </script>
+}

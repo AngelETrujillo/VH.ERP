@@ -30,6 +30,8 @@ namespace VH.Data.Repositories
         private IGenericRepository<Inventario>? _inventarios;
         private IGenericRepository<EntregaEPP>? _entregasEPP;
         private IGenericRepository<LogActividad>? _logsActividad;
+        private IGenericRepository<Modulo>? _modulos;
+        private IGenericRepository<RolPermiso>? _rolPermisos;
 
         public UnitOfWork(VHERPContext context)
         {
@@ -73,7 +75,13 @@ namespace VH.Data.Repositories
             _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
 
         public IGenericRepository<LogActividad> LogsActividad =>
-            _logsActividad ??= new GenericRepository<LogActividad>(_context);
+    _logsActividad ??= new GenericRepository<LogActividad>(_context);
+
+        public IGenericRepository<Modulo> Modulos =>
+            _modulos ??= new GenericRepository<Modulo>(_context);
+
+        public IGenericRepository<RolPermiso> RolPermisos =>
+            _rolPermisos ??= new GenericRepository<RolPermiso>(_context);
 
         // ===== MÉTODOS DE CONTROL =====
         public async Task<int> CompleteAsync()
