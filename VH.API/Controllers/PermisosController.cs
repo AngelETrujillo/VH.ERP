@@ -65,7 +65,7 @@ namespace VH.API.Controllers
         }
 
         [HttpGet("mis-permisos")]
-        [Authorize(Roles = "SuperAdmin,Administrador,Almacenista,Consulta")]
+        [Authorize]
         public async Task<ActionResult<List<PermisoModuloDto>>> GetMisPermisos()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -186,19 +186,25 @@ namespace VH.Web.Controllers
         {
             try
             {
-                var client = new HttpClient();
-                client.BaseAddress = new Uri("https://localhost:7088/");
-                client.DefaultRequestHeaders.Authorization =
+                _httpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-                var response = await client.GetAsync("api/Permisos/mis-permisos");
+                var response = await _httpClient.GetAsync("api/Permisos/mis-permisos");
                 if (response.IsSuccessStatusCode)
                 {
                     var permisosJson = await response.Content.ReadAsStringAsync();
                     HttpContext.Session.SetString("PermisosUsuario", permisosJson);
                 }
+                else
+                {
+                    // Si falla, guardar lista vacía para evitar errores
+                    HttpContext.Session.SetString("PermisosUsuario", "[]");
+                }
             }
-            catch { }
+            catch
+            {
+                HttpContext.Session.SetString("PermisosUsuario", "[]");
+            }
         }
 
         [Authorize]

@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
+using VH.Web.Filters;
 
 namespace VH.Web.Controllers
 {
+    [Authorize]
+    [RequierePermiso("ALMACENES", "ver")]
     public class AlmacenesController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -15,12 +19,24 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
         // GET: Almacenes
         public async Task<IActionResult> Index()
         {
+            SetAuthHeader();
             try
             {
                 var response = await _httpClient.GetAsync("api/almacenes");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
                 response.EnsureSuccessStatusCode();
                 var almacenes = await response.Content.ReadFromJsonAsync<IEnumerable<AlmacenResponseDto>>();
                 return View(almacenes);
@@ -34,8 +50,10 @@ namespace VH.Web.Controllers
         }
 
         // GET: Almacenes/Create
+        [RequierePermiso("ALMACENES", "crear")]
         public async Task<IActionResult> Create()
         {
+            SetAuthHeader();
             await CargarProyectosEnViewBag();
             return View();
         }
@@ -43,19 +61,22 @@ namespace VH.Web.Controllers
         // POST: Almacenes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ALMACENES", "crear")]
         public async Task<IActionResult> Create(AlmacenRequestDto dto)
         {
             if (ModelState.IsValid)
             {
+                SetAuthHeader();
                 try
                 {
                     var response = await _httpClient.PostAsJsonAsync("api/almacenes", dto);
                     if (response.IsSuccessStatusCode)
                     {
+                        TempData["Mensaje"] = "Almacén creado exitosamente";
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    ModelState.AddModelError("", error);
                 }
                 catch (Exception ex)
                 {
@@ -68,109 +89,54 @@ namespace VH.Web.Controllers
         }
 
         // GET: Almacenes/Edit/5
+        [RequierePermiso("ALMACENES", "editar")]
         public async Task<IActionResult> Edit(int id)
         {
-            try
-            {
-                var almacen = await _httpClient.GetFromJsonAsync<AlmacenResponseDto>($"api/almacenes/{id}");
-                if (almacen == null) return NotFound();
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/almacenes/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-                var dto = new AlmacenRequestDto(
-                    almacen.Nombre,
-                    almacen.Descripcion,
-                    almacen.Domicilio,
-                    almacen.TipoUbicacion,
-                    almacen.Activo,
-                    almacen.IdProyecto
-                );
-
-                await CargarProyectosEnViewBag();
-                ViewBag.Id = id;
-                return View(dto);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            var almacen = await response.Content.ReadFromJsonAsync<AlmacenResponseDto>();
+            await CargarProyectosEnViewBag();
+            ViewBag.IdAlmacen = id;
+            return View(almacen);
         }
 
         // POST: Almacenes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ALMACENES", "editar")]
         public async Task<IActionResult> Edit(int id, AlmacenRequestDto dto)
         {
             if (ModelState.IsValid)
             {
-                try
+                SetAuthHeader();
+                var response = await _httpClient.PutAsJsonAsync($"api/almacenes/{id}", dto);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await _httpClient.PutAsJsonAsync($"api/almacenes/{id}", dto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return RedirectToAction(nameof(Index));
-                    }
-                    ModelState.AddModelError("", "Error al actualizar");
+                    TempData["Mensaje"] = "Almacén actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al actualizar almacén");
-                    ModelState.AddModelError("", "Error al actualizar");
-                }
+                ModelState.AddModelError("", "Error al actualizar");
             }
             await CargarProyectosEnViewBag();
-            ViewBag.Id = id;
+            ViewBag.IdAlmacen = id;
             return View(dto);
         }
 
-        // GET: Almacenes/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            try
-            {
-                var almacen = await _httpClient.GetFromJsonAsync<AlmacenResponseDto>($"api/almacenes/{id}");
-                if (almacen == null) return NotFound();
-                return View(almacen);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
-        // GET: Almacenes/Delete/5
+        // POST: Almacenes/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("ALMACENES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var almacen = await _httpClient.GetFromJsonAsync<AlmacenResponseDto>($"api/almacenes/{id}");
-                if (almacen == null) return NotFound();
-                return View(almacen);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
+            SetAuthHeader();
+            var response = await _httpClient.DeleteAsync($"api/almacenes/{id}");
+            if (response.IsSuccessStatusCode)
+                TempData["Mensaje"] = "Almacén eliminado";
+            else
+                TempData["Error"] = "No se pudo eliminar el almacén";
 
-        // POST: Almacenes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/almacenes/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["ErrorMessage"] = $"No se pudo eliminar: {error}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al eliminar almacén");
-                TempData["ErrorMessage"] = "Error al eliminar el almacén";
-            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -178,16 +144,20 @@ namespace VH.Web.Controllers
         {
             try
             {
-                var proyectos = await _httpClient.GetFromJsonAsync<IEnumerable<ProyectoResponseDto>>("api/proyectos");
-                ViewBag.Proyectos = proyectos?.Select(p => new SelectListItem
+                var response = await _httpClient.GetAsync("api/proyectos");
+                if (response.IsSuccessStatusCode)
                 {
-                    Value = p.IdProyecto.ToString(),
-                    Text = p.Nombre
-                }).ToList() ?? new List<SelectListItem>();
+                    var proyectos = await response.Content.ReadFromJsonAsync<IEnumerable<ProyectoResponseDto>>();
+                    ViewBag.Proyectos = new SelectList(proyectos, "IdProyecto", "Nombre");
+                }
+                else
+                {
+                    ViewBag.Proyectos = new SelectList(new List<ProyectoResponseDto>(), "IdProyecto", "Nombre");
+                }
             }
             catch
             {
-                ViewBag.Proyectos = new List<SelectListItem>();
+                ViewBag.Proyectos = new SelectList(new List<ProyectoResponseDto>(), "IdProyecto", "Nombre");
             }
         }
     }

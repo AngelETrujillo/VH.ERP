@@ -1,9 +1,12 @@
-﻿// VH.Web/Controllers/ProveedoresController.cs
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VH.Services.DTOs;
+using VH.Web.Filters;
 
 namespace VH.Web.Controllers
 {
+    [Authorize]
+    [RequierePermiso("PROVEEDORES", "ver")]
     public class ProveedoresController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -15,12 +18,24 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
         // GET: Proveedores
         public async Task<IActionResult> Index()
         {
+            SetAuthHeader();
             try
             {
                 var response = await _httpClient.GetAsync("api/proveedores");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
                 response.EnsureSuccessStatusCode();
                 var proveedores = await response.Content.ReadFromJsonAsync<IEnumerable<ProveedorResponseDto>>();
                 return View(proveedores);
@@ -34,6 +49,7 @@ namespace VH.Web.Controllers
         }
 
         // GET: Proveedores/Create
+        [RequierePermiso("PROVEEDORES", "crear")]
         public IActionResult Create()
         {
             return View();
@@ -42,19 +58,22 @@ namespace VH.Web.Controllers
         // POST: Proveedores/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("PROVEEDORES", "crear")]
         public async Task<IActionResult> Create(ProveedorRequestDto proveedorDto)
         {
             if (ModelState.IsValid)
             {
+                SetAuthHeader();
                 try
                 {
                     var response = await _httpClient.PostAsJsonAsync("api/proveedores", proveedorDto);
                     if (response.IsSuccessStatusCode)
                     {
+                        TempData["Mensaje"] = "Proveedor creado exitosamente";
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    ModelState.AddModelError("", error);
                 }
                 catch (Exception ex)
                 {
@@ -65,106 +84,56 @@ namespace VH.Web.Controllers
             return View(proveedorDto);
         }
 
-        // GET: Proveedores/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            try
-            {
-                var proveedor = await _httpClient.GetFromJsonAsync<ProveedorResponseDto>($"api/proveedores/{id}");
-                if (proveedor == null) return NotFound();
-                return View(proveedor);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
         // GET: Proveedores/Edit/5
+        [RequierePermiso("PROVEEDORES", "editar")]
         public async Task<IActionResult> Edit(int id)
         {
-            try
-            {
-                var proveedor = await _httpClient.GetFromJsonAsync<ProveedorResponseDto>($"api/proveedores/{id}");
-                if (proveedor == null) return NotFound();
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/proveedores/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-                // Convertir a RequestDto
-                var dto = new ProveedorRequestDto(
-                    proveedor.Nombre,
-                    proveedor.RFC,
-                    proveedor.Contacto,
-                    proveedor.Telefono,
-                    proveedor.Activo
-                );
-                ViewBag.Id = id;
-                return View(dto);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            var proveedor = await response.Content.ReadFromJsonAsync<ProveedorResponseDto>();
+            var dto = new ProveedorRequestDto(
+                proveedor!.Nombre,
+                proveedor.RFC,
+                proveedor.Contacto ?? "",
+                proveedor.Telefono ?? "",
+                true
+            );
+            ViewBag.IdProveedor = id;
+            return View(dto);
         }
 
         // POST: Proveedores/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("PROVEEDORES", "editar")]
         public async Task<IActionResult> Edit(int id, ProveedorRequestDto proveedorDto)
         {
             if (ModelState.IsValid)
             {
-                try
+                SetAuthHeader();
+                var response = await _httpClient.PutAsJsonAsync($"api/proveedores/{id}", proveedorDto);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await _httpClient.PutAsJsonAsync($"api/proveedores/{id}", proveedorDto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return RedirectToAction(nameof(Index));
-                    }
-                    ModelState.AddModelError("", "Error al actualizar");
+                    TempData["Mensaje"] = "Proveedor actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al actualizar el proveedor");
-                    ModelState.AddModelError("", "Error al actualizar: " + ex.Message);
-                }
+                ModelState.AddModelError("", "Error al actualizar");
             }
-            ViewBag.Id = id;
+            ViewBag.IdProveedor = id;
             return View(proveedorDto);
         }
 
-        // GET: Proveedores/Delete/5
+        // POST: Proveedores/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("PROVEEDORES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var proveedor = await _httpClient.GetFromJsonAsync<ProveedorResponseDto>($"api/proveedores/{id}");
-                if (proveedor == null) return NotFound();
-                return View(proveedor);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
-        // POST: Proveedores/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/proveedores/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                TempData["ErrorMessage"] = "No se pudo eliminar el proveedor";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al eliminar proveedor");
-                TempData["ErrorMessage"] = "Error al eliminar";
-            }
+            SetAuthHeader();
+            await _httpClient.DeleteAsync($"api/proveedores/{id}");
+            TempData["Mensaje"] = "Proveedor eliminado";
             return RedirectToAction(nameof(Index));
         }
     }

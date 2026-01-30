@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
+using VH.Web.Filters;
 
 namespace VH.Web.Controllers
 {
+    [Authorize]
+    [RequierePermiso("INVENTARIOS", "ver")]
     public class InventariosController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -15,12 +19,24 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
         // GET: Inventarios
         public async Task<IActionResult> Index()
         {
+            SetAuthHeader();
             try
             {
                 var response = await _httpClient.GetAsync("api/inventarios");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
                 response.EnsureSuccessStatusCode();
                 var inventarios = await response.Content.ReadFromJsonAsync<IEnumerable<InventarioResponseDto>>();
                 return View(inventarios);
@@ -34,8 +50,10 @@ namespace VH.Web.Controllers
         }
 
         // GET: Inventarios/Create
+        [RequierePermiso("INVENTARIOS", "crear")]
         public async Task<IActionResult> Create()
         {
+            SetAuthHeader();
             await CargarListasEnViewBag();
             return View();
         }
@@ -43,135 +61,92 @@ namespace VH.Web.Controllers
         // POST: Inventarios/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("INVENTARIOS", "crear")]
         public async Task<IActionResult> Create(InventarioRequestDto dto)
         {
             if (ModelState.IsValid)
             {
+                SetAuthHeader();
                 try
                 {
                     var response = await _httpClient.PostAsJsonAsync("api/inventarios", dto);
                     if (response.IsSuccessStatusCode)
                     {
+                        TempData["Mensaje"] = "Inventario creado exitosamente";
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    ModelState.AddModelError("", error);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error al crear inventario");
-                    ModelState.AddModelError("", "Error al crear el registro de inventario");
+                    ModelState.AddModelError("", "Error al crear el inventario");
                 }
             }
             await CargarListasEnViewBag();
             return View(dto);
         }
 
-        // GET: Inventarios/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            try
-            {
-                var inventario = await _httpClient.GetFromJsonAsync<InventarioResponseDto>($"api/inventarios/{id}");
-                if (inventario == null) return NotFound();
-                return View(inventario);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
         // GET: Inventarios/Edit/5
+        [RequierePermiso("INVENTARIOS", "editar")]
         public async Task<IActionResult> Edit(int id)
         {
-            try
-            {
-                var inventario = await _httpClient.GetFromJsonAsync<InventarioResponseDto>($"api/inventarios/{id}");
-                if (inventario == null) return NotFound();
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/inventarios/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-                var dto = new InventarioRequestDto(
-                    inventario.IdAlmacen,
-                    inventario.IdMaterial,
-                    inventario.StockMinimo,
-                    inventario.StockMaximo,
-                    inventario.UbicacionPasillo
-                );
+            var inventario = await response.Content.ReadFromJsonAsync<InventarioResponseDto>();
 
-                await CargarListasEnViewBag();
-                ViewBag.Id = id;
-                ViewBag.NombreAlmacen = inventario.NombreAlmacen;
-                ViewBag.NombreMaterial = inventario.NombreMaterial;
-                return View(dto);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            ViewBag.IdInventario = id;
+            ViewBag.NombreAlmacen = inventario?.NombreAlmacen;
+            ViewBag.NombreMaterial = inventario?.NombreMaterial;
+
+            var dto = new InventarioRequestDto(
+                inventario!.IdAlmacen,
+                inventario.IdMaterial,
+                inventario.StockMinimo,
+                inventario.StockMaximo,
+                inventario.UbicacionPasillo
+            );
+
+            return View(dto);
         }
 
         // POST: Inventarios/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("INVENTARIOS", "editar")]
         public async Task<IActionResult> Edit(int id, InventarioRequestDto dto)
         {
             if (ModelState.IsValid)
             {
-                try
+                SetAuthHeader();
+                var response = await _httpClient.PutAsJsonAsync($"api/inventarios/{id}", dto);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await _httpClient.PutAsJsonAsync($"api/inventarios/{id}", dto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return RedirectToAction(nameof(Index));
-                    }
-                    var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    TempData["Mensaje"] = "Inventario actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al actualizar inventario");
-                    ModelState.AddModelError("", "Error al actualizar");
-                }
+                ModelState.AddModelError("", "Error al actualizar");
             }
-            await CargarListasEnViewBag();
-            ViewBag.Id = id;
+            ViewBag.IdInventario = id;
             return View(dto);
         }
 
-        // GET: Inventarios/Delete/5
+        // POST: Inventarios/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("INVENTARIOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var inventario = await _httpClient.GetFromJsonAsync<InventarioResponseDto>($"api/inventarios/{id}");
-                if (inventario == null) return NotFound();
-                return View(inventario);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
+            SetAuthHeader();
+            var response = await _httpClient.DeleteAsync($"api/inventarios/{id}");
+            if (response.IsSuccessStatusCode)
+                TempData["Mensaje"] = "Inventario eliminado";
+            else
+                TempData["Error"] = "No se pudo eliminar el inventario";
 
-        // POST: Inventarios/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/inventarios/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                TempData["ErrorMessage"] = "No se pudo eliminar el registro";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al eliminar inventario");
-                TempData["ErrorMessage"] = "Error al eliminar";
-            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -179,24 +154,32 @@ namespace VH.Web.Controllers
         {
             try
             {
-                var almacenes = await _httpClient.GetFromJsonAsync<IEnumerable<AlmacenResponseDto>>("api/almacenes");
-                ViewBag.Almacenes = almacenes?.Where(a => a.Activo).Select(a => new SelectListItem
+                var almacenesResponse = await _httpClient.GetAsync("api/almacenes");
+                if (almacenesResponse.IsSuccessStatusCode)
                 {
-                    Value = a.IdAlmacen.ToString(),
-                    Text = $"{a.Nombre} ({a.NombreProyecto})"
-                }).ToList() ?? new List<SelectListItem>();
+                    var almacenes = await almacenesResponse.Content.ReadFromJsonAsync<IEnumerable<AlmacenResponseDto>>();
+                    ViewBag.Almacenes = new SelectList(almacenes, "IdAlmacen", "Nombre");
+                }
+                else
+                {
+                    ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
+                }
 
-                var materiales = await _httpClient.GetFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>("api/materiales");
-                ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
+                var materialesResponse = await _httpClient.GetAsync("api/materiales");
+                if (materialesResponse.IsSuccessStatusCode)
                 {
-                    Value = m.IdMaterial.ToString(),
-                    Text = $"{m.Nombre} ({m.AbreviaturaUnidadMedida})"
-                }).ToList() ?? new List<SelectListItem>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    ViewBag.Materiales = new SelectList(materiales, "IdMaterial", "Nombre");
+                }
+                else
+                {
+                    ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
+                }
             }
             catch
             {
-                ViewBag.Almacenes = new List<SelectListItem>();
-                ViewBag.Materiales = new List<SelectListItem>();
+                ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
+                ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
             }
         }
     }

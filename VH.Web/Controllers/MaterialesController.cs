@@ -1,10 +1,13 @@
-﻿// VH.Web/Controllers/MaterialesController.cs
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
+using VH.Web.Filters;
 
 namespace VH.Web.Controllers
 {
+    [Authorize]
+    [RequierePermiso("MATERIALES_EPP", "ver")]
     public class MaterialesController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -16,12 +19,24 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
         // GET: Materiales
         public async Task<IActionResult> Index()
         {
+            SetAuthHeader();
             try
             {
                 var response = await _httpClient.GetAsync("api/materiales");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
                 response.EnsureSuccessStatusCode();
                 var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
                 return View(materiales);
@@ -35,8 +50,10 @@ namespace VH.Web.Controllers
         }
 
         // GET: Materiales/Create
+        [RequierePermiso("MATERIALES_EPP", "crear")]
         public async Task<IActionResult> Create()
         {
+            SetAuthHeader();
             await CargarUnidadesMedidaEnViewBag();
             return View();
         }
@@ -44,19 +61,22 @@ namespace VH.Web.Controllers
         // POST: Materiales/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("MATERIALES_EPP", "crear")]
         public async Task<IActionResult> Create(MaterialEPPRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
+                SetAuthHeader();
                 try
                 {
                     var response = await _httpClient.PostAsJsonAsync("api/materiales", materialDto);
                     if (response.IsSuccessStatusCode)
                     {
+                        TempData["Mensaje"] = "Material creado exitosamente";
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    ModelState.AddModelError("", error);
                 }
                 catch (Exception ex)
                 {
@@ -68,129 +88,76 @@ namespace VH.Web.Controllers
             return View(materialDto);
         }
 
-        // GET: Materiales/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            try
-            {
-                var material = await _httpClient.GetFromJsonAsync<MaterialEPPResponseDto>($"api/materiales/{id}");
-                if (material == null) return NotFound();
-                return View(material);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
         // GET: Materiales/Edit/5
+        [RequierePermiso("MATERIALES_EPP", "editar")]
         public async Task<IActionResult> Edit(int id)
         {
-            try
-            {
-                var material = await _httpClient.GetFromJsonAsync<MaterialEPPResponseDto>($"api/materiales/{id}");
-                if (material == null) return NotFound();
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/materiales/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-                // Convertir a RequestDto
-                var dto = new MaterialEPPRequestDto(
-                    material.Nombre,
-                    material.Descripcion,
-                    material.IdUnidadMedida,
-                    material.CostoUnitarioEstimado,
-                    material.Activo
-                );
-
-                await CargarUnidadesMedidaEnViewBag();
-                ViewBag.Id = id;
-                return View(dto);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            await CargarUnidadesMedidaEnViewBag();
+            ViewBag.IdMaterial = id;
+            return View(material);
         }
 
         // POST: Materiales/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("MATERIALES_EPP", "editar")]
         public async Task<IActionResult> Edit(int id, MaterialEPPRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
-                try
+                SetAuthHeader();
+                var response = await _httpClient.PutAsJsonAsync($"api/materiales/{id}", materialDto);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await _httpClient.PutAsJsonAsync($"api/materiales/{id}", materialDto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return RedirectToAction(nameof(Index));
-                    }
-                    var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error: {error}");
+                    TempData["Mensaje"] = "Material actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al actualizar material");
-                    ModelState.AddModelError("", "Error al actualizar");
-                }
+                ModelState.AddModelError("", "Error al actualizar");
             }
             await CargarUnidadesMedidaEnViewBag();
-            ViewBag.Id = id;
+            ViewBag.IdMaterial = id;
             return View(materialDto);
         }
 
-        // GET: Materiales/Delete/5
+        // POST: Materiales/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("MATERIALES_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var material = await _httpClient.GetFromJsonAsync<MaterialEPPResponseDto>($"api/materiales/{id}");
-                if (material == null) return NotFound();
-                return View(material);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
+            SetAuthHeader();
+            var response = await _httpClient.DeleteAsync($"api/materiales/{id}");
+            if (response.IsSuccessStatusCode)
+                TempData["Mensaje"] = "Material eliminado";
+            else
+                TempData["Error"] = "No se pudo eliminar el material";
 
-        // POST: Materiales/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/materiales/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["ErrorMessage"] = $"No se pudo eliminar: {error}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al eliminar material");
-                TempData["ErrorMessage"] = "Error al eliminar";
-            }
             return RedirectToAction(nameof(Index));
         }
 
-        // Método auxiliar para cargar unidades de medida
         private async Task CargarUnidadesMedidaEnViewBag()
         {
             try
             {
-                var unidades = await _httpClient.GetFromJsonAsync<IEnumerable<UnidadMedidaResponseDto>>("api/unidadesmedida");
-                ViewBag.UnidadesMedida = unidades?.Select(u => new SelectListItem
+                var response = await _httpClient.GetAsync("api/unidadesmedida");
+                if (response.IsSuccessStatusCode)
                 {
-                    Value = u.IdUnidadMedida.ToString(),
-                    Text = $"{u.Abreviatura} - {u.Nombre}"
-                }).ToList() ?? new List<SelectListItem>();
+                    var unidades = await response.Content.ReadFromJsonAsync<IEnumerable<UnidadMedidaResponseDto>>();
+                    ViewBag.UnidadesMedida = new SelectList(unidades, "IdUnidadMedida", "Nombre");
+                }
+                else
+                {
+                    ViewBag.UnidadesMedida = new SelectList(new List<UnidadMedidaResponseDto>(), "IdUnidadMedida", "Nombre");
+                }
             }
             catch
             {
-                ViewBag.UnidadesMedida = new List<SelectListItem>();
+                ViewBag.UnidadesMedida = new SelectList(new List<UnidadMedidaResponseDto>(), "IdUnidadMedida", "Nombre");
             }
         }
     }

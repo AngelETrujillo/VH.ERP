@@ -1,10 +1,13 @@
-﻿// VH.Web/Controllers/PartidasController.cs
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
+using VH.Web.Filters;
 
 namespace VH.Web.Controllers
 {
+    [Authorize]
+    [RequierePermiso("PROYECTOS", "ver")]
     public class PartidasController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -16,33 +19,51 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
-        // GET: /Proyectos/{idProyecto}/Partidas
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        // GET: /Partidas?idProyecto=1
         public async Task<IActionResult> Index(int idProyecto)
         {
-            ViewBag.IdProyecto = idProyecto;
-
-            // 1. Obtener los detalles del proyecto
-            var proyectoResponse = await _httpClient.GetAsync($"api/proyectos/{idProyecto}");
-            if (!proyectoResponse.IsSuccessStatusCode)
+            SetAuthHeader();
+            try
             {
-                return NotFound($"Proyecto con ID {idProyecto} no encontrado.");
+                var proyectoResponse = await _httpClient.GetAsync($"api/proyectos/{idProyecto}");
+                if (proyectoResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
+                if (!proyectoResponse.IsSuccessStatusCode)
+                    return NotFound($"Proyecto con ID {idProyecto} no encontrado.");
+
+                var proyecto = await proyectoResponse.Content.ReadFromJsonAsync<ProyectoResponseDto>();
+                ViewBag.IdProyecto = idProyecto;
+                ViewBag.ProyectoNombre = proyecto?.Nombre;
+                ViewBag.PresupuestoTotal = proyecto?.PresupuestoTotal;
+
+                var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas");
+                response.EnsureSuccessStatusCode();
+                var partidas = await response.Content.ReadFromJsonAsync<IEnumerable<ConceptoPartidaResponseDto>>();
+
+                return View(partidas);
             }
-            var proyecto = await proyectoResponse.Content.ReadFromJsonAsync<ProyectoResponseDto>();
-            ViewBag.ProyectoNombre = proyecto?.Nombre;
-            ViewBag.PresupuestoTotal = proyecto?.PresupuestoTotal;
-
-            // 2. Obtener la lista de partidas del proyecto
-            var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas");
-            response.EnsureSuccessStatusCode();
-
-            var partidas = await response.Content.ReadFromJsonAsync<IEnumerable<ConceptoPartidaResponseDto>>();
-
-            return View(partidas);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar partidas");
+                ViewBag.ErrorMessage = "Error al cargar las partidas";
+                return View(new List<ConceptoPartidaResponseDto>());
+            }
         }
 
         // GET: Partidas/Create
+        [RequierePermiso("PROYECTOS", "crear")]
         public async Task<IActionResult> Create(int idProyecto)
         {
+            SetAuthHeader();
             ViewBag.IdProyecto = idProyecto;
             await CargarUnidadesMedidaEnViewBag();
             return View();
@@ -51,23 +72,27 @@ namespace VH.Web.Controllers
         // POST: Partidas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("PROYECTOS", "crear")]
         public async Task<IActionResult> Create(int idProyecto, ConceptoPartidaRequestDto partidaDto)
         {
             if (ModelState.IsValid)
             {
+                SetAuthHeader();
                 try
                 {
                     var response = await _httpClient.PostAsJsonAsync($"api/proyectos/{idProyecto}/partidas", partidaDto);
                     if (response.IsSuccessStatusCode)
                     {
-                        return RedirectToAction(nameof(Index), new { idProyecto = idProyecto });
+                        TempData["Mensaje"] = "Partida creada exitosamente";
+                        return RedirectToAction(nameof(Index), new { idProyecto });
                     }
                     var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error al crear la partida: {error}");
+                    ModelState.AddModelError("", error);
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Error al crear la partida: " + ex.Message);
+                    _logger.LogError(ex, "Error al crear partida");
+                    ModelState.AddModelError("", "Error al crear la partida");
                 }
             }
 
@@ -77,66 +102,42 @@ namespace VH.Web.Controllers
         }
 
         // GET: Partidas/Edit/5
-        public async Task<IActionResult> Edit(int? id, int idProyecto)
+        [RequierePermiso("PROYECTOS", "editar")]
+        public async Task<IActionResult> Edit(int id, int idProyecto)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas/{id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    return NotFound();
-                }
+            var partida = await response.Content.ReadFromJsonAsync<ConceptoPartidaResponseDto>();
+            var partidaRequest = new ConceptoPartidaRequestDto(
+                partida!.Descripcion,
+                partida.IdUnidadMedida,
+                partida.CantidadEstimada
+            );
 
-                var partida = await response.Content.ReadFromJsonAsync<ConceptoPartidaResponseDto>();
-                if (partida == null)
-                {
-                    return NotFound();
-                }
-
-                // Convertir a RequestDto para el formulario
-                var partidaRequest = new ConceptoPartidaRequestDto(
-                    partida.Descripcion,
-                    partida.IdUnidadMedida,
-                    partida.CantidadEstimada
-                );
-
-                ViewBag.IdProyecto = idProyecto;
-                ViewBag.IdPartida = id;
-                await CargarUnidadesMedidaEnViewBag();
-                return View(partidaRequest);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            ViewBag.IdProyecto = idProyecto;
+            ViewBag.IdPartida = id;
+            await CargarUnidadesMedidaEnViewBag();
+            return View(partidaRequest);
         }
 
         // POST: Partidas/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("PROYECTOS", "editar")]
         public async Task<IActionResult> Edit(int id, int idProyecto, ConceptoPartidaRequestDto partidaDto)
         {
             if (ModelState.IsValid)
             {
-                try
+                SetAuthHeader();
+                var response = await _httpClient.PutAsJsonAsync($"api/proyectos/{idProyecto}/partidas/{id}", partidaDto);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await _httpClient.PutAsJsonAsync($"api/proyectos/{idProyecto}/partidas/{id}", partidaDto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return RedirectToAction(nameof(Index), new { idProyecto = idProyecto });
-                    }
-                    var error = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"Error al actualizar: {error}");
+                    TempData["Mensaje"] = "Partida actualizada exitosamente";
+                    return RedirectToAction(nameof(Index), new { idProyecto });
                 }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "Error al actualizar la partida: " + ex.Message);
-                }
+                ModelState.AddModelError("", "Error al actualizar");
             }
 
             ViewBag.IdProyecto = idProyecto;
@@ -146,63 +147,52 @@ namespace VH.Web.Controllers
         }
 
         // GET: Partidas/Delete/5
-        public async Task<IActionResult> Delete(int? id, int idProyecto)
+        [RequierePermiso("PROYECTOS", "eliminar")]
+        public async Task<IActionResult> Delete(int id, int idProyecto)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
 
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas/{id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    return NotFound();
-                }
-
-                var partida = await response.Content.ReadFromJsonAsync<ConceptoPartidaResponseDto>();
-                ViewBag.IdProyecto = idProyecto;
-                return View(partida);
-            }
-            catch
-            {
-                return NotFound();
-            }
+            var partida = await response.Content.ReadFromJsonAsync<ConceptoPartidaResponseDto>();
+            ViewBag.IdProyecto = idProyecto;
+            return View(partida);
         }
 
         // POST: Partidas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("PROYECTOS", "eliminar")]
         public async Task<IActionResult> DeleteConfirmed(int id, int idProyecto)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/proyectos/{idProyecto}/partidas/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index), new { idProyecto = idProyecto });
-                }
-                TempData["ErrorMessage"] = "Error al eliminar la partida";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Error al eliminar la partida: " + ex.Message;
-            }
-            return RedirectToAction(nameof(Index), new { idProyecto = idProyecto });
+            SetAuthHeader();
+            var response = await _httpClient.DeleteAsync($"api/proyectos/{idProyecto}/partidas/{id}");
+            if (response.IsSuccessStatusCode)
+                TempData["Mensaje"] = "Partida eliminada";
+            else
+                TempData["Error"] = "No se pudo eliminar la partida";
+
+            return RedirectToAction(nameof(Index), new { idProyecto });
         }
 
-        // Método auxiliar para cargar unidades de medida
         private async Task CargarUnidadesMedidaEnViewBag()
         {
             try
             {
-                var unidades = await _httpClient.GetFromJsonAsync<IEnumerable<UnidadMedidaResponseDto>>("api/unidadesmedida");
-                ViewBag.UnidadesMedida = unidades?.Select(u => new SelectListItem
+                var response = await _httpClient.GetAsync("api/unidadesmedida");
+                if (response.IsSuccessStatusCode)
                 {
-                    Value = u.IdUnidadMedida.ToString(),
-                    Text = $"{u.Abreviatura} - {u.Nombre}"
-                }).ToList() ?? new List<SelectListItem>();
+                    var unidades = await response.Content.ReadFromJsonAsync<IEnumerable<UnidadMedidaResponseDto>>();
+                    ViewBag.UnidadesMedida = unidades?.Select(u => new SelectListItem
+                    {
+                        Value = u.IdUnidadMedida.ToString(),
+                        Text = $"{u.Abreviatura} - {u.Nombre}"
+                    }).ToList() ?? new List<SelectListItem>();
+                }
+                else
+                {
+                    ViewBag.UnidadesMedida = new List<SelectListItem>();
+                }
             }
             catch
             {
