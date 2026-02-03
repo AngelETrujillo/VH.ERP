@@ -38,7 +38,8 @@ namespace VH.Web.Filters
                 return;
             }
 
-            var permisos = System.Text.Json.JsonSerializer.Deserialize<List<PermisoModuloDto>>(permisosJson);
+            var permisos = System.Text.Json.JsonSerializer.Deserialize<List<PermisoModuloDto>>(permisosJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var permiso = permisos?.FirstOrDefault(p => p.Codigo == CodigoModulo);
 
             if (permiso == null)
