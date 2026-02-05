@@ -18,21 +18,11 @@
             --hover-color: #245B91;
         }
 
-        /* :root {
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 70px;
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #3498db;
-            --hover-color: #2980b9;
-        } */
-
         body {
             overflow-x: hidden;
             background-color: #f4f6f9;
         }
 
-        /* Sidebar */
         .sidebar {
             position: fixed;
             top: 0;
@@ -211,7 +201,6 @@
             display: none;
         }
 
-        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             transition: margin-left 0.3s ease;
@@ -222,7 +211,6 @@
                 margin-left: var(--sidebar-collapsed-width);
             }
 
-        /* Top Navbar */
         .top-navbar {
             background: white;
             padding: 15px 25px;
@@ -296,7 +284,6 @@
             padding: 25px;
         }
 
-        /* Footer */
         .main-footer {
             padding: 20px 25px;
             background: white;
@@ -305,7 +292,6 @@
             font-size: 0.875rem;
         }
 
-        /* Responsive */
         @@media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -328,7 +314,6 @@
             display: none;
         }
 
-        /* Scrollbar personalizado */
         .sidebar::-webkit-scrollbar {
             width: 5px;
         }
@@ -341,9 +326,36 @@
             background: rgba(255,255,255,0.2);
             border-radius: 5px;
         }
+
+        .menu-arrow.rotate {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body>
+    @{
+        var esSuperAdmin = User.IsInRole("SuperAdmin");
+        var session = Context.Session;
+
+        // Permisos de módulos
+        var puedeVerProyectos = PermisoHelper.PuedeVer(session, "PROYECTOS", esSuperAdmin);
+        var puedeVerUnidadesMedida = PermisoHelper.PuedeVer(session, "UNIDADES_MEDIDA", esSuperAdmin);
+        var puedeVerEmpleados = PermisoHelper.PuedeVer(session, "EMPLEADOS", esSuperAdmin);
+        var puedeVerProveedores = PermisoHelper.PuedeVer(session, "PROVEEDORES", esSuperAdmin);
+        var puedeVerAlmacenes = PermisoHelper.PuedeVer(session, "ALMACENES", esSuperAdmin);
+        var puedeVerMateriales = PermisoHelper.PuedeVer(session, "MATERIALES_EPP", esSuperAdmin);
+        var puedeVerCompras = PermisoHelper.PuedeVer(session, "COMPRAS_EPP", esSuperAdmin);
+        var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
+        var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
+
+        // Grupos de menú
+        var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
+        var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores;
+        var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
+        var mostrarOperaciones = puedeVerCompras || puedeVerEntregas || puedeVerInventarios;
+        var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
+    }
+
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -366,101 +378,146 @@
             </li>
         </ul>
 
-        <p class="sidebar-section-title">Catálogos</p>
-        <ul class="sidebar-menu">
-            <li class="has-submenu">
-                <a href="#" class="submenu-toggle">
-                    <i class="bi bi-folder"></i>
-                    <span class="menu-text">Catálogos Base</span>
-                    <i class="bi bi-chevron-down menu-arrow"></i>
-                </a>
-                <ul class="submenu">
-                    <li><a asp-controller="Proyectos" asp-action="Index">Proyectos</a></li>
-                    <li><a asp-controller="UnidadesMedida" asp-action="Index">Unidades de Medida</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#" class="submenu-toggle">
-                    <i class="bi bi-people"></i>
-                    <span class="menu-text">Recursos</span>
-                    <i class="bi bi-chevron-down menu-arrow"></i>
-                </a>
-                <ul class="submenu">
-                    <li><a asp-controller="Empleado" asp-action="Index">Empleados</a></li>
-                    <li><a asp-controller="Proveedores" asp-action="Index">Proveedores</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#" class="submenu-toggle">
-                    <i class="bi bi-box-seam"></i>
-                    <span class="menu-text">Almacenes</span>
-                    <i class="bi bi-chevron-down menu-arrow"></i>
-                </a>
-                <ul class="submenu">
-                    <li><a asp-controller="Almacenes" asp-action="Index">Almacenes</a></li>
-                    <li><a asp-controller="Materiales" asp-action="Index">Materiales EPP</a></li>
-                </ul>
-            </li>
-        </ul>
-        
-        <p class="sidebar-section-title">Operaciones EPP</p>
-        <ul class="sidebar-menu">
-            <li>
-                <a asp-controller="ComprasEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComprasEPP" ? "active" : "")">
-                    <i class="bi bi-cart-plus"></i>
-                    <span class="menu-text">Compras EPP</span>
-                </a>
-            </li>
-            <li>
-                <a asp-controller="EntregasEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "EntregasEPP" ? "active" : "")">
-                    <i class="bi bi-clipboard-check"></i>
-                    <span class="menu-text">Entregas EPP</span>
-                </a>
-            </li>
-            <li>
-                <a asp-controller="Inventarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventarios" ? "active" : "")">
-                    <i class="bi bi-boxes"></i>
-                    <span class="menu-text">Control Inventario</span>
-                </a>
-            </li>
-        </ul>
+        @if (mostrarCatalogos)
+        {
+            <p class="sidebar-section-title">Catálogos</p>
+            <ul class="sidebar-menu">
+                @if (mostrarCatalogosBase)
+                {
+                    <li class="has-submenu">
+                        <a href="#" class="submenu-toggle">
+                            <i class="bi bi-folder"></i>
+                            <span class="menu-text">Catálogos Base</span>
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </a>
+                        <ul class="submenu">
+                            @if (puedeVerProyectos)
+                            {
+                                <li><a asp-controller="Proyectos" asp-action="Index">Proyectos</a></li>
+                            }
+                            @if (puedeVerUnidadesMedida)
+                            {
+                                <li><a asp-controller="UnidadesMedida" asp-action="Index">Unidades de Medida</a></li>
+                            }
+                        </ul>
+                    </li>
+                }
+                @if (mostrarRecursos)
+                {
+                    <li class="has-submenu">
+                        <a href="#" class="submenu-toggle">
+                            <i class="bi bi-people"></i>
+                            <span class="menu-text">Recursos</span>
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </a>
+                        <ul class="submenu">
+                            @if (puedeVerEmpleados)
+                            {
+                                <li><a asp-controller="Empleado" asp-action="Index">Empleados</a></li>
+                            }
+                            @if (puedeVerProveedores)
+                            {
+                                <li><a asp-controller="Proveedores" asp-action="Index">Proveedores</a></li>
+                            }
+                        </ul>
+                    </li>
+                }
+                @if (mostrarAlmacenesMenu)
+                {
+                    <li class="has-submenu">
+                        <a href="#" class="submenu-toggle">
+                            <i class="bi bi-box-seam"></i>
+                            <span class="menu-text">Almacenes</span>
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </a>
+                        <ul class="submenu">
+                            @if (puedeVerAlmacenes)
+                            {
+                                <li><a asp-controller="Almacenes" asp-action="Index">Almacenes</a></li>
+                            }
+                            @if (puedeVerMateriales)
+                            {
+                                <li><a asp-controller="Materiales" asp-action="Index">Materiales EPP</a></li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        }
 
-        <p class="sidebar-section-title">Administración</p>
-        <ul class="sidebar-menu">
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
-            {
-                <li>
-                    <a asp-controller="GestionUsuarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionUsuarios" ? "active" : "")">
-                        <i class="bi bi-people"></i>
-                        <span class="menu-text">Usuarios</span>
-                    </a>
-                </li>
-            }
-            @if (User.IsInRole("SuperAdmin"))
-            {
-                <li>
-                    <a asp-controller="GestionRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionRoles" ? "active" : "")">
-                        <i class="bi bi-shield-lock"></i>
-                        <span class="menu-text">Roles</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="GestionPermisos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionPermisos" ? "active" : "")">
-                        <i class="bi bi-key"></i>
-                        <span class="menu-text">Permisos</span>
-                    </a>
-                </li>
-            }
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
-            {
-                <li>
-                    <a asp-controller="LogActividad" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "LogActividad" ? "active" : "")">
-                        <i class="bi bi-journal-text"></i>
-                        <span class="menu-text">Log Actividad</span>
-                    </a>
-                </li>
-            }
-        </ul>
+        @if (mostrarOperaciones)
+        {
+            <p class="sidebar-section-title">Operaciones EPP</p>
+            <ul class="sidebar-menu">
+                @if (puedeVerCompras)
+                {
+                    <li>
+                        <a asp-controller="ComprasEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComprasEPP" ? "active" : "")">
+                            <i class="bi bi-cart-plus"></i>
+                            <span class="menu-text">Compras EPP</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerEntregas)
+                {
+                    <li>
+                        <a asp-controller="EntregasEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "EntregasEPP" ? "active" : "")">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span class="menu-text">Entregas EPP</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerInventarios)
+                {
+                    <li>
+                        <a asp-controller="Inventarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventarios" ? "active" : "")">
+                            <i class="bi bi-boxes"></i>
+                            <span class="menu-text">Control Inventario</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+        {
+            <p class="sidebar-section-title">Administración</p>
+            <ul class="sidebar-menu">
+                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+                {
+                    <li>
+                        <a asp-controller="GestionUsuarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionUsuarios" ? "active" : "")">
+                            <i class="bi bi-people"></i>
+                            <span class="menu-text">Usuarios</span>
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    <li>
+                        <a asp-controller="GestionRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionRoles" ? "active" : "")">
+                            <i class="bi bi-shield-lock"></i>
+                            <span class="menu-text">Roles</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="GestionPermisos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "GestionPermisos" ? "active" : "")">
+                            <i class="bi bi-key"></i>
+                            <span class="menu-text">Permisos</span>
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+                {
+                    <li>
+                        <a asp-controller="LogActividad" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "LogActividad" ? "active" : "")">
+                            <i class="bi bi-journal-text"></i>
+                            <span class="menu-text">Log Actividad</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
     </nav>
 
     <!-- Main Content -->
@@ -530,25 +587,21 @@
             const sidebarToggle = document.getElementById('sidebarToggle');
             const mobileToggle = document.getElementById('mobileToggle');
 
-            // Toggle sidebar en desktop
             sidebarToggle?.addEventListener('click', function () {
                 sidebar.classList.toggle('collapsed');
                 mainContent.classList.toggle('expanded');
                 localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             });
 
-            // Toggle sidebar en mobile
             mobileToggle?.addEventListener('click', function () {
                 sidebar.classList.toggle('mobile-show');
             });
 
-            // Restaurar estado del sidebar
             if (localStorage.getItem('sidebarCollapsed') === 'true') {
                 sidebar.classList.add('collapsed');
                 mainContent.classList.add('expanded');
             }
 
-            // Submenús
             document.querySelectorAll('.submenu-toggle').forEach(function (toggle) {
                 toggle.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -556,7 +609,6 @@
                     const submenu = parent.querySelector('.submenu');
                     const arrow = this.querySelector('.menu-arrow');
 
-                    // Cerrar otros submenús
                     document.querySelectorAll('.submenu.show').forEach(function (openSubmenu) {
                         if (openSubmenu !== submenu) {
                             openSubmenu.classList.remove('show');
@@ -569,7 +621,6 @@
                 });
             });
 
-            // Cerrar sidebar en mobile al hacer click fuera
             document.addEventListener('click', function (e) {
                 if (window.innerWidth <= 768) {
                     if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
@@ -579,11 +630,6 @@
             });
         });
     </script>
-    <style>
-        .menu-arrow.rotate {
-            transform: rotate(180deg);
-        }
-    </style>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

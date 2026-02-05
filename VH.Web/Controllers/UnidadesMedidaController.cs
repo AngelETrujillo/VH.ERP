@@ -48,6 +48,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: UnidadesMedida/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/unidadesmedida/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var unidad = await response.Content.ReadFromJsonAsync<UnidadMedidaResponseDto>();
+            return View(unidad);
+        }
+
         // GET: UnidadesMedida/Create
         [RequierePermiso("UNIDADES_MEDIDA", "crear")]
         public IActionResult Create()
@@ -93,8 +104,13 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var unidad = await response.Content.ReadFromJsonAsync<UnidadMedidaResponseDto>();
-            ViewBag.IdUnidadMedida = id;
-            return View(unidad);
+            var dto = new UnidadMedidaRequestDto(
+                unidad!.Nombre,
+                unidad.Abreviatura,
+                unidad.Descripcion
+            );
+            ViewBag.Id = id;
+            return View(dto);
         }
 
         // POST: UnidadesMedida/Edit/5
@@ -114,15 +130,27 @@ namespace VH.Web.Controllers
                 }
                 ModelState.AddModelError("", "Error al actualizar");
             }
-            ViewBag.IdUnidadMedida = id;
+            ViewBag.Id = id;
             return View(dto);
         }
 
-        // POST: UnidadesMedida/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: UnidadesMedida/Delete/5
         [RequierePermiso("UNIDADES_MEDIDA", "eliminar")]
         public async Task<IActionResult> Delete(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/unidadesmedida/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var unidad = await response.Content.ReadFromJsonAsync<UnidadMedidaResponseDto>();
+            return View(unidad);
+        }
+
+        // POST: UnidadesMedida/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("UNIDADES_MEDIDA", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             SetAuthHeader();
             var response = await _httpClient.DeleteAsync($"api/unidadesmedida/{id}");

@@ -1,16 +1,22 @@
 ﻿using VH.Services.DTOs.Permiso;
+using System.Text.Json;
 
 namespace VH.Web.Helpers
 {
     public static class PermisoHelper
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public static List<PermisoModuloDto> ObtenerPermisos(ISession session)
         {
             var permisosJson = session.GetString("PermisosUsuario");
             if (string.IsNullOrEmpty(permisosJson))
                 return new List<PermisoModuloDto>();
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<PermisoModuloDto>>(permisosJson)
+            return JsonSerializer.Deserialize<List<PermisoModuloDto>>(permisosJson, _jsonOptions)
                    ?? new List<PermisoModuloDto>();
         }
 

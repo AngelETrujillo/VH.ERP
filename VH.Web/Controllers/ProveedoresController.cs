@@ -48,6 +48,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: Proveedores/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/proveedores/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var proveedor = await response.Content.ReadFromJsonAsync<ProveedorResponseDto>();
+            return View(proveedor);
+        }
+
         // GET: Proveedores/Create
         [RequierePermiso("PROVEEDORES", "crear")]
         public IActionResult Create()
@@ -98,9 +109,9 @@ namespace VH.Web.Controllers
                 proveedor.RFC,
                 proveedor.Contacto ?? "",
                 proveedor.Telefono ?? "",
-                true
+                proveedor.Activo
             );
-            ViewBag.IdProveedor = id;
+            ViewBag.Id = id;
             return View(dto);
         }
 
@@ -121,19 +132,35 @@ namespace VH.Web.Controllers
                 }
                 ModelState.AddModelError("", "Error al actualizar");
             }
-            ViewBag.IdProveedor = id;
+            ViewBag.Id = id;
             return View(proveedorDto);
         }
 
-        // POST: Proveedores/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: Proveedores/Delete/5
         [RequierePermiso("PROVEEDORES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             SetAuthHeader();
-            await _httpClient.DeleteAsync($"api/proveedores/{id}");
-            TempData["Mensaje"] = "Proveedor eliminado";
+            var response = await _httpClient.GetAsync($"api/proveedores/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var proveedor = await response.Content.ReadFromJsonAsync<ProveedorResponseDto>();
+            return View(proveedor);
+        }
+
+        // POST: Proveedores/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("PROVEEDORES", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.DeleteAsync($"api/proveedores/{id}");
+            if (response.IsSuccessStatusCode)
+                TempData["Mensaje"] = "Proveedor eliminado";
+            else
+                TempData["Error"] = "No se pudo eliminar el proveedor";
+
             return RedirectToAction(nameof(Index));
         }
     }

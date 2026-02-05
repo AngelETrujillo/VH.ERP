@@ -49,6 +49,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: Inventarios/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/inventarios/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var inventario = await response.Content.ReadFromJsonAsync<InventarioResponseDto>();
+            return View(inventario);
+        }
+
         // GET: Inventarios/Create
         [RequierePermiso("INVENTARIOS", "crear")]
         public async Task<IActionResult> Create()
@@ -81,7 +92,7 @@ namespace VH.Web.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error al crear inventario");
-                    ModelState.AddModelError("", "Error al crear el inventario");
+                    ModelState.AddModelError("", "Error al crear el registro de inventario");
                 }
             }
             await CargarListasEnViewBag();
@@ -97,11 +108,6 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var inventario = await response.Content.ReadFromJsonAsync<InventarioResponseDto>();
-
-            ViewBag.IdInventario = id;
-            ViewBag.NombreAlmacen = inventario?.NombreAlmacen;
-            ViewBag.NombreMaterial = inventario?.NombreMaterial;
-
             var dto = new InventarioRequestDto(
                 inventario!.IdAlmacen,
                 inventario.IdMaterial,
@@ -110,6 +116,9 @@ namespace VH.Web.Controllers
                 inventario.UbicacionPasillo
             );
 
+            ViewBag.Id = id;
+            ViewBag.NombreAlmacen = inventario.NombreAlmacen;
+            ViewBag.NombreMaterial = inventario.NombreMaterial;
             return View(dto);
         }
 
@@ -130,22 +139,34 @@ namespace VH.Web.Controllers
                 }
                 ModelState.AddModelError("", "Error al actualizar");
             }
-            ViewBag.IdInventario = id;
+            ViewBag.Id = id;
             return View(dto);
         }
 
-        // POST: Inventarios/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: Inventarios/Delete/5
         [RequierePermiso("INVENTARIOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/inventarios/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var inventario = await response.Content.ReadFromJsonAsync<InventarioResponseDto>();
+            return View(inventario);
+        }
+
+        // POST: Inventarios/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("INVENTARIOS", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             SetAuthHeader();
             var response = await _httpClient.DeleteAsync($"api/inventarios/{id}");
             if (response.IsSuccessStatusCode)
                 TempData["Mensaje"] = "Inventario eliminado";
             else
-                TempData["Error"] = "No se pudo eliminar el inventario";
+                TempData["Error"] = "No se pudo eliminar el registro";
 
             return RedirectToAction(nameof(Index));
         }
@@ -158,28 +179,36 @@ namespace VH.Web.Controllers
                 if (almacenesResponse.IsSuccessStatusCode)
                 {
                     var almacenes = await almacenesResponse.Content.ReadFromJsonAsync<IEnumerable<AlmacenResponseDto>>();
-                    ViewBag.Almacenes = new SelectList(almacenes, "IdAlmacen", "Nombre");
+                    ViewBag.Almacenes = almacenes?.Where(a => a.Activo).Select(a => new SelectListItem
+                    {
+                        Value = a.IdAlmacen.ToString(),
+                        Text = $"{a.Nombre} ({a.NombreProyecto})"
+                    }).ToList() ?? new List<SelectListItem>();
                 }
                 else
                 {
-                    ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
+                    ViewBag.Almacenes = new List<SelectListItem>();
                 }
 
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
                     var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
-                    ViewBag.Materiales = new SelectList(materiales, "IdMaterial", "Nombre");
+                    ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
+                    {
+                        Value = m.IdMaterial.ToString(),
+                        Text = $"{m.Nombre} ({m.AbreviaturaUnidadMedida})"
+                    }).ToList() ?? new List<SelectListItem>();
                 }
                 else
                 {
-                    ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
+                    ViewBag.Materiales = new List<SelectListItem>();
                 }
             }
             catch
             {
-                ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
-                ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
+                ViewBag.Almacenes = new List<SelectListItem>();
+                ViewBag.Materiales = new List<SelectListItem>();
             }
         }
     }

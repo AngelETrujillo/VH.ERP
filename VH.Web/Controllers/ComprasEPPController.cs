@@ -64,6 +64,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: ComprasEPP/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/comprasepp/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
+            return View(compra);
+        }
+
         // GET: ComprasEPP/Create
         [RequierePermiso("COMPRAS_EPP", "crear")]
         public async Task<IActionResult> Create()
@@ -95,23 +106,12 @@ namespace VH.Web.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error al crear compra");
+                    _logger.LogError(ex, "Error al crear compra EPP");
                     ModelState.AddModelError("", "Error al registrar la compra");
                 }
             }
             await CargarListasEnViewBag();
             return View(dto);
-        }
-
-        // GET: ComprasEPP/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            SetAuthHeader();
-            var response = await _httpClient.GetAsync($"api/comprasepp/{id}");
-            if (!response.IsSuccessStatusCode) return NotFound();
-
-            var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
-            return View(compra);
         }
 
         // GET: ComprasEPP/Edit/5
@@ -123,9 +123,21 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
+            var dto = new CompraEPPRequestDto(
+                compra!.IdMaterial,
+                compra.IdProveedor,
+                compra.IdAlmacen,
+                compra.FechaCompra,
+                compra.CantidadComprada,
+                compra.PrecioUnitario,
+                compra.NumeroDocumento,
+                compra.Observaciones
+            );
+
             await CargarListasEnViewBag();
-            ViewBag.IdCompra = id;
-            return View(compra);
+            ViewBag.Id = id;
+            ViewBag.CantidadDisponible = compra.CantidadDisponible;
+            return View(dto);
         }
 
         // POST: ComprasEPP/Edit/5
@@ -146,15 +158,27 @@ namespace VH.Web.Controllers
                 ModelState.AddModelError("", "Error al actualizar");
             }
             await CargarListasEnViewBag();
-            ViewBag.IdCompra = id;
+            ViewBag.Id = id;
             return View(dto);
         }
 
-        // POST: ComprasEPP/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: ComprasEPP/Delete/5
         [RequierePermiso("COMPRAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/comprasepp/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
+            return View(compra);
+        }
+
+        // POST: ComprasEPP/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("COMPRAS_EPP", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             SetAuthHeader();
             var response = await _httpClient.DeleteAsync($"api/comprasepp/{id}");
@@ -166,6 +190,45 @@ namespace VH.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: ComprasEPP/HistorialPrecios/5
+        public async Task<IActionResult> HistorialPrecios(int idMaterial, int? idProveedor)
+        {
+            SetAuthHeader();
+            try
+            {
+                var url = $"api/comprasepp/historial-precios/{idMaterial}";
+                if (idProveedor.HasValue) url += $"?idProveedor={idProveedor}";
+
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return RedirectToAction(nameof(Index));
+
+                var historial = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+
+                var materialResponse = await _httpClient.GetAsync($"api/materiales/{idMaterial}");
+                if (materialResponse.IsSuccessStatusCode)
+                {
+                    var material = await materialResponse.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+                    ViewBag.NombreMaterial = material?.Nombre ?? "Material";
+                }
+                else
+                {
+                    ViewBag.NombreMaterial = "Material";
+                }
+
+                ViewBag.IdMaterial = idMaterial;
+                await CargarProveedoresEnViewBag();
+                ViewBag.FiltroProveedor = idProveedor;
+
+                return View(historial);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar historial de precios");
+                TempData["Error"] = "Error al cargar el historial";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
         private async Task CargarListasEnViewBag()
         {
             try
@@ -174,46 +237,83 @@ namespace VH.Web.Controllers
                 if (materialesResponse.IsSuccessStatusCode)
                 {
                     var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
-                    ViewBag.Materiales = new SelectList(materiales, "IdMaterial", "Nombre");
+                    ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
+                    {
+                        Value = m.IdMaterial.ToString(),
+                        Text = $"{m.Nombre} ({m.AbreviaturaUnidadMedida})"
+                    }).ToList() ?? new List<SelectListItem>();
                 }
                 else
                 {
-                    ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
+                    ViewBag.Materiales = new List<SelectListItem>();
                 }
 
                 var proveedoresResponse = await _httpClient.GetAsync("api/proveedores");
                 if (proveedoresResponse.IsSuccessStatusCode)
                 {
                     var proveedores = await proveedoresResponse.Content.ReadFromJsonAsync<IEnumerable<ProveedorResponseDto>>();
-                    ViewBag.Proveedores = new SelectList(proveedores, "IdProveedor", "Nombre");
+                    ViewBag.Proveedores = proveedores?.Where(p => p.Activo).Select(p => new SelectListItem
+                    {
+                        Value = p.IdProveedor.ToString(),
+                        Text = p.Nombre
+                    }).ToList() ?? new List<SelectListItem>();
                 }
                 else
                 {
-                    ViewBag.Proveedores = new SelectList(new List<ProveedorResponseDto>(), "IdProveedor", "Nombre");
+                    ViewBag.Proveedores = new List<SelectListItem>();
                 }
 
                 var almacenesResponse = await _httpClient.GetAsync("api/almacenes");
                 if (almacenesResponse.IsSuccessStatusCode)
                 {
                     var almacenes = await almacenesResponse.Content.ReadFromJsonAsync<IEnumerable<AlmacenResponseDto>>();
-                    ViewBag.Almacenes = new SelectList(almacenes, "IdAlmacen", "Nombre");
+                    ViewBag.Almacenes = almacenes?.Where(a => a.Activo).Select(a => new SelectListItem
+                    {
+                        Value = a.IdAlmacen.ToString(),
+                        Text = $"{a.Nombre} ({a.NombreProyecto})"
+                    }).ToList() ?? new List<SelectListItem>();
                 }
                 else
                 {
-                    ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
+                    ViewBag.Almacenes = new List<SelectListItem>();
                 }
             }
             catch
             {
-                ViewBag.Materiales = new SelectList(new List<MaterialEPPResponseDto>(), "IdMaterial", "Nombre");
-                ViewBag.Proveedores = new SelectList(new List<ProveedorResponseDto>(), "IdProveedor", "Nombre");
-                ViewBag.Almacenes = new SelectList(new List<AlmacenResponseDto>(), "IdAlmacen", "Nombre");
+                ViewBag.Materiales = new List<SelectListItem>();
+                ViewBag.Proveedores = new List<SelectListItem>();
+                ViewBag.Almacenes = new List<SelectListItem>();
             }
         }
 
         private async Task CargarFiltrosEnViewBag()
         {
             await CargarListasEnViewBag();
+        }
+
+        private async Task CargarProveedoresEnViewBag()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/proveedores");
+                if (response.IsSuccessStatusCode)
+                {
+                    var proveedores = await response.Content.ReadFromJsonAsync<IEnumerable<ProveedorResponseDto>>();
+                    ViewBag.ProveedoresFiltro = proveedores?.Select(p => new SelectListItem
+                    {
+                        Value = p.IdProveedor.ToString(),
+                        Text = p.Nombre
+                    }).ToList() ?? new List<SelectListItem>();
+                }
+                else
+                {
+                    ViewBag.ProveedoresFiltro = new List<SelectListItem>();
+                }
+            }
+            catch
+            {
+                ViewBag.ProveedoresFiltro = new List<SelectListItem>();
+            }
         }
     }
 }

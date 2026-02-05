@@ -49,6 +49,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: Materiales/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/materiales/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            return View(material);
+        }
+
         // GET: Materiales/Create
         [RequierePermiso("MATERIALES_EPP", "crear")]
         public async Task<IActionResult> Create()
@@ -97,9 +108,17 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            var dto = new MaterialEPPRequestDto(
+                material!.Nombre,
+                material.Descripcion,
+                material.IdUnidadMedida,
+                material.CostoUnitarioEstimado,
+                material.Activo
+            );
+
             await CargarUnidadesMedidaEnViewBag();
-            ViewBag.IdMaterial = id;
-            return View(material);
+            ViewBag.Id = id;
+            return View(dto);
         }
 
         // POST: Materiales/Edit/5
@@ -120,15 +139,27 @@ namespace VH.Web.Controllers
                 ModelState.AddModelError("", "Error al actualizar");
             }
             await CargarUnidadesMedidaEnViewBag();
-            ViewBag.IdMaterial = id;
+            ViewBag.Id = id;
             return View(materialDto);
         }
 
-        // POST: Materiales/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: Materiales/Delete/5
         [RequierePermiso("MATERIALES_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/materiales/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            return View(material);
+        }
+
+        // POST: Materiales/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("MATERIALES_EPP", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             SetAuthHeader();
             var response = await _httpClient.DeleteAsync($"api/materiales/{id}");

@@ -49,6 +49,17 @@ namespace VH.Web.Controllers
             }
         }
 
+        // GET: Almacenes/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/almacenes/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var almacen = await response.Content.ReadFromJsonAsync<AlmacenResponseDto>();
+            return View(almacen);
+        }
+
         // GET: Almacenes/Create
         [RequierePermiso("ALMACENES", "crear")]
         public async Task<IActionResult> Create()
@@ -97,9 +108,18 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var almacen = await response.Content.ReadFromJsonAsync<AlmacenResponseDto>();
+            var dto = new AlmacenRequestDto(
+                almacen!.Nombre,
+                almacen.Descripcion,
+                almacen.Domicilio,
+                almacen.TipoUbicacion,
+                almacen.Activo,
+                almacen.IdProyecto
+            );
+
             await CargarProyectosEnViewBag();
-            ViewBag.IdAlmacen = id;
-            return View(almacen);
+            ViewBag.Id = id;
+            return View(dto);
         }
 
         // POST: Almacenes/Edit/5
@@ -120,15 +140,27 @@ namespace VH.Web.Controllers
                 ModelState.AddModelError("", "Error al actualizar");
             }
             await CargarProyectosEnViewBag();
-            ViewBag.IdAlmacen = id;
+            ViewBag.Id = id;
             return View(dto);
         }
 
-        // POST: Almacenes/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: Almacenes/Delete/5
         [RequierePermiso("ALMACENES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/almacenes/{id}");
+            if (!response.IsSuccessStatusCode) return NotFound();
+
+            var almacen = await response.Content.ReadFromJsonAsync<AlmacenResponseDto>();
+            return View(almacen);
+        }
+
+        // POST: Almacenes/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("ALMACENES", "eliminar")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             SetAuthHeader();
             var response = await _httpClient.DeleteAsync($"api/almacenes/{id}");
