@@ -42,10 +42,17 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var proyecto = _mapper.Map<Proyecto>(dto);
-            var created = await _proyectoService.CreateProyectoAsync(proyecto);
-            var response = _mapper.Map<ProyectoResponseDto>(created);
-            return CreatedAtAction(nameof(GetById), new { id = response.IdProyecto }, response);
+            try
+            {
+                var proyecto = _mapper.Map<Proyecto>(dto);
+                var created = await _proyectoService.CreateProyectoAsync(proyecto);
+                var response = _mapper.Map<ProyectoResponseDto>(created);
+                return CreatedAtAction(nameof(GetById), new { id = response.IdProyecto }, response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         // PUT: api/proyectos/5
@@ -54,20 +61,34 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var proyecto = _mapper.Map<Proyecto>(dto);
-            proyecto.IdProyecto = id;
-            var result = await _proyectoService.UpdateProyectoAsync(proyecto);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var proyecto = _mapper.Map<Proyecto>(dto);
+                proyecto.IdProyecto = id;
+                var result = await _proyectoService.UpdateProyectoAsync(proyecto);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         // DELETE: api/proyectos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _proyectoService.DeleteProyectoAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var result = await _proyectoService.DeleteProyectoAsync(id);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
     }
 }

@@ -38,9 +38,14 @@ namespace VH.Services.Services
             // Verificar si la UnidadMedida existe
             var unidadMedida = await _unitOfWork.UnidadesMedida.GetByIdAsync(material.IdUnidadMedida);
             if (unidadMedida == null)
-            {
                 throw new ArgumentException($"La unidad de medida con ID {material.IdUnidadMedida} no existe.");
-            }
+
+            // Validar nombre duplicado
+            var existente = await _unitOfWork.MaterialesEPP.FindAsync(
+                m => m.Nombre.ToLower() == material.Nombre.ToLower());
+
+            if (existente.Any())
+                throw new InvalidOperationException($"Ya existe un material con el nombre '{material.Nombre}'.");
 
             await _unitOfWork.MaterialesEPP.AddAsync(material);
             await _unitOfWork.CompleteAsync();

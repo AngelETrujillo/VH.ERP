@@ -43,10 +43,17 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var empleado = _mapper.Map<Empleado>(dto);
-            var created = await _empleadoService.CreateEmpleadoAsync(empleado);
-            var response = _mapper.Map<EmpleadoResponseDto>(created);
-            return CreatedAtAction(nameof(GetById), new { id = response.IdEmpleado }, response);
+            try
+            {
+                var empleado = _mapper.Map<Empleado>(dto);
+                var created = await _empleadoService.CreateEmpleadoAsync(empleado);
+                var response = _mapper.Map<EmpleadoResponseDto>(created);
+                return CreatedAtAction(nameof(GetById), new { id = response.IdEmpleado }, response);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         // PUT: api/empleados/5
@@ -55,20 +62,34 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var empleado = _mapper.Map<Empleado>(dto);
-            empleado.IdEmpleado = id;
-            var result = await _empleadoService.UpdateEmpleadoAsync(empleado);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var empleado = _mapper.Map<Empleado>(dto);
+                empleado.IdEmpleado = id;
+                var result = await _empleadoService.UpdateEmpleadoAsync(empleado);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         // DELETE: api/empleados/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _empleadoService.DeleteEmpleadoAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var result = await _empleadoService.DeleteEmpleadoAsync(id);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
     }
 }

@@ -40,10 +40,17 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var proveedor = _mapper.Map<Proveedor>(dto);
-            var created = await _proveedorService.CreateProveedorAsync(proveedor);
-            var response = _mapper.Map<ProveedorResponseDto>(created);
-            return CreatedAtAction(nameof(GetById), new { id = response.IdProveedor }, response);
+            try
+            {
+                var proveedor = _mapper.Map<Proveedor>(dto);
+                var created = await _proveedorService.CreateProveedorAsync(proveedor);
+                var response = _mapper.Map<ProveedorResponseDto>(created);
+                return CreatedAtAction(nameof(GetById), new { id = response.IdProveedor }, response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -51,19 +58,33 @@ namespace VH.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var proveedor = _mapper.Map<Proveedor>(dto);
-            proveedor.IdProveedor = id;
-            var result = await _proveedorService.UpdateProveedorAsync(proveedor);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var proveedor = _mapper.Map<Proveedor>(dto);
+                proveedor.IdProveedor = id;
+                var result = await _proveedorService.UpdateProveedorAsync(proveedor);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _proveedorService.DeleteProveedorAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                var result = await _proveedorService.DeleteProveedorAsync(id);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
         }
     }
 }

@@ -47,9 +47,9 @@ namespace VH.API.Controllers
                 var response = _mapper.Map<MaterialEPPResponseDto>(created);
                 return CreatedAtAction(nameof(GetById), new { id = response.IdMaterial }, response);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { mensaje = ex.Message });
             }
         }
 
