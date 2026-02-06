@@ -1,6 +1,10 @@
 ﻿@model IEnumerable<VH.Services.DTOs.EntregaEPPResponseDto>
 @{
     ViewData["Title"] = "Entregas EPP";
+    var esSuperAdmin = User.IsInRole("SuperAdmin");
+    var puedeCrear = PermisoHelper.PuedeCrear(Context.Session, "EMPLEADOS", esSuperAdmin);
+    var puedeEditar = PermisoHelper.PuedeEditar(Context.Session, "EMPLEADOS", esSuperAdmin);
+    var puedeEliminar = PermisoHelper.PuedeEliminar(Context.Session, "EMPLEADOS", esSuperAdmin);
 }
 
 <div class="container-fluid">
@@ -12,9 +16,12 @@
             </h2>
             <p class="text-muted mb-0">Registro de entregas de equipos de protección a empleados</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
-            <i class="bi bi-plus-lg me-2"></i>Nueva Entrega
-        </a>
+        @if (puedeCrear)
+        {
+            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Nueva Entrega
+            </a>
+        }
     </div>
 
     <!-- Alertas -->
@@ -140,14 +147,20 @@
                                                class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@item.IdEntrega"
-                                               class="btn btn-outline-warning" title="Editar">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a asp-action="Delete" asp-route-id="@item.IdEntrega"
-                                               class="btn btn-outline-danger" title="Eliminar">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
+                                            @if (puedeEditar)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.IdEntrega"
+                                                   class="btn btn-outline-warning" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            }
+                                            @if (puedeEliminar)
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.IdEntrega"
+                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
