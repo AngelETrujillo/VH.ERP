@@ -23,6 +23,8 @@ namespace VH.Services.Interfaces
         IGenericRepository<CompraEPP> ComprasEPP { get; }
         IGenericRepository<Inventario> Inventarios { get; }
         IGenericRepository<EntregaEPP> EntregasEPP { get; }
+        IGenericRepository<RequisicionEPP> RequisicionesEPP { get; }
+        IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; }
         IGenericRepository<LogActividad> LogsActividad { get; }
 
         IGenericRepository<Modulo> Modulos { get; }

@@ -1,0 +1,258 @@
+﻿@model VH.Services.DTOs.RequisicionEPPRequestDto
+@{
+    ViewData["Title"] = "Nueva Requisición EPP";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-file-earmark-plus text-primary me-2"></i>Nueva Requisición EPP
+            </h2>
+            <p class="text-muted mb-0">Solicitar equipos de protección personal</p>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" id="formRequisicion">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Datos Generales -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Datos de la Requisición</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="IdEmpleadoRecibe" class="form-label fw-semibold">
+                                    Empleado Receptor <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="IdEmpleadoRecibe" asp-items="@(ViewBag.Empleados as List<SelectListItem>)"
+                                        class="form-select">
+                                    <option value="">-- Seleccione empleado --</option>
+                                </select>
+                                <span asp-validation-for="IdEmpleadoRecibe" class="text-danger small"></span>
+                                <small class="text-muted">Persona que recibirá el EPP</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="IdAlmacen" class="form-label fw-semibold">
+                                    Almacén <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="IdAlmacen" asp-items="@(ViewBag.Almacenes as List<SelectListItem>)"
+                                        class="form-select">
+                                    <option value="">-- Seleccione almacén --</option>
+                                </select>
+                                <span asp-validation-for="IdAlmacen" class="text-danger small"></span>
+                                <small class="text-muted">De donde se surtirá el material</small>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Justificacion" class="form-label fw-semibold">Justificación</label>
+                                <textarea asp-for="Justificacion" class="form-control" rows="2"
+                                          placeholder="Motivo de la requisición..."></textarea>
+                                <span asp-validation-for="Justificacion" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materiales -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
+                        <button type="button" class="btn btn-light btn-sm" id="btnAgregarMaterial">
+                            <i class="bi bi-plus-lg me-1"></i>Agregar Material
+                        </button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tablaMateriales">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40%">Material <span class="text-danger">*</span></th>
+                                        <th width="20%">Cantidad <span class="text-danger">*</span></th>
+                                        <th width="20%">Talla</th>
+                                        <th width="20%" class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialesBody">
+                                    <!-- Filas dinámicas -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="sinMateriales" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                            No hay materiales agregados. Haga clic en "Agregar Material".
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Resumen -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Resumen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Materiales:</span>
+                            <strong id="totalMateriales">0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Total Cantidad:</span>
+                            <strong id="totalCantidad">0</strong>
+                        </div>
+                        <hr>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="btnGuardar">
+                                <i class="bi bi-send me-2"></i>Enviar Requisición
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ayuda -->
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>La requisición será enviada para aprobación.</li>
+                            <li>Una vez aprobada, se procederá a la entrega.</li>
+                            <li>Puede cancelar la requisición mientras esté pendiente.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const materiales = @Html.Raw(Json.Serialize(ViewBag.Materiales as List<SelectListItem>));
+        let contadorFilas = 0;
+
+        function agregarFila() {
+            const tbody = document.getElementById('materialesBody');
+            const index = contadorFilas++;
+
+            let optionsMaterial = '<option value="">-- Seleccione --</option>';
+            materiales.forEach(m => {
+                optionsMaterial += `<option value="${m.value}">${m.text}</option>`;
+            });
+
+            const tr = document.createElement('tr');
+            tr.id = `fila_${index}`;
+            tr.innerHTML = `
+                <td>
+                    <select name="Detalles[${index}].IdMaterial" class="form-select form-select-sm material-select" required>
+                        ${optionsMaterial}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="Detalles[${index}].CantidadSolicitada"
+                           class="form-control form-control-sm cantidad-input"
+                           min="0.01" step="0.01" required placeholder="0.00" />
+                </td>
+                <td>
+                    <input type="text" name="Detalles[${index}].TallaSolicitada"
+                           class="form-control form-control-sm" maxlength="20" placeholder="Ej: M, L, XL" />
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarFila(${index})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+            actualizarVista();
+        }
+
+        function eliminarFila(index) {
+            const fila = document.getElementById(`fila_${index}`);
+            if (fila) {
+                fila.remove();
+                actualizarVista();
+                reindexarFilas();
+            }
+        }
+
+        function reindexarFilas() {
+            const filas = document.querySelectorAll('#materialesBody tr');
+            filas.forEach((fila, index) => {
+                const selects = fila.querySelectorAll('select');
+                const inputs = fila.querySelectorAll('input');
+
+                selects.forEach(select => {
+                    const name = select.getAttribute('name');
+                    if (name) {
+                        select.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
+                    }
+                });
+
+                inputs.forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
+                    }
+                });
+            });
+        }
+
+        function actualizarVista() {
+            const filas = document.querySelectorAll('#materialesBody tr');
+            const sinMateriales = document.getElementById('sinMateriales');
+            const totalMateriales = document.getElementById('totalMateriales');
+
+            if (filas.length === 0) {
+                sinMateriales.style.display = 'block';
+            } else {
+                sinMateriales.style.display = 'none';
+            }
+
+            totalMateriales.textContent = filas.length;
+            calcularTotalCantidad();
+        }
+
+        function calcularTotalCantidad() {
+            const inputs = document.querySelectorAll('.cantidad-input');
+            let total = 0;
+            inputs.forEach(input => {
+                const val = parseFloat(input.value) || 0;
+                total += val;
+            });
+            document.getElementById('totalCantidad').textContent = total.toFixed(2);
+        }
+
+        document.getElementById('btnAgregarMaterial').addEventListener('click', agregarFila);
+
+        document.getElementById('materialesBody').addEventListener('input', function(e) {
+            if (e.target.classList.contains('cantidad-input')) {
+                calcularTotalCantidad();
+            }
+        });
+
+        document.getElementById('formRequisicion').addEventListener('submit', function(e) {
+            const filas = document.querySelectorAll('#materialesBody tr');
+            if (filas.length === 0) {
+                e.preventDefault();
+                alert('Debe agregar al menos un material a la requisición.');
+                return false;
+            }
+        });
+
+        // Iniciar con una fila
+        agregarFila();
+    </script>
+}

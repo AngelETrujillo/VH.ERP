@@ -1,0 +1,365 @@
+﻿@model VH.Services.DTOs.RequisicionEPPResponseDto
+@{
+    ViewData["Title"] = $"Entregar Requisición {Model.NumeroRequisicion}";
+    var lotesDisponibles = ViewBag.LotesDisponibles as Dictionary<int, List<SelectListItem>> ?? new Dictionary<int, List<SelectListItem>>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="flex-grow-1">
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-box-arrow-right text-success me-2"></i>Registrar Entrega
+            </h2>
+            <p class="text-muted mb-0">@Model.NumeroRequisicion</p>
+        </div>
+        <span class="badge bg-info fs-6 px-3 py-2">Aprobada</span>
+    </div>
+
+    <form asp-action="Entregar" asp-route-id="@Model.IdRequisicion" method="post" id="formEntrega" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="FirmaDigital" id="firmaDigitalInput" />
+        <input type="hidden" name="FotoEvidencia" id="fotoEvidenciaInput" />
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Información del Receptor -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Receptor</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-semibold">Empleado</label>
+                                <p class="fs-5 mb-0 fw-bold">@Model.NombreEmpleadoRecibe</p>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="text-muted small text-uppercase fw-semibold">N° Nómina</label>
+                                <p class="fs-5 mb-0"><code>@Model.NumeroNominaEmpleado</code></p>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="text-muted small text-uppercase fw-semibold">Almacén</label>
+                                <p class="fs-5 mb-0">@Model.NombreAlmacen</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materiales a Entregar -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales a Entregar</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Material</th>
+                                        <th class="text-center">Solicitado</th>
+                                        <th>Lote <span class="text-danger">*</span></th>
+                                        <th>Cantidad a Entregar <span class="text-danger">*</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Detalles.Count; i++)
+                                    {
+                                        var detalle = Model.Detalles[i];
+                                        var lotes = lotesDisponibles.ContainsKey(detalle.IdMaterial)
+                                        ? lotesDisponibles[detalle.IdMaterial]
+                                        : new List<SelectListItem>();
+
+                                        <tr>
+                                            <td>
+                                                <strong>@detalle.NombreMaterial</strong>
+                                                <br><small class="text-muted">@detalle.UnidadMedida</small>
+                                                @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
+                                                {
+                                                    <br>
+                                            
+                                                    <small class="badge bg-secondary">Talla: @detalle.TallaSolicitada</small>
+                                                }
+                                                <input type="hidden" name="Detalles[@i].IdRequisicionDetalle" value="@detalle.IdRequisicionDetalle" />
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                            </td>
+                                            <td>
+                                                @if (lotes.Any())
+                                                {
+                                                    <select name="Detalles[@i].IdCompra" class="form-select form-select-sm lote-select"
+                                                            data-material="@detalle.IdMaterial" required>
+                                                        <option value="">-- Seleccione lote --</option>
+                                                        @foreach (var lote in lotes)
+                                                        {
+                                                            <option value="@lote.Value">@lote.Text</option>
+                                                        }
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger small">
+                                                        <i class="bi bi-exclamation-triangle me-1"></i>Sin stock disponible
+                                                    </span>
+                                                    <input type="hidden" name="Detalles[@i].IdCompra" value="0" />
+                                                }
+                                            </td>
+                                            <td>
+                                                <input type="number" name="Detalles[@i].CantidadEntregada"
+                                                       class="form-control form-control-sm cantidad-entrega"
+                                                       min="0.01" step="0.01" max="@detalle.CantidadSolicitada"
+                                                       value="@detalle.CantidadSolicitada" required
+                                                       @(lotes.Any() ? "" : "disabled") />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-secondary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Observaciones</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea name="Observaciones" class="form-control" rows="2"
+                                  placeholder="Observaciones adicionales sobre la entrega (opcional)..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Firma Digital -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-pen me-2"></i>Firma Digital <span class="text-danger">*</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-2">El empleado debe firmar para confirmar la recepción:</p>
+                        <div class="border rounded mb-2" style="background: #f8f9fa;">
+                            <canvas id="firmaCanvas" width="350" height="150" style="width: 100%; touch-action: none;"></canvas>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" id="btnLimpiarFirma">
+                                <i class="bi bi-eraser me-1"></i>Limpiar
+                            </button>
+                        </div>
+                        <div id="firmaError" class="text-danger small mt-2" style="display: none;">
+                            <i class="bi bi-exclamation-circle me-1"></i>La firma es obligatoria
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Foto Evidencia -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-info text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Foto Evidencia (Opcional)</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="file" id="fotoInput" accept="image/*" capture="environment" class="form-control mb-2" />
+                        <div id="previewContainer" style="display: none;">
+                            <img id="fotoPreview" class="img-fluid rounded border" style="max-height: 200px;" />
+                            <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="btnQuitarFoto">
+                                <i class="bi bi-trash me-1"></i>Quitar foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón Entregar -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="btnEntregar">
+                                <i class="bi bi-check-lg me-2"></i>Confirmar Entrega
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información -->
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Seleccione el lote de donde se entregará cada material.</li>
+                            <li>La firma digital es <strong>obligatoria</strong>.</li>
+                            <li>La foto de evidencia es opcional pero recomendada.</li>
+                            <li>Al confirmar, se descontará del inventario automáticamente.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // ===== FIRMA DIGITAL =====
+        const canvas = document.getElementById('firmaCanvas');
+        const ctx = canvas.getContext('2d');
+        let dibujando = false;
+        let hayFirma = false;
+
+        // Ajustar canvas para alta resolución
+        function ajustarCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        ajustarCanvas();
+        window.addEventListener('resize', ajustarCanvas);
+
+        function obtenerPosicion(e) {
+            const rect = canvas.getBoundingClientRect();
+            if (e.touches) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function iniciarDibujo(e) {
+            e.preventDefault();
+            dibujando = true;
+            const pos = obtenerPosicion(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function dibujar(e) {
+            if (!dibujando) return;
+            e.preventDefault();
+            const pos = obtenerPosicion(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            hayFirma = true;
+        }
+
+        function finalizarDibujo(e) {
+            if (dibujando) {
+                e.preventDefault();
+                dibujando = false;
+            }
+        }
+
+        // Eventos mouse
+        canvas.addEventListener('mousedown', iniciarDibujo);
+        canvas.addEventListener('mousemove', dibujar);
+        canvas.addEventListener('mouseup', finalizarDibujo);
+        canvas.addEventListener('mouseout', finalizarDibujo);
+
+        // Eventos touch
+        canvas.addEventListener('touchstart', iniciarDibujo);
+        canvas.addEventListener('touchmove', dibujar);
+        canvas.addEventListener('touchend', finalizarDibujo);
+
+        // Limpiar firma
+        document.getElementById('btnLimpiarFirma').addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hayFirma = false;
+        });
+
+        // ===== FOTO EVIDENCIA =====
+        const fotoInput = document.getElementById('fotoInput');
+        const fotoPreview = document.getElementById('fotoPreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const fotoEvidenciaInput = document.getElementById('fotoEvidenciaInput');
+
+        fotoInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Mostrar preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                // Subir foto
+                const formData = new FormData();
+                formData.append('foto', file);
+
+                try {
+                    const response = await fetch('@Url.Action("SubirFoto", "RequisicionesEPP")', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        fotoEvidenciaInput.value = data.ruta;
+                    } else {
+                        alert('Error al subir la foto');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al subir la foto');
+                }
+            }
+        });
+
+        document.getElementById('btnQuitarFoto').addEventListener('click', function() {
+            fotoInput.value = '';
+            fotoPreview.src = '';
+            previewContainer.style.display = 'none';
+            fotoEvidenciaInput.value = '';
+        });
+
+        // ===== VALIDACIÓN Y ENVÍO =====
+        document.getElementById('formEntrega').addEventListener('submit', function(e) {
+            // Validar firma
+            if (!hayFirma) {
+                e.preventDefault();
+                document.getElementById('firmaError').style.display = 'block';
+                canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+
+            // Convertir firma a base64
+            document.getElementById('firmaDigitalInput').value = canvas.toDataURL('image/png');
+            document.getElementById('firmaError').style.display = 'none';
+
+            // Validar que todos los lotes estén seleccionados
+            const loteSelects = document.querySelectorAll('.lote-select');
+            for (let select of loteSelects) {
+                if (select.value === '') {
+                    e.preventDefault();
+                    alert('Debe seleccionar un lote para cada material.');
+                    select.focus();
+                    return false;
+                }
+            }
+
+            if (!confirm('¿Está seguro de confirmar la entrega? Esta acción descontará el inventario.')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+}

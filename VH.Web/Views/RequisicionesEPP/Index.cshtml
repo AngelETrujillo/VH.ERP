@@ -1,0 +1,153 @@
+﻿@model IEnumerable<VH.Services.DTOs.RequisicionEPPResponseDto>
+@{
+    ViewData["Title"] = "Requisiciones EPP";
+    var esSuperAdmin = User.IsInRole("SuperAdmin");
+    var esAdmin = User.IsInRole("Administrador");
+    var puedeCrear = PermisoHelper.PuedeCrear(Context.Session, "REQUISICIONES_EPP", esSuperAdmin);
+    var puedeEditar = PermisoHelper.PuedeEditar(Context.Session, "REQUISICIONES_EPP", esSuperAdmin);
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>Requisiciones EPP
+            </h2>
+            <p class="text-muted mb-0">Gestión de solicitudes de equipos de protección personal</p>
+        </div>
+        @if (puedeCrear)
+        {
+            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Nueva Requisición
+            </a>
+        }
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Index" class="btn @(ViewBag.FiltroActual == null ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-list-ul me-1"></i>Todas
+                </a>
+                <a asp-action="Index" asp-route-filtro="mis" class="btn @(ViewBag.FiltroActual == "mis" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-person me-1"></i>Mis Requisiciones
+                </a>
+                @if (esSuperAdmin || esAdmin)
+                {
+                    <a asp-action="Index" asp-route-filtro="pendientes-aprobacion" class="btn @(ViewBag.FiltroActual == "pendientes-aprobacion" ? "btn-warning" : "btn-outline-warning") btn-sm">
+                        <i class="bi bi-clock me-1"></i>Pendientes Aprobación
+                    </a>
+                    <a asp-action="Index" asp-route-filtro="pendientes-entrega" class="btn @(ViewBag.FiltroActual == "pendientes-entrega" ? "btn-info" : "btn-outline-info") btn-sm">
+                        <i class="bi bi-box-seam me-1"></i>Pendientes Entrega
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>N° Requisición</th>
+                            <th>Fecha</th>
+                            <th>Solicitante</th>
+                            <th>Empleado Receptor</th>
+                            <th>Almacén</th>
+                            <th class="text-center">Materiales</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center" width="150">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var item in Model.OrderByDescending(r => r.FechaSolicitud))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">@item.NumeroRequisicion</strong>
+                                    </td>
+                                    <td>
+                                        <small>@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </td>
+                                    <td>@item.NombreUsuarioSolicita</td>
+                                    <td>
+                                        <div>@item.NombreEmpleadoRecibe</div>
+                                        <small class="text-muted">@item.NumeroNominaEmpleado</small>
+                                    </td>
+                                    <td>@item.NombreAlmacen</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">@item.TotalMateriales</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-@item.EstadoClase">@item.EstadoTexto</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.IdRequisicion"
+                                               class="btn btn-outline-info" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                                            {
+                                                <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
+                                                   class="btn btn-outline-warning" title="Aprobar/Rechazar">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </a>
+                                            }
+                                            @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Aprobada && (esSuperAdmin || esAdmin))
+                                            {
+                                                <a asp-action="Entregar" asp-route-id="@item.IdRequisicion"
+                                                   class="btn btn-outline-success" title="Entregar">
+                                                    <i class="bi bi-box-arrow-right"></i>
+                                                </a>
+                                            }
+                                            @if (item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                                            {
+                                                <form asp-action="Cancelar" asp-route-id="@item.IdRequisicion" method="post" class="d-inline"
+                                                      onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger" title="Cancelar">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                                    No hay requisiciones registradas
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

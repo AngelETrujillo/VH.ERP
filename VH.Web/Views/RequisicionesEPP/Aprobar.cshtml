@@ -1,0 +1,185 @@
+﻿@model VH.Services.DTOs.RequisicionEPPResponseDto
+@{
+    ViewData["Title"] = $"Aprobar Requisición {Model.NumeroRequisicion}";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="flex-grow-1">
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-check-circle text-warning me-2"></i>Aprobar / Rechazar Requisición
+            </h2>
+            <p class="text-muted mb-0">@Model.NumeroRequisicion</p>
+        </div>
+        <span class="badge bg-warning fs-6 px-3 py-2">Pendiente</span>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Información de la Requisición -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información de la Requisición</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold">N° Requisición</label>
+                            <p class="fs-5 mb-0 fw-bold text-primary">@Model.NumeroRequisicion</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Fecha Solicitud</label>
+                            <p class="fs-5 mb-0">@Model.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Solicitante</label>
+                            <p class="fs-5 mb-0">@Model.NombreUsuarioSolicita</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Almacén</label>
+                            <p class="fs-5 mb-0">@Model.NombreAlmacen</p>
+                        </div>
+                        <div class="col-12">
+                            <label class="text-muted small text-uppercase fw-semibold">Empleado Receptor</label>
+                            <p class="fs-5 mb-0">
+                                @Model.NombreEmpleadoRecibe
+                                <span class="badge bg-secondary ms-2">@Model.NumeroNominaEmpleado</span>
+                            </p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Justificacion))
+                        {
+                            <div class="col-12">
+                                <label class="text-muted small text-uppercase fw-semibold">Justificación</label>
+                                <p class="mb-0 bg-light p-3 rounded">@Model.Justificacion</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materiales Solicitados -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Material</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-center">Talla</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in Model.Detalles)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@detalle.NombreMaterial</strong>
+                                            <br><small class="text-muted">@detalle.UnidadMedida</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                        </td>
+                                        <td class="text-center">
+                                            @(string.IsNullOrEmpty(detalle.TallaSolicitada) ? "-" : detalle.TallaSolicitada)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th>Total: @Model.TotalMateriales material(es)</th>
+                                    <th class="text-center">@Model.TotalCantidadSolicitada</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Formulario de Aprobación -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Decisión</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Botón Aprobar -->
+                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Aprobada" value="true" />
+                        <input type="hidden" name="MotivoRechazo" value="" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg"
+                                    onclick="return confirm('¿Está seguro de APROBAR esta requisición?');">
+                                <i class="bi bi-check-lg me-2"></i>Aprobar Requisición
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Formulario Rechazar -->
+                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" id="formRechazo">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Aprobada" value="false" />
+
+                        <div class="mb-3">
+                            <label for="MotivoRechazo" class="form-label fw-semibold text-danger">
+                                <i class="bi bi-x-circle me-1"></i>Motivo de Rechazo
+                            </label>
+                            <textarea name="MotivoRechazo" id="MotivoRechazo" class="form-control" rows="3"
+                                      placeholder="Indique el motivo del rechazo..."></textarea>
+                            <small class="text-muted">Obligatorio si rechaza la requisición</small>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger" id="btnRechazar">
+                                <i class="bi bi-x-lg me-2"></i>Rechazar Requisición
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información -->
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
+                    <ul class="small text-muted mb-0">
+                        <li>Al <strong class="text-success">aprobar</strong>, la requisición pasará a estado "Aprobada" y podrá ser entregada.</li>
+                        <li>Al <strong class="text-danger">rechazar</strong>, debe indicar un motivo y la requisición se cerrará.</li>
+                        <li>Esta acción no se puede deshacer.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('formRechazo').addEventListener('submit', function(e) {
+            var motivo = document.getElementById('MotivoRechazo').value.trim();
+            if (motivo === '') {
+                e.preventDefault();
+                alert('Debe indicar el motivo del rechazo.');
+                document.getElementById('MotivoRechazo').focus();
+                return false;
+            }
+
+            if (!confirm('¿Está seguro de RECHAZAR esta requisición?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+}

@@ -588,6 +588,130 @@ namespace VH.Data.Migrations
                     b.ToTable("Proyectos");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.RequisicionEPP", b =>
+                {
+                    b.Property<int>("IdRequisicion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdRequisicion"));
+
+                    b.Property<int>("EstadoRequisicion")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaAprobacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaEntrega")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaSolicitud")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FirmaDigital")
+                        .HasMaxLength(500000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FotoEvidencia")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("IdAlmacen")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdEmpleadoRecibe")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IdUsuarioAprueba")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("IdUsuarioEntrega")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("IdUsuarioSolicita")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Justificacion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("MotivoRechazo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NumeroRequisicion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("IdRequisicion");
+
+                    b.HasIndex("EstadoRequisicion");
+
+                    b.HasIndex("FechaSolicitud");
+
+                    b.HasIndex("IdAlmacen");
+
+                    b.HasIndex("IdEmpleadoRecibe");
+
+                    b.HasIndex("IdUsuarioAprueba");
+
+                    b.HasIndex("IdUsuarioEntrega");
+
+                    b.HasIndex("IdUsuarioSolicita");
+
+                    b.HasIndex("NumeroRequisicion")
+                        .IsUnique();
+
+                    b.ToTable("RequisicionesEPP");
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.RequisicionEPPDetalle", b =>
+                {
+                    b.Property<int>("IdRequisicionDetalle")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdRequisicionDetalle"));
+
+                    b.Property<decimal?>("CantidadEntregada")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CantidadSolicitada")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int?>("IdCompra")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdMaterial")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdRequisicion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TallaSolicitada")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("IdRequisicionDetalle");
+
+                    b.HasIndex("IdCompra");
+
+                    b.HasIndex("IdMaterial");
+
+                    b.HasIndex("IdRequisicion", "IdMaterial");
+
+                    b.ToTable("RequisicionesEPPDetalle");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.Rol", b =>
                 {
                     b.Property<string>("Id")
@@ -979,6 +1103,73 @@ namespace VH.Data.Migrations
                     b.Navigation("ModuloPadre");
                 });
 
+            modelBuilder.Entity("VH.Services.Entities.RequisicionEPP", b =>
+                {
+                    b.HasOne("VH.Services.Entities.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("IdAlmacen")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.Empleado", "EmpleadoRecibe")
+                        .WithMany()
+                        .HasForeignKey("IdEmpleadoRecibe")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.Usuario", "UsuarioAprueba")
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioAprueba")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VH.Services.Entities.Usuario", "UsuarioEntrega")
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioEntrega")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VH.Services.Entities.Usuario", "UsuarioSolicita")
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioSolicita")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("EmpleadoRecibe");
+
+                    b.Navigation("UsuarioAprueba");
+
+                    b.Navigation("UsuarioEntrega");
+
+                    b.Navigation("UsuarioSolicita");
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.RequisicionEPPDetalle", b =>
+                {
+                    b.HasOne("VH.Services.Entities.CompraEPP", "Compra")
+                        .WithMany()
+                        .HasForeignKey("IdCompra")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VH.Services.Entities.MaterialEPP", "Material")
+                        .WithMany()
+                        .HasForeignKey("IdMaterial")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VH.Services.Entities.RequisicionEPP", "Requisicion")
+                        .WithMany("Detalles")
+                        .HasForeignKey("IdRequisicion")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Compra");
+
+                    b.Navigation("Material");
+
+                    b.Navigation("Requisicion");
+                });
+
             modelBuilder.Entity("VH.Services.Entities.RolPermiso", b =>
                 {
                     b.HasOne("VH.Services.Entities.Modulo", "Modulo")
@@ -1036,6 +1227,11 @@ namespace VH.Data.Migrations
                     b.Navigation("ConceptosPartidas");
 
                     b.Navigation("Empleados");
+                });
+
+            modelBuilder.Entity("VH.Services.Entities.RequisicionEPP", b =>
+                {
+                    b.Navigation("Detalles");
                 });
 
             modelBuilder.Entity("VH.Services.Entities.Rol", b =>

@@ -173,6 +173,35 @@ namespace VH.Services.Mapping
                 // Precio del lote
                 .ForMember(dest => dest.PrecioUnitarioCompra, opt => opt.MapFrom(src =>
                     src.Compra != null ? src.Compra.PrecioUnitario : 0));
+
+            // ===== REQUISICIONES EPP =====
+            CreateMap<RequisicionEPP, RequisicionEPPResponseDto>()
+                .ForMember(dest => dest.Justificacion, opt => opt.MapFrom(src => src.Justificacion ?? string.Empty))
+                .ForMember(dest => dest.NombreUsuarioSolicita, opt => opt.MapFrom(src =>
+                    src.UsuarioSolicita != null ? src.UsuarioSolicita.NombreCompleto : string.Empty))
+                .ForMember(dest => dest.NombreEmpleadoRecibe, opt => opt.MapFrom(src =>
+                    src.EmpleadoRecibe != null ? $"{src.EmpleadoRecibe.Nombre} {src.EmpleadoRecibe.ApellidoPaterno}" : string.Empty))
+                .ForMember(dest => dest.NumeroNominaEmpleado, opt => opt.MapFrom(src =>
+                    src.EmpleadoRecibe != null ? src.EmpleadoRecibe.NumeroNomina : string.Empty))
+                .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
+                    src.Almacen != null ? src.Almacen.Nombre : string.Empty))
+                .ForMember(dest => dest.NombreUsuarioAprueba, opt => opt.MapFrom(src =>
+                    src.UsuarioAprueba != null ? src.UsuarioAprueba.NombreCompleto : null))
+                .ForMember(dest => dest.NombreUsuarioEntrega, opt => opt.MapFrom(src =>
+                    src.UsuarioEntrega != null ? src.UsuarioEntrega.NombreCompleto : null));
+
+            CreateMap<RequisicionEPPDetalle, RequisicionEPPDetalleResponseDto>()
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.Material != null ? src.Material.Nombre : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.Material != null && src.Material.UnidadMedida != null ? src.Material.UnidadMedida.Abreviatura : string.Empty))
+                .ForMember(dest => dest.DescripcionLote, opt => opt.MapFrom(src =>
+                    src.Compra != null ? $"Lote #{src.Compra.IdCompra} - {(src.Compra.Proveedor != null ? src.Compra.Proveedor.Nombre : "")}" : null));
+
+            CreateMap<RequisicionEPPRequestDto, RequisicionEPP>()
+                .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
+
+            CreateMap<RequisicionEPPDetalleRequestDto, RequisicionEPPDetalle>();
         }
     }
 }

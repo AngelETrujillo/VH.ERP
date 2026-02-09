@@ -344,6 +344,7 @@
         var puedeVerProveedores = PermisoHelper.PuedeVer(session, "PROVEEDORES", esSuperAdmin);
         var puedeVerAlmacenes = PermisoHelper.PuedeVer(session, "ALMACENES", esSuperAdmin);
         var puedeVerMateriales = PermisoHelper.PuedeVer(session, "MATERIALES_EPP", esSuperAdmin);
+        var puedeVerRequisiciones = PermisoHelper.PuedeVer(session, "REQUISICIONES_EPP", esSuperAdmin);
         var puedeVerCompras = PermisoHelper.PuedeVer(session, "COMPRAS_EPP", esSuperAdmin);
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
@@ -352,7 +353,7 @@
         var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
         var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores;
         var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
-        var mostrarOperaciones = puedeVerCompras || puedeVerEntregas || puedeVerInventarios;
+        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios;
         var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
     }
 
@@ -449,6 +450,15 @@
         {
             <p class="sidebar-section-title">Operaciones EPP</p>
             <ul class="sidebar-menu">
+                @if (puedeVerRequisiciones)
+                {
+                    <li>
+                        <a asp-controller="RequisicionesEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "RequisicionesEPP" ? "active" : "")">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span class="menu-text">Requisiciones EPP</span>
+                        </a>
+                    </li>
+                }
                 @if (puedeVerCompras)
                 {
                     <li>

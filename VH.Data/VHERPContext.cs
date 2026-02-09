@@ -21,6 +21,8 @@ namespace VH.Data
         public DbSet<CompraEPP> ComprasEPP { get; set; }  // ← NUEVA TABLA
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
+        public DbSet<RequisicionEPP> RequisicionesEPP { get; set; }
+        public DbSet<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; set; }
         public DbSet<LogActividad> LogsActividad { get; set; }
         public DbSet<Modulo> Modulos { get; set; }
         public DbSet<RolPermiso> RolPermisos { get; set; }
@@ -363,6 +365,110 @@ namespace VH.Data
 
                 // Índice para búsquedas por fecha
                 entity.HasIndex(e => e.FechaEntrega);
+            });
+
+            // ===== CONFIGURACIÓN DE REQUISICION EPP =====
+            modelBuilder.Entity<RequisicionEPP>(entity =>
+            {
+                entity.HasKey(r => r.IdRequisicion);
+
+                entity.Property(r => r.NumeroRequisicion)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(r => r.Justificacion)
+                    .HasMaxLength(500);
+
+                entity.Property(r => r.MotivoRechazo)
+                    .HasMaxLength(500);
+
+                entity.Property(r => r.FirmaDigital)
+                    .HasMaxLength(500000);
+
+                entity.Property(r => r.FotoEvidencia)
+                    .HasMaxLength(300);
+
+                entity.Property(r => r.Observaciones)
+                    .HasMaxLength(500);
+
+                entity.Property(r => r.EstadoRequisicion)
+                    .IsRequired();
+
+                // Índice único para número de requisición
+                entity.HasIndex(r => r.NumeroRequisicion).IsUnique();
+
+                // Relación: RequisicionEPP -> Usuario Solicita
+                entity.HasOne(r => r.UsuarioSolicita)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdUsuarioSolicita)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: RequisicionEPP -> Empleado Recibe
+                entity.HasOne(r => r.EmpleadoRecibe)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdEmpleadoRecibe)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: RequisicionEPP -> Almacén
+                entity.HasOne(r => r.Almacen)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: RequisicionEPP -> Usuario Aprueba
+                entity.HasOne(r => r.UsuarioAprueba)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdUsuarioAprueba)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: RequisicionEPP -> Usuario Entrega
+                entity.HasOne(r => r.UsuarioEntrega)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdUsuarioEntrega)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índices para búsquedas frecuentes
+                entity.HasIndex(r => r.FechaSolicitud);
+                entity.HasIndex(r => r.EstadoRequisicion);
+                entity.HasIndex(r => r.IdUsuarioSolicita);
+                entity.HasIndex(r => r.IdEmpleadoRecibe);
+            });
+
+            // ===== CONFIGURACIÓN DE REQUISICION EPP DETALLE =====
+            modelBuilder.Entity<RequisicionEPPDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdRequisicionDetalle);
+
+                entity.Property(d => d.CantidadSolicitada)
+                    .IsRequired()
+                    .HasPrecision(18, 4);
+
+                entity.Property(d => d.CantidadEntregada)
+                    .HasPrecision(18, 4);
+
+                entity.Property(d => d.TallaSolicitada)
+                    .HasMaxLength(20);
+
+                // Relación: Detalle -> Requisición
+                entity.HasOne(d => d.Requisicion)
+                    .WithMany(r => r.Detalles)
+                    .HasForeignKey(d => d.IdRequisicion)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación: Detalle -> Material
+                entity.HasOne(d => d.Material)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación: Detalle -> Compra (lote)
+                entity.HasOne(d => d.Compra)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdCompra)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice para búsquedas
+                entity.HasIndex(d => new { d.IdRequisicion, d.IdMaterial });
             });
 
             // ===== CONFIGURACIÓN DE LOG ACTIVIDAD =====

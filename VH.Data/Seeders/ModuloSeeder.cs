@@ -25,6 +25,7 @@ namespace VH.Data.Seeders
                 new Modulo { Codigo = "ALMACENES_MENU", Nombre = "Almacenes", Icono = "bi-box-seam", Orden = 30 },
                 
                 // Operaciones EPP
+                new Modulo { Codigo = "REQUISICIONES_EPP", Nombre = "Requisiciones EPP", Icono = "bi-file-earmark-text", ControllerName = "RequisicionesEPP", Orden = 39 },
                 new Modulo { Codigo = "COMPRAS_EPP", Nombre = "Compras EPP", Icono = "bi-cart-plus", ControllerName = "ComprasEPP", Orden = 40 },
                 new Modulo { Codigo = "ENTREGAS_EPP", Nombre = "Entregas EPP", Icono = "bi-clipboard-check", ControllerName = "EntregasEPP", Orden = 41 },
                 new Modulo { Codigo = "INVENTARIOS", Nombre = "Control Inventario", Icono = "bi-boxes", ControllerName = "Inventarios", Orden = 42 },

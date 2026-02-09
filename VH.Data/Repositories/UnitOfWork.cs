@@ -26,9 +26,11 @@ namespace VH.Data.Repositories
         private IGenericRepository<Almacen>? _almacenes;
 
         // Transacciones EPP
-        private IGenericRepository<CompraEPP>? _comprasEPP;  // ← NUEVO
+        private IGenericRepository<CompraEPP>? _comprasEPP;
         private IGenericRepository<Inventario>? _inventarios;
         private IGenericRepository<EntregaEPP>? _entregasEPP;
+        private IGenericRepository<RequisicionEPP>? _requisicionesEPP;
+        private IGenericRepository<RequisicionEPPDetalle>? _requisicionesEPPDetalle;
         private IGenericRepository<LogActividad>? _logsActividad;
         private IGenericRepository<Modulo>? _modulos;
         private IGenericRepository<RolPermiso>? _rolPermisos;
@@ -72,10 +74,16 @@ namespace VH.Data.Repositories
             _inventarios ??= new GenericRepository<Inventario>(_context);
 
         public IGenericRepository<EntregaEPP> EntregasEPP =>
-            _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
+    _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
+
+        public IGenericRepository<RequisicionEPP> RequisicionesEPP =>
+            _requisicionesEPP ??= new GenericRepository<RequisicionEPP>(_context);
+
+        public IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle =>
+            _requisicionesEPPDetalle ??= new GenericRepository<RequisicionEPPDetalle>(_context);
 
         public IGenericRepository<LogActividad> LogsActividad =>
-    _logsActividad ??= new GenericRepository<LogActividad>(_context);
+            _logsActividad ??= new GenericRepository<LogActividad>(_context);
 
         public IGenericRepository<Modulo> Modulos =>
             _modulos ??= new GenericRepository<Modulo>(_context);

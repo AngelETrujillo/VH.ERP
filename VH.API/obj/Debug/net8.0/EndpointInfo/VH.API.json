@@ -2486,6 +2486,400 @@
         }
       }
     },
+    "/api/RequisicionesEPP": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequisicionEPPRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequisicionEPPRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequisicionEPPRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/mis-requisiciones": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/empleado/{idEmpleado}": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/pendientes-aprobacion": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/pendientes-entrega": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/{id}": {
+      "get": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisicionEPPResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/{id}/aprobar": {
+      "post": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprobarRequisicionRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprobarRequisicionRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprobarRequisicionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/{id}/entregar": {
+      "post": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregarRequisicionRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregarRequisicionRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregarRequisicionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RequisicionesEPP/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "RequisicionesEPP"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Roles": {
       "get": {
         "tags": [
@@ -3126,6 +3520,19 @@
         },
         "additionalProperties": false
       },
+      "AprobarRequisicionRequestDto": {
+        "type": "object",
+        "properties": {
+          "aprobada": {
+            "type": "boolean"
+          },
+          "motivoRechazo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AsignarPermisoRequestDto": {
         "type": "object",
         "properties": {
@@ -3563,6 +3970,60 @@
           }
         },
         "additionalProperties": false
+      },
+      "EntregarRequisicionDetalleDto": {
+        "type": "object",
+        "properties": {
+          "idRequisicionDetalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idCompra": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadEntregada": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EntregarRequisicionRequestDto": {
+        "type": "object",
+        "properties": {
+          "firmaDigital": {
+            "type": "string",
+            "nullable": true
+          },
+          "fotoEvidencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "detalles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntregarRequisicionDetalleDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EstadoRequisicion": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "InventarioRequestDto": {
         "type": "object",
@@ -4044,6 +4505,223 @@
           "refreshToken": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequisicionEPPDetalleRequestDto": {
+        "type": "object",
+        "properties": {
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadSolicitada": {
+            "type": "number",
+            "format": "double"
+          },
+          "tallaSolicitada": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequisicionEPPDetalleResponseDto": {
+        "type": "object",
+        "properties": {
+          "idRequisicionDetalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idRequisicion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadSolicitada": {
+            "type": "number",
+            "format": "double"
+          },
+          "tallaSolicitada": {
+            "type": "string",
+            "nullable": true
+          },
+          "idCompra": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "descripcionLote": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadEntregada": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "entregado": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequisicionEPPRequestDto": {
+        "type": "object",
+        "properties": {
+          "idEmpleadoRecibe": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "justificacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "detalles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequisicionEPPDetalleRequestDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequisicionEPPResponseDto": {
+        "type": "object",
+        "properties": {
+          "idRequisicion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numeroRequisicion": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUsuarioSolicita": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreUsuarioSolicita": {
+            "type": "string",
+            "nullable": true
+          },
+          "idEmpleadoRecibe": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreEmpleadoRecibe": {
+            "type": "string",
+            "nullable": true
+          },
+          "numeroNominaEmpleado": {
+            "type": "string",
+            "nullable": true
+          },
+          "idAlmacen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreAlmacen": {
+            "type": "string",
+            "nullable": true
+          },
+          "justificacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "estadoRequisicion": {
+            "$ref": "#/components/schemas/EstadoRequisicion"
+          },
+          "estadoTexto": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "estadoClase": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "idUsuarioAprueba": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreUsuarioAprueba": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaAprobacion": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "motivoRechazo": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUsuarioEntrega": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreUsuarioEntrega": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "firmaDigital": {
+            "type": "string",
+            "nullable": true
+          },
+          "fotoEvidencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaSolicitud": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detalles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequisicionEPPDetalleResponseDto"
+            },
+            "nullable": true
+          },
+          "totalMateriales": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "totalCantidadSolicitada": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
           }
         },
         "additionalProperties": false

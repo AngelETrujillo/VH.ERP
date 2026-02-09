@@ -121,6 +121,7 @@ builder.Services.AddScoped<IUnidadMedidaService, UnidadMedidaService>();
 builder.Services.AddScoped<IAlmacenService, AlmacenService>();
 builder.Services.AddScoped<IInventarioService, InventarioService>();
 builder.Services.AddScoped<ICompraEPPService, CompraEPPService>();
+builder.Services.AddScoped<IRequisicionEPPService, RequisicionEPPService>();
 
 // 9. Servicios de Autenticación
 builder.Services.AddScoped<IAuthService, AuthService>();
