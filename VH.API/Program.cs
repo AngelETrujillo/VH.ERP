@@ -15,9 +15,7 @@ using VH.Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===== CONFIGURACIÓN DE SERVICIOS =====
-
-// 1. Agregar Controllers con opciones JSON
+// 1. Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -25,17 +23,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
-// 2. Swagger/OpenAPI con soporte JWT
+// 2. Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "VH.ERP API - Sistema de Gestión EPP",
-        Version = "v1",
-        Description = "API para el sistema ERP de gestión de equipos de protección personal"
-    });
-
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "VH.ERP API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header. Ejemplo: \"Bearer {token}\"",
@@ -44,47 +36,30 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
             Array.Empty<string>()
         }
     });
 });
 
-// 3. Entity Framework - SQL Server
+// 3. Database
 builder.Services.AddDbContext<VHERPContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 4. Identity
 builder.Services.AddIdentity<Usuario, Rol>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<VHERPContext>()
 .AddDefaultTokenProviders();
 
-// 5. JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"]!;
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
-var jwtAudience = builder.Configuration["Jwt:Audience"]!;
-
+// 5. JWT
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "VH_ERP_SecretKey_2024_MuySegura_DebeSerLarga_32Chars!";
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -98,19 +73,15 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 
-// 6. AutoMapper
+// 6 a 9. Inyección de Dependencias (Mantenemos tus servicios)
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
-// 7. Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// 8. Servicios de Negocio
 builder.Services.AddScoped<IProyectoService, ProyectoService>();
 builder.Services.AddScoped<IConceptoPartidaService, ConceptoPartidaService>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
@@ -122,20 +93,18 @@ builder.Services.AddScoped<IAlmacenService, AlmacenService>();
 builder.Services.AddScoped<IInventarioService, InventarioService>();
 builder.Services.AddScoped<ICompraEPPService, CompraEPPService>();
 builder.Services.AddScoped<IRequisicionEPPService, RequisicionEPPService>();
-
-// 9. Servicios de Autenticación
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<ILogActividadService, LogActividadService>();
 builder.Services.AddScoped<IPermisoService, PermisoService>();
 
-// 10. CORS
+// 10. CORS CONFIGURADO PARA RED
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWebApp", policy =>
     {
-        policy.WithOrigins("https://localhost:7266", "http://localhost:5210")
+        policy.WithOrigins("http://192.168.1.96", "https://localhost:7266", "http://localhost:5210")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -143,29 +112,30 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Ejecutar Seeder
+// SEEDER CON PROTECCIÓN (EVITA EL ERROR 500.30)
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Rol>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-    var context = scope.ServiceProvider.GetRequiredService<VHERPContext>();
-
-    await VH.Data.Seeders.IdentitySeeder.SeedAsync(roleManager, userManager);
-    await VH.Data.Seeders.ModuloSeeder.SeedAsync(context);
-}
-
-// ===== CONFIGURACIÓN DEL PIPELINE =====
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    try
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "VH.ERP API v1");
-    });
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Rol>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+        var context = scope.ServiceProvider.GetRequiredService<VHERPContext>();
+
+        await VH.Data.Seeders.IdentitySeeder.SeedAsync(roleManager, userManager);
+        await VH.Data.Seeders.ModuloSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error en Seeder: {ex.Message}");
+    }
 }
 
-app.UseHttpsRedirection();
+// Pipeline
+app.UseSwagger();
+app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "VH.ERP API v1"); });
+
+app.UseRouting();
+
 app.UseCors("AllowWebApp");
 
 app.UseAuthentication();

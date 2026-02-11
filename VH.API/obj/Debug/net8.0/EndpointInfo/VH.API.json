@@ -1,8 +1,7 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "VH.ERP API - Sistema de Gestión EPP",
-    "description": "API para el sistema ERP de gestión de equipos de protección personal",
+    "title": "VH.ERP API",
     "version": "v1"
   },
   "paths": {

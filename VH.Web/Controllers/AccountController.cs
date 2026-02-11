@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Security.Principal;
 using VH.Services.DTOs.Auth;
 
 namespace VH.Web.Controllers
@@ -30,56 +31,76 @@ namespace VH.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginRequestDto request, string? returnUrl = null)
         {
-            if (!ModelState.IsValid)
-                return View(request);
+            if (!ModelState.IsValid) return View(request);
 
             try
             {
+                // 1. Llamamos a la API
                 var response = await _httpClient.PostAsJsonAsync("api/Auth/login", request);
-                var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
 
-                if (result == null || !result.Exitoso)
+                if (response.IsSuccessStatusCode)
                 {
-                    ModelState.AddModelError("", result?.Mensaje ?? "Error al iniciar sesión");
+                    // 2. Primero leemos el resultado JSON
+                    var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+
+                    if (result == null || !result.Exitoso)
+                    {
+                        ModelState.AddModelError("", result?.Mensaje ?? "Credenciales inválidas.");
+                        return View(request);
+                    }
+
+                    // 3. Ahora que tenemos el 'result', creamos los Claims
+                    var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, result.Usuario!.Id),
+                new(ClaimTypes.Name, result.Usuario.NombreCompleto),
+                new(ClaimTypes.Email, result.Usuario.Email),
+                new("Token", result.Token!),
+                new("RefreshToken", result.RefreshToken!)
+            };
+
+                    // Agregamos los roles si existen
+                    if (result.Usuario.Roles != null)
+                    {
+                        foreach (var rol in result.Usuario.Roles)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, rol));
+                        }
+                    }
+
+                    // 4. Creamos Identidad y Principal
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+
+                    // 5. Configuramos propiedades de autenticación
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = request.Recordarme,
+                        ExpiresUtc = result.Expiracion
+                    };
+
+                    // 6. Iniciamos sesión en el sistema de Cookies de la Web
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+
+                    // 7. Guardamos el Token en la sesión para futuras llamadas a la API
+                    HttpContext.Session.SetString("JwtToken", result.Token!);
+
+                    // 8. Cargamos permisos
+                    await CargarPermisosEnSesion(result.Token!);
+
+                    // 9. Redirección final
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        return Redirect(returnUrl);
+
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    // Si la API responde con error, leemos el detalle
+                    var errorDetail = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", $"Error en la API ({response.StatusCode}): {errorDetail}");
                     return View(request);
                 }
-
-                // Crear claims para la cookie
-                var claims = new List<Claim>
-                {
-                    new(ClaimTypes.NameIdentifier, result.Usuario!.Id),
-                    new(ClaimTypes.Name, result.Usuario.NombreCompleto),
-                    new(ClaimTypes.Email, result.Usuario.Email),
-                    new("Token", result.Token!),
-                    new("RefreshToken", result.RefreshToken!)
-                };
-
-                foreach (var rol in result.Usuario.Roles)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, rol));
-                }
-
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
-
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = request.Recordarme,
-                    ExpiresUtc = result.Expiracion
-                };
-
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
-
-                // Guardar token en sesión
-                HttpContext.Session.SetString("JwtToken", result.Token!);
-
-                // Cargar permisos del usuario
-                await CargarPermisosEnSesion(result.Token!);
-
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    return Redirect(returnUrl);
-
-                return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {

@@ -1,11 +1,3 @@
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.csproj.AssemblyReference.cache
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.AssemblyInfoInputs.cache
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.AssemblyInfo.cs
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.csproj.CoreCompileInputs.cache
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.sourcelink.json
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\appsettings.json
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\VH.API.exe
@@ -135,6 +127,14 @@ C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\VH.Data.dll
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\VH.Services.dll
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\VH.Services.pdb
 C:\Users\User\source\repos\VH-ERP\VH.API\bin\Debug\net8.0\VH.Data.pdb
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.csproj.AssemblyReference.cache
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.AssemblyInfoInputs.cache
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.AssemblyInfo.cs
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.csproj.CoreCompileInputs.cache
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\VH.API.sourcelink.json
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\User\source\repos\VH-ERP\VH.API\obj\Debug\net8.0\staticwebassets\msbuild.VH.API.Microsoft.AspNetCore.StaticWebAssets.props
