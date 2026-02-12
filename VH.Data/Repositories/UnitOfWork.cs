@@ -24,6 +24,7 @@ namespace VH.Data.Repositories
         private IGenericRepository<Proveedor>? _proveedores;
         private IGenericRepository<MaterialEPP>? _materialesEPP;
         private IGenericRepository<Almacen>? _almacenes;
+        private IGenericRepository<Puesto>? _puestos;
 
         // Transacciones EPP
         private IGenericRepository<CompraEPP>? _comprasEPP;
@@ -31,6 +32,14 @@ namespace VH.Data.Repositories
         private IGenericRepository<EntregaEPP>? _entregasEPP;
         private IGenericRepository<RequisicionEPP>? _requisicionesEPP;
         private IGenericRepository<RequisicionEPPDetalle>? _requisicionesEPPDetalle;
+
+        // Analytics
+        private IGenericRepository<ConfiguracionMaterialEPP>? _configuracionesMaterialEPP;
+        private IGenericRepository<AlertaConsumo>? _alertasConsumo;
+        private IGenericRepository<EstadisticaEmpleadoMensual>? _estadisticasEmpleadoMensual;
+        private IGenericRepository<EstadisticaProyectoMensual>? _estadisticasProyectoMensual;
+
+        // Sistema
         private IGenericRepository<LogActividad>? _logsActividad;
         private IGenericRepository<Modulo>? _modulos;
         private IGenericRepository<RolPermiso>? _rolPermisos;
@@ -66,6 +75,9 @@ namespace VH.Data.Repositories
         public IGenericRepository<Almacen> Almacenes =>
             _almacenes ??= new GenericRepository<Almacen>(_context);
 
+        public IGenericRepository<Puesto> Puestos =>
+            _puestos ??= new GenericRepository<Puesto>(_context);
+
         // --- Transacciones EPP ---
         public IGenericRepository<CompraEPP> ComprasEPP =>
             _comprasEPP ??= new GenericRepository<CompraEPP>(_context);
@@ -74,7 +86,7 @@ namespace VH.Data.Repositories
             _inventarios ??= new GenericRepository<Inventario>(_context);
 
         public IGenericRepository<EntregaEPP> EntregasEPP =>
-    _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
+            _entregasEPP ??= new GenericRepository<EntregaEPP>(_context);
 
         public IGenericRepository<RequisicionEPP> RequisicionesEPP =>
             _requisicionesEPP ??= new GenericRepository<RequisicionEPP>(_context);
@@ -82,6 +94,20 @@ namespace VH.Data.Repositories
         public IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle =>
             _requisicionesEPPDetalle ??= new GenericRepository<RequisicionEPPDetalle>(_context);
 
+        // --- Analytics ---
+        public IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP =>
+            _configuracionesMaterialEPP ??= new GenericRepository<ConfiguracionMaterialEPP>(_context);
+
+        public IGenericRepository<AlertaConsumo> AlertasConsumo =>
+            _alertasConsumo ??= new GenericRepository<AlertaConsumo>(_context);
+
+        public IGenericRepository<EstadisticaEmpleadoMensual> EstadisticasEmpleadoMensual =>
+            _estadisticasEmpleadoMensual ??= new GenericRepository<EstadisticaEmpleadoMensual>(_context);
+
+        public IGenericRepository<EstadisticaProyectoMensual> EstadisticasProyectoMensual =>
+            _estadisticasProyectoMensual ??= new GenericRepository<EstadisticaProyectoMensual>(_context);
+
+        // --- Sistema ---
         public IGenericRepository<LogActividad> LogsActividad =>
             _logsActividad ??= new GenericRepository<LogActividad>(_context);
 
@@ -91,11 +117,13 @@ namespace VH.Data.Repositories
         public IGenericRepository<RolPermiso> RolPermisos =>
             _rolPermisos ??= new GenericRepository<RolPermiso>(_context);
 
-        // ===== MÉTODOS DE CONTROL =====
+        // ===== MÉTODO DE PERSISTENCIA =====
         public async Task<int> CompleteAsync()
         {
             return await _context.SaveChangesAsync();
         }
+
+        // ===== LIBERACIÓN DE RECURSOS =====
         public void Dispose()
         {
             _context.Dispose();

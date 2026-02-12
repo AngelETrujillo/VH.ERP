@@ -18,6 +18,7 @@ namespace VH.Services.Interfaces
         IGenericRepository<Proveedor> Proveedores { get; }
         IGenericRepository<MaterialEPP> MaterialesEPP { get; }
         IGenericRepository<Almacen> Almacenes { get; }
+        IGenericRepository<Puesto> Puestos { get; }
 
         // ===== REPOSITORIOS DE TRANSACCIONES EPP =====
         IGenericRepository<CompraEPP> ComprasEPP { get; }
@@ -25,8 +26,15 @@ namespace VH.Services.Interfaces
         IGenericRepository<EntregaEPP> EntregasEPP { get; }
         IGenericRepository<RequisicionEPP> RequisicionesEPP { get; }
         IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; }
-        IGenericRepository<LogActividad> LogsActividad { get; }
 
+        // ===== REPOSITORIOS DE ANALYTICS =====
+        IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }
+        IGenericRepository<AlertaConsumo> AlertasConsumo { get; }
+        IGenericRepository<EstadisticaEmpleadoMensual> EstadisticasEmpleadoMensual { get; }
+        IGenericRepository<EstadisticaProyectoMensual> EstadisticasProyectoMensual { get; }
+
+        // ===== REPOSITORIOS DE SISTEMA =====
+        IGenericRepository<LogActividad> LogsActividad { get; }
         IGenericRepository<Modulo> Modulos { get; }
         IGenericRepository<RolPermiso> RolPermisos { get; }
 
