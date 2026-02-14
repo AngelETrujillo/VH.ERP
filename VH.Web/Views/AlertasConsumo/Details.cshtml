@@ -1,0 +1,155 @@
+@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
+@{
+    ViewData["Title"] = "Detalle de Alerta";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-exclamation-triangle text-@Model.ColorSeveridad me-2"></i>Alerta #@Model.IdAlerta
+            </h2>
+            <p class="text-muted mb-0">@Model.TipoAlertaTexto | Generada: @Model.FechaGeneracion.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <div>
+            <a asp-action="Revisar" asp-route-id="@Model.IdAlerta" class="btn btn-primary me-2">
+                <i class="bi bi-pencil me-1"></i>Revisar
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-@Model.ColorSeveridad text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi @Model.IconoTipo me-2"></i>@Model.TipoAlertaTexto
+                        </h5>
+                        <span class="badge bg-light text-dark">@Model.SeveridadTexto</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="lead">@Model.Descripcion</p>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Valor Esperado</p>
+                            <p class="fw-bold fs-5 text-success">@Model.ValorEsperado</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Valor Real</p>
+                            <p class="fw-bold fs-5 text-danger">@Model.ValorReal</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Desviación</p>
+                            <p class="fw-bold fs-5">@Model.Desviacion.ToString("N1")%</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Costo Estimado de Pérdida</p>
+                            <p class="fw-bold fs-5 text-danger">@(Model.CostoEstimado?.ToString("C") ?? "No calculado")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Observaciones))
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Observaciones de Revisión</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">@Model.Observaciones</p>
+                        <hr>
+                        <small class="text-muted">
+                            Revisado por: @(Model.NombreUsuarioReviso ?? "N/A") | 
+                            Fecha: @(Model.FechaRevision?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")
+                        </small>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Estado</h5>
+                </div>
+                <div class="card-body text-center">
+                    <span class="badge bg-@Model.ColorEstado fs-5 px-4 py-2">@Model.EstadoTexto</span>
+                    <p class="text-muted mt-3 mb-0">
+                        @Model.DiasDesdeGeneracion días desde generación
+                    </p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>Empleado</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>@Model.NombreEmpleado</strong></p>
+                    <p class="mb-1 text-muted">@Model.NumeroNomina</p>
+                    <p class="mb-1 text-muted">@Model.PuestoEmpleado</p>
+                    <hr>
+                    <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@Model.IdEmpleado" 
+                       class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-person-lines-fill me-1"></i>Ver Perfil Completo
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-building me-2"></i>Proyecto</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0"><strong>@Model.NombreProyecto</strong></p>
+                </div>
+            </div>
+
+            @if (Model.IdMaterial.HasValue)
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Material</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0"><strong>@Model.NombreMaterial</strong></p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Referencias</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="mb-1 text-muted">ID Entrega</p>
+                    <p class="fw-bold">@(Model.IdEntrega?.ToString() ?? "N/A")</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1 text-muted">ID Requisición</p>
+                    <p class="fw-bold">@(Model.IdRequisicion?.ToString() ?? "N/A")</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1 text-muted">ID Proyecto</p>
+                    <p class="fw-bold">@(Model.IdProyecto?.ToString() ?? "N/A")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

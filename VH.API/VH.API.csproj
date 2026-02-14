@@ -23,4 +23,8 @@
     <ProjectReference Include="..\VH.Data\VH.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+
 </Project>

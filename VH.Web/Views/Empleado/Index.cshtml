@@ -9,20 +9,26 @@
 
 <div class="container-fluid">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+
         <div>
-            <h2 class="mb-1 fw-bold text-dark">
-                <i class="bi bi-people-fill text-primary me-2"></i>Gestión de Empleados
+            <h2 class="mb-1 fw-bold text-dark fs-4 fs-md-2">
+                <i class="bi bi-people-fill text-primary me-2"></i>
+                Gestión de Empleados
             </h2>
-            <p class="text-muted mb-0">Administra el personal de la empresa</p>
+            <p class="text-muted mb-0 small">Administra el personal de la empresa</p>
         </div>
+
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            <a asp-action="Create"
+               class="btn btn-primary w-100 w-md-auto">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Empleado
             </a>
         }
+
     </div>
+
 
     <!-- Alertas -->
     @if (ViewBag.ErrorMessage != null)
@@ -35,39 +41,59 @@
 
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
+        
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
+
+            <div class="row g-3">
+
+                <!-- Buscador -->
+                <div class="col-12 col-lg-5">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por nombre, nómina o puesto...">
+                        <input type="text"
+                               id="searchInput"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="Buscar empleado...">
                     </div>
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <div class="btn-group" role="group">
+
+                <!-- Filtros -->
+                <div class="col-12 col-lg-5">
+                    <div class="btn-group w-100" role="group">
                         <input type="radio" class="btn-check" name="filtroEstado" id="filtroTodos" checked>
-                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
+                        <label class="btn btn-outline-secondary" for="filtroTodos">Todos</label>
+
                         <input type="radio" class="btn-check" name="filtroEstado" id="filtroActivos">
-                        <label class="btn btn-outline-success btn-sm" for="filtroActivos">Activos</label>
+                        <label class="btn btn-outline-success" for="filtroActivos">Activos</label>
+
                         <input type="radio" class="btn-check" name="filtroEstado" id="filtroInactivos">
-                        <label class="btn btn-outline-danger btn-sm" for="filtroInactivos">Inactivos</label>
+                        <label class="btn btn-outline-danger" for="filtroInactivos">Inactivos</label>
                     </div>
-                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
                 </div>
+
+                <!-- Contador -->
+                <div class="col-12 col-lg-2 text-lg-end">
+                    <span class="badge bg-secondary w-100 w-lg-auto">
+                        @Model?.Count() registros
+                    </span>
+                </div>
+
             </div>
+
         </div>
+
+        
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="dataTable">
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4">Empleado</th>
-                            <th>No. Nómina</th>
-                            <th>Puesto</th>
-                            <th>Proyecto</th>
+                            <th class="d-none d-md-table-cell">No. Nómina</th>
+                            <th class="d-none d-lg-table-cell">Puesto</th>
+                            <th class="d-none d-lg-table-cell">Proyecto</th>
                             <th class="text-center">Estado</th>
                             <th class="text-center" style="width:140px;">Acciones</th>
                         </tr>
@@ -90,8 +116,10 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><code class="bg-light px-2 py-1 rounded">@item.NumeroNomina</code></td>
-                                    <td>@item.Puesto</td>
+                                    <td class="d-none d-md-table-cell">
+                                        <code class="bg-light px-2 py-1 rounded">@item.NumeroNomina</code>
+                                    </td>
+                                    <td class="d-none d-lg-table-cell">@item.Puesto</td>
                                     <td>
                                         @if (!string.IsNullOrEmpty(item.NombreProyecto))
                                         {
@@ -119,11 +147,14 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group btn-group-sm">
+
+                                        <!-- Desktop -->
+                                        <div class="btn-group btn-group-sm d-none d-md-inline-flex">
                                             <a asp-action="Details" asp-route-id="@item.IdEmpleado"
                                                class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
+
                                             @if (puedeEditar)
                                             {
                                                 <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
@@ -131,6 +162,7 @@
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                             }
+
                                             @if (puedeEliminar)
                                             {
                                                 <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
@@ -139,7 +171,35 @@
                                                 </a>
                                             }
                                         </div>
+
+                                        <!-- Mobile -->
+                                        <div class="d-flex d-md-none gap-2 justify-content-center">
+
+                                            <a asp-action="Details" asp-route-id="@item.IdEmpleado"
+                                               class="btn btn-outline-info btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            @if (puedeEditar)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
+                                                   class="btn btn-outline-warning btn-sm">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            }
+
+                                            @if (puedeEliminar)
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
+                                                   class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
+
+                                        </div>
+
                                     </td>
+
                                 </tr>
                             }
                         }
@@ -166,6 +226,20 @@
 </div>
 
 <style>
+    @* .avatar-circle {
+        width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+    }
+
+    @media (min-width:768px) {
+        .avatar-circle {
+            width: 42px;
+            height: 42px;
+            font-size: 0.9rem;
+        }
+    } *@
+
     .avatar-circle {
         width: 42px;
         height: 42px;

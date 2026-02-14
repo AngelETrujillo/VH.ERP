@@ -5,6 +5,331 @@
     "version": "v1"
   },
   "paths": {
+    "/api/AlertasConsumo": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "FechaDesde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "FechaHasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "IdProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "IdEmpleado",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "IdMaterial",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TipoAlerta",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoAlerta"
+            }
+          },
+          {
+            "name": "Severidad",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SeveridadAlerta"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoAlerta"
+            }
+          },
+          {
+            "name": "SoloPendientes",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "SoloCriticas",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/{id}": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/resumen": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/pendientes/empleado/{idEmpleado}": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/proyecto/{idProyecto}": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "soloPendientes",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/{id}/revisar": {
+      "put": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertaRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertaRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/revisar-masivo": {
+      "put": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertasMasivoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertasMasivoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarAlertasMasivoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/configuracion": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfiguracionMaterialRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfiguracionMaterialRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfiguracionMaterialRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AlertasConsumo/configuracion/{idMaterial}": {
+      "get": {
+        "tags": [
+          "AlertasConsumo"
+        ],
+        "parameters": [
+          {
+            "name": "idMaterial",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Almacenes": {
       "get": {
         "tags": [
@@ -681,6 +1006,535 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/kpis": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/ranking/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idPuesto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/consumo-proyectos/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/consumo-proyecto/{idProyecto}/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/perfil-empleado/{idEmpleado}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/historial-empleado/{idEmpleado}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "meses",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/materiales-frecuentes/{idEmpleado}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "top",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/tendencia-consumo": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "meses",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 12
+            }
+          },
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/tendencia-alertas": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "meses",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 12
+            }
+          },
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/heatmap/{idProyecto}/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idProyecto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/comparar-empleado/{idEmpleado}/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "idEmpleado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/proyectos-desviacion": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "umbral",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/reporte-mensual/{anio}/{mes}": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idProyecto",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/recalcular-estadisticas/{anio}/{mes}": {
+      "post": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "parameters": [
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/recalcular-riesgos": {
+      "post": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/filtros/proyectos": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/filtros/puestos": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/filtros/materiales": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DashboardAnalytics/filtros/periodos": {
+      "get": {
+        "tags": [
+          "DashboardAnalytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -2485,6 +3339,143 @@
         }
       }
     },
+    "/api/Puestos": {
+      "get": {
+        "tags": [
+          "Puestos"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Puestos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Puestos/{id}": {
+      "get": {
+        "tags": [
+          "Puestos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Puestos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuestoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Puestos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Puestos/activos": {
+      "get": {
+        "tags": [
+          "Puestos"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/RequisicionesEPP": {
       "get": {
         "tags": [
@@ -3782,6 +4773,41 @@
         },
         "additionalProperties": false
       },
+      "ConfiguracionMaterialRequestDto": {
+        "type": "object",
+        "properties": {
+          "idMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vidaUtilDias": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "frecuenciaMinimaDias": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadMaximaMensual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cantidadMaximaPorEntrega": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "requiereDevolucion": {
+            "type": "boolean"
+          },
+          "umbralAlertaPorcentaje": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "EmpleadoRequestDto": {
         "type": "object",
         "properties": {
@@ -4012,6 +5038,17 @@
           }
         },
         "additionalProperties": false
+      },
+      "EstadoAlerta": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "EstadoRequisicion": {
         "enum": [
@@ -4332,6 +5369,15 @@
         },
         "additionalProperties": false
       },
+      "NivelRiesgoEPP": {
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "PermisoModuloDto": {
         "type": "object",
         "properties": {
@@ -4490,6 +5536,26 @@
           "presupuestoTotal": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PuestoRequestDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "nivelRiesgoEPP": {
+            "$ref": "#/components/schemas/NivelRiesgoEPP"
+          },
+          "activo": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4725,6 +5791,40 @@
         },
         "additionalProperties": false
       },
+      "RevisarAlertaRequestDto": {
+        "type": "object",
+        "properties": {
+          "nuevoEstado": {
+            "$ref": "#/components/schemas/EstadoAlerta"
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevisarAlertasMasivoRequestDto": {
+        "type": "object",
+        "properties": {
+          "idsAlertas": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "nuevoEstado": {
+            "$ref": "#/components/schemas/EstadoAlerta"
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RolRequestDto": {
         "type": "object",
         "properties": {
@@ -4766,6 +5866,28 @@
           }
         },
         "additionalProperties": false
+      },
+      "SeveridadAlerta": {
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TipoAlerta": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "UnidadMedidaRequestDto": {
         "type": "object",

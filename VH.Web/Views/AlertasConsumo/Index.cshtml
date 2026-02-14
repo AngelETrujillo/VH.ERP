@@ -1,0 +1,262 @@
+@using VH.Services.DTOs.Analytics
+@{
+    ViewData["Title"] = "Alertas de Consumo";
+    var alertas = ViewBag.Alertas as IEnumerable<AlertaConsumoResponseDto>;
+    var resumen = ViewBag.Resumen as ResumenAlertasDto;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-exclamation-triangle text-warning me-2"></i>Alertas de Consumo
+            </h2>
+            <p class="text-muted mb-0">Gestión y seguimiento de anomalías detectadas</p>
+        </div>
+        <a asp-action="Configuracion" class="btn btn-outline-primary">
+            <i class="bi bi-gear me-1"></i>Configuración
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center bg-danger text-white">
+                <div class="card-body py-3">
+                    <h3 class="mb-0">@(resumen?.TotalCriticas ?? 0)</h3>
+                    <small>Críticas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center bg-warning">
+                <div class="card-body py-3">
+                    <h3 class="mb-0">@(resumen?.TotalAltas ?? 0)</h3>
+                    <small>Altas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center bg-info text-white">
+                <div class="card-body py-3">
+                    <h3 class="mb-0">@(resumen?.TotalMedias ?? 0)</h3>
+                    <small>Medias</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center bg-secondary text-white">
+                <div class="card-body py-3">
+                    <h3 class="mb-0">@(resumen?.TotalBajas ?? 0)</h3>
+                    <small>Bajas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0 text-success">@(resumen?.RevisadasHoy ?? 0)</h3>
+                    <small class="text-muted">Revisadas Hoy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0 text-primary">@(resumen?.CostoPotencialTotal.ToString("C") ?? "$0")</h3>
+                    <small class="text-muted">Pérdida Potencial</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Proyecto</label>
+                    <select name="idProyecto" class="form-select">
+                        <option value="">Todos</option>
+                        @if (ViewBag.Proyectos != null)
+                        {
+                            @foreach (var p in ViewBag.Proyectos as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                            {
+                                <option value="@p.Value" selected="@(p.Value == ViewBag.FiltroProyecto?.ToString())">@p.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Severidad</label>
+                    <select name="severidad" class="form-select">
+                        <option value="">Todas</option>
+                        @foreach (var s in ViewBag.Severidades as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                        {
+                            <option value="@s.Value" selected="@(s.Value == ViewBag.FiltroSeveridad?.ToString())">@s.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        @foreach (var e in ViewBag.Estados as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                        {
+                            <option value="@e.Value" selected="@(e.Value == ViewBag.FiltroEstado?.ToString())">@e.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="form-check mt-2">
+                        <input type="checkbox" name="soloPendientes" value="true" class="form-check-input" 
+                               checked="@(ViewBag.SoloPendientes == true)" id="chkPendientes">
+                        <label class="form-check-label" for="chkPendientes">Solo pendientes</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block">
+                        <i class="bi bi-funnel me-1"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <form id="formMasivo" asp-action="RevisarMasivo" method="post">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Fecha</th>
+                                <th>Severidad</th>
+                                <th>Tipo</th>
+                                <th>Empleado</th>
+                                <th>Material</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-end">Costo Est.</th>
+                                <th width="100"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (alertas != null && alertas.Any())
+                            {
+                                @foreach (var alerta in alertas)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="idsAlertas" value="@alerta.IdAlerta" class="form-check-input alertaCheck">
+                                        </td>
+                                        <td>
+                                            <small>@alerta.FechaGeneracion.ToString("dd/MM/yyyy")</small>
+                                            <br><small class="text-muted">@alerta.FechaGeneracion.ToString("HH:mm")</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@alerta.ColorSeveridad">
+                                                <i class="bi @alerta.IconoTipo me-1"></i>@alerta.SeveridadTexto
+                                            </span>
+                                        </td>
+                                        <td><small>@alerta.TipoAlertaTexto</small></td>
+                                        <td>
+                                            <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@alerta.IdEmpleado" 
+                                               class="text-decoration-none">
+                                                @alerta.NombreEmpleado
+                                            </a>
+                                            <br><small class="text-muted">@alerta.NumeroNomina</small>
+                                        </td>
+                                        <td><small>@alerta.NombreMaterial</small></td>
+                                        <td>
+                                            <small title="@alerta.Descripcion">
+                                                @(alerta.Descripcion.Length > 60 ? alerta.Descripcion.Substring(0, 60) + "..." : alerta.Descripcion)
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-@alerta.ColorEstado">@alerta.EstadoTexto</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>@(alerta.CostoEstimado?.ToString("C") ?? "-")</strong>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a asp-action="Details" asp-route-id="@alerta.IdAlerta" class="btn btn-outline-secondary" title="Ver">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a asp-action="Revisar" asp-route-id="@alerta.IdAlerta" class="btn btn-outline-primary" title="Revisar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-5">
+                                        <i class="bi bi-check-circle display-4 d-block mb-3 text-success"></i>
+                                        No hay alertas que coincidan con los filtros
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (alertas != null && alertas.Any())
+                {
+                    <div class="card-footer bg-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <span id="selectedCount">0</span> alertas seleccionadas
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <select name="nuevoEstado" class="form-select d-inline-block w-auto">
+                                    <option value="3">Descartar</option>
+                                    <option value="4">Confirmar</option>
+                                    <option value="5">Resolver</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary" id="btnMasivo" disabled>
+                                    Aplicar a seleccionadas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.alertaCheck');
+            const selectedCount = document.getElementById('selectedCount');
+            const btnMasivo = document.getElementById('btnMasivo');
+
+            function updateCount() {
+                const checked = document.querySelectorAll('.alertaCheck:checked').length;
+                if (selectedCount) selectedCount.textContent = checked;
+                if (btnMasivo) btnMasivo.disabled = checked === 0;
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                    updateCount();
+                });
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateCount);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,96 @@
+@model VH.Services.DTOs.Analytics.PuestoRequestDto
+@{
+    ViewData["Title"] = "Nuevo Puesto";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-person-badge-fill text-primary me-2"></i>Nuevo Puesto
+            </h2>
+            <p class="text-muted mb-0">Complete la información del puesto de trabajo</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información del Puesto</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Nombre del Puesto <span class="text-danger">*</span></label>
+                                <input type="text" name="Nombre" class="form-control form-control-lg" required
+                                       placeholder="Ej: Albañil, Soldador, Electricista" value="@Model?.Nombre">
+                                <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Descripción</label>
+                                <textarea name="Descripcion" class="form-control" rows="3"
+                                          placeholder="Descripción de las funciones del puesto">@Model?.Descripcion</textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nivel de Riesgo EPP <span class="text-danger">*</span></label>
+                                <select name="NivelRiesgoEPP" class="form-select" required>
+                                    @foreach (var nivel in ViewBag.NivelesRiesgo as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                    {
+                                        <option value="@nivel.Value">@nivel.Text</option>
+                                    }
+                                </select>
+                                <small class="text-muted">Afecta los umbrales de alerta para empleados de este puesto</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Estado</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input type="checkbox" name="Activo" value="true" class="form-check-input" id="chkActivo" checked>
+                                    <label class="form-check-label" for="chkActivo">Puesto activo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white py-3">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Guardar Puesto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-info-circle me-2"></i>Niveles de Riesgo</h5>
+                    <hr>
+                    <div class="mb-3">
+                        <span class="badge bg-danger me-2">Alto</span>
+                        <small>Soldadores, Electricistas, Fierreros, Operadores de maquinaria</small>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge bg-warning me-2">Medio</span>
+                        <small>Albañiles, Plomeros, Carpinteros, Maestros de obra</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-success me-2">Bajo</span>
+                        <small>Ayudantes, Veladores, Almacenistas, Personal administrativo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

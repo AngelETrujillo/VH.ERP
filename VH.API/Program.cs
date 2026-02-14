@@ -12,6 +12,8 @@ using VH.Services.Entities;
 using VH.Services.Interfaces;
 using VH.Services.Mapping;
 using VH.Services.Services;
+using VH.API.Extensions;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -98,6 +100,8 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<ILogActividadService, LogActividadService>();
 builder.Services.AddScoped<IPermisoService, PermisoService>();
+builder.Services.AddScoped<IAlertaConsumoService, AlertaConsumoService>();
+builder.Services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
 
 // 10. CORS CONFIGURADO PARA RED
 builder.Services.AddCors(options =>

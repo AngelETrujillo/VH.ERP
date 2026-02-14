@@ -348,10 +348,14 @@
         var puedeVerCompras = PermisoHelper.PuedeVer(session, "COMPRAS_EPP", esSuperAdmin);
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
+        var puedeVerDashboardAnalytics = PermisoHelper.PuedeVer(session, "DASHBOARD_ANALYTICS", esSuperAdmin);
+        var puedeVerAlertasConsumo = PermisoHelper.PuedeVer(session, "ALERTAS_CONSUMO", esSuperAdmin);
+        var puedeVerPuestos = PermisoHelper.PuedeVer(session, "PUESTOS", esSuperAdmin);
+        var puedeVerConfigMateriales = PermisoHelper.PuedeVer(session, "CONFIG_MATERIALES", esSuperAdmin);
 
         // Grupos de menú
         var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
-        var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores;
+        var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores || puedeVerPuestos;
         var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
         var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios;
         var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
@@ -378,6 +382,31 @@
                 </a>
             </li>
         </ul>
+
+        @if (puedeVerDashboardAnalytics || puedeVerAlertasConsumo)
+        {
+            <p class="sidebar-section-title">Analytics</p>
+            <ul class="sidebar-menu">
+                @if (puedeVerDashboardAnalytics)
+                {
+                    <li>
+                        <a asp-controller="DashboardAnalytics" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardAnalytics" ? "active" : "")">
+                            <i class="bi bi-graph-up"></i>
+                            <span class="menu-text">Dashboard Analytics</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerAlertasConsumo)
+                {
+                    <li>
+                        <a asp-controller="AlertasConsumo" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AlertasConsumo" ? "active" : "")">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span class="menu-text">Alertas Consumo</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
 
         @if (mostrarCatalogos)
         {
@@ -420,6 +449,10 @@
                             {
                                 <li><a asp-controller="Proveedores" asp-action="Index">Proveedores</a></li>
                             }
+                            @if (puedeVerPuestos)
+                            {
+                                <li><a asp-controller="Puestos" asp-action="Index">Puestos</a></li>
+                            }
                         </ul>
                     </li>
                 }
@@ -439,6 +472,10 @@
                             @if (puedeVerMateriales)
                             {
                                 <li><a asp-controller="Materiales" asp-action="Index">Materiales EPP</a></li>
+                            }
+                            @if (puedeVerConfigMateriales)
+                            {
+                                <li><a asp-controller="AlertasConsumo" asp-action="Configuracion">Configuración EPP</a></li>
                             }
                         </ul>
                     </li>

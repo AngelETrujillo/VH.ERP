@@ -1,0 +1,352 @@
+@using VH.Services.DTOs.Analytics
+@{
+    ViewData["Title"] = "Dashboard Analytics";
+    var kpis = ViewBag.KPIs as KPIsEjecutivosDto;
+    var ranking = ViewBag.Ranking as RankingConsumoResponseDto;
+    var resumenAlertas = ViewBag.ResumenAlertas as ResumenAlertasDto;
+    var tendencia = ViewBag.Tendencia as TendenciaConsumoDto;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-graph-up text-primary me-2"></i>Dashboard de Control de Consumo
+            </h2>
+            <p class="text-muted mb-0">Análisis y detección de anomalías en consumo de EPP</p>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2">
+                <select name="idProyecto" class="form-select" style="width: 200px;" onchange="this.form.submit()">
+                    <option value="">Todos los proyectos</option>
+                    @if (ViewBag.Proyectos != null)
+                    {
+                        @foreach (var proyecto in ViewBag.Proyectos as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                        {
+                            <option value="@proyecto.Value" selected="@(proyecto.Value == ViewBag.FiltroProyecto?.ToString())">@proyecto.Text</option>
+                        }
+                    }
+                </select>
+            </form>
+            <form method="post" asp-action="RecalcularEstadisticas" asp-route-anio="@ViewBag.Anio" asp-route-mes="@ViewBag.Mes">
+                <button type="submit" class="btn btn-outline-secondary" title="Recalcular estadísticas">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (resumenAlertas?.TotalCriticas > 0)
+    {
+        <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+            <div class="flex-grow-1">
+                <strong>@resumenAlertas.TotalCriticas alertas críticas</strong> requieren atención inmediata.
+                Pérdida potencial estimada: <strong>@resumenAlertas.CostoPotencialTotal.ToString("C")</strong>
+            </div>
+            <a asp-controller="AlertasConsumo" asp-action="Index" asp-route-soloPendientes="true" class="btn btn-danger btn-sm">
+                Ver Alertas
+            </a>
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Consumo del Mes</p>
+                            <h3 class="fw-bold mb-0">@(kpis?.ConsumoMesActual.ToString("C") ?? "$0")</h3>
+                            @if (kpis != null)
+                            {
+                                var variacionClass = kpis.VariacionConsumoMensual > 0 ? "text-danger" : "text-success";
+                                var variacionIcon = kpis.VariacionConsumoMensual > 0 ? "bi-arrow-up" : "bi-arrow-down";
+                                <small class="@variacionClass">
+                                    <i class="bi @variacionIcon"></i> @Math.Abs(kpis.VariacionConsumoMensual).ToString("N1")% vs mes anterior
+                                </small>
+                            }
+                        </div>
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="bi bi-cash-stack text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Alertas Pendientes</p>
+                            <h3 class="fw-bold mb-0">@(resumenAlertas?.TotalPendientes ?? 0)</h3>
+                            <small class="text-danger">
+                                <i class="bi bi-exclamation-circle"></i> @(resumenAlertas?.TotalCriticas ?? 0) críticas
+                            </small>
+                        </div>
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                            <i class="bi bi-bell text-danger fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Empleados con Alertas</p>
+                            <h3 class="fw-bold mb-0">@(kpis?.EmpleadosConAlertas ?? 0) <small class="text-muted fs-6">/ @(kpis?.TotalEmpleadosActivos ?? 0)</small></h3>
+                            <small class="text-warning">
+                                <i class="bi bi-people"></i> @(kpis?.PorcentajeEmpleadosConAlertas.ToString("N1") ?? "0")% del total
+                            </small>
+                        </div>
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="bi bi-person-exclamation text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Proyectos Sobre Presupuesto</p>
+                            <h3 class="fw-bold mb-0">@(kpis?.ProyectosSobrePresupuesto ?? 0) <small class="text-muted fs-6">/ @(kpis?.TotalProyectosActivos ?? 0)</small></h3>
+                            <small class="text-info">
+                                <i class="bi bi-building"></i> Con desviación
+                            </small>
+                        </div>
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="bi bi-graph-down text-info fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Tendencia de Consumo</h5>
+                    <a asp-action="ConsumoProyectos" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartTendencia" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Alertas por Tipo</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartAlertas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-arrow-up-circle text-danger me-2"></i>Top 10 Consumidores</h5>
+                    <a asp-action="Ranking" class="btn btn-sm btn-outline-primary">Ver completo</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">#</th>
+                                    <th>Empleado</th>
+                                    <th>Proyecto</th>
+                                    <th class="text-end">Costo</th>
+                                    <th class="text-center">Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (ranking?.TopConsumidores != null)
+                                {
+                                    @foreach (var item in ranking.TopConsumidores.Take(10))
+                                    {
+                                        <tr class="@(item.EsEmpate ? "table-warning" : "")">
+                                            <td>
+                                                @if (item.Posicion <= 3)
+                                                {
+                                                    <span class="badge bg-danger">@item.Posicion</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">@item.Posicion</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-action="PerfilEmpleado" asp-route-id="@item.IdEmpleado" class="text-decoration-none">
+                                                    <strong>@item.NombreCompleto</strong>
+                                                </a>
+                                                <br><small class="text-muted">@item.NumeroNomina - @item.Puesto</small>
+                                            </td>
+                                            <td><small>@item.NombreProyecto</small></td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-@item.ColorIndicador">@item.NivelRiesgo</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No hay datos disponibles</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-arrow-down-circle text-success me-2"></i>Bottom 10 Consumidores</h5>
+                    <a asp-action="Ranking" class="btn btn-sm btn-outline-primary">Ver completo</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">#</th>
+                                    <th>Empleado</th>
+                                    <th>Proyecto</th>
+                                    <th class="text-end">Costo</th>
+                                    <th class="text-center">Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (ranking?.BottomConsumidores != null)
+                                {
+                                    @foreach (var item in ranking.BottomConsumidores.Take(10))
+                                    {
+                                        <tr class="@(item.EsEmpate ? "table-info" : "")">
+                                            <td><span class="text-muted">@item.Posicion</span></td>
+                                            <td>
+                                                <a asp-action="PerfilEmpleado" asp-route-id="@item.IdEmpleado" class="text-decoration-none">
+                                                    <strong>@item.NombreCompleto</strong>
+                                                </a>
+                                                <br><small class="text-muted">@item.NumeroNomina - @item.Puesto</small>
+                                            </td>
+                                            <td><small>@item.NombreProyecto</small></td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-@item.ColorIndicador">@item.NivelRiesgo</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No hay datos disponibles</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gráfico de Tendencia
+            var tendenciaData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tendencia?.Puntos ?? new List<PuntoTendenciaDto>()));
+            
+            if (tendenciaData.length > 0) {
+                var ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
+                new Chart(ctxTendencia, {
+                    type: 'line',
+                    data: {
+                        labels: tendenciaData.map(p => p.etiqueta),
+                        datasets: [{
+                            label: 'Consumo',
+                            data: tendenciaData.map(p => p.valor),
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'Presupuesto',
+                            data: tendenciaData.map(p => p.presupuestoReferencia),
+                            borderColor: '#6c757d',
+                            borderDash: [5, 5],
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico de Alertas por Tipo
+            var alertasData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(resumenAlertas));
+            
+            if (alertasData) {
+                var ctxAlertas = document.getElementById('chartAlertas').getContext('2d');
+                new Chart(ctxAlertas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Solicitud Prematura', 'Exceso Frecuencia', 'Exceso Cantidad', 'Patrón Anómalo', 'Desviación Presupuestal', 'Top Consumidor'],
+                        datasets: [{
+                            data: [
+                                alertasData.solicitudesPrematuras,
+                                alertasData.excesosFrecuencia,
+                                alertasData.excesosCantidad,
+                                alertasData.patronesAnomalos,
+                                alertasData.desviacionesPresupuesto,
+                                alertasData.topConsumidores
+                            ],
+                            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6f42c1', '#0dcaf0', '#198754']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

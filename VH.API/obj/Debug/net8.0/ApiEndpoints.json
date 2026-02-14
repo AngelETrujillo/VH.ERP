@@ -1,5 +1,214 @@
 [
   {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetAlertas",
+    "RelativePath": "api/AlertasConsumo",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "FechaDesde",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "FechaHasta",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "IdProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "IdEmpleado",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "IdMaterial",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "TipoAlerta",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Severidad",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Estado",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SoloPendientes",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      },
+      {
+        "Name": "SoloCriticas",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetAlerta",
+    "RelativePath": "api/AlertasConsumo/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "RevisarAlerta",
+    "RelativePath": "api/AlertasConsumo/{id}/revisar",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.Analytics.RevisarAlertaRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetTodasConfiguraciones",
+    "RelativePath": "api/AlertasConsumo/configuracion",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GuardarConfiguracion",
+    "RelativePath": "api/AlertasConsumo/configuracion",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.Analytics.ConfiguracionMaterialRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetConfiguracionMaterial",
+    "RelativePath": "api/AlertasConsumo/configuracion/{idMaterial}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idMaterial",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetAlertasPendientesEmpleado",
+    "RelativePath": "api/AlertasConsumo/pendientes/empleado/{idEmpleado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idEmpleado",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetAlertasProyecto",
+    "RelativePath": "api/AlertasConsumo/proyecto/{idProyecto}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "soloPendientes",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "GetResumen",
+    "RelativePath": "api/AlertasConsumo/resumen",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.AlertasConsumoController",
+    "Method": "RevisarAlertasMasivo",
+    "RelativePath": "api/AlertasConsumo/revisar-masivo",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.API.Controllers.RevisarAlertasMasivoRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "VH.API.Controllers.AlmacenesController",
     "Method": "GetAll",
     "RelativePath": "api/Almacenes",
@@ -388,6 +597,365 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "CompararEmpleadoConPuesto",
+    "RelativePath": "api/DashboardAnalytics/comparar-empleado/{idEmpleado}/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idEmpleado",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetConsumoProyectoDetalle",
+    "RelativePath": "api/DashboardAnalytics/consumo-proyecto/{idProyecto}/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetConsumoProyectos",
+    "RelativePath": "api/DashboardAnalytics/consumo-proyectos/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetMaterialesParaFiltro",
+    "RelativePath": "api/DashboardAnalytics/filtros/materiales",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetPeriodosDisponibles",
+    "RelativePath": "api/DashboardAnalytics/filtros/periodos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetProyectosParaFiltro",
+    "RelativePath": "api/DashboardAnalytics/filtros/proyectos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetPuestosParaFiltro",
+    "RelativePath": "api/DashboardAnalytics/filtros/puestos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetHeatmap",
+    "RelativePath": "api/DashboardAnalytics/heatmap/{idProyecto}/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetHistorialEmpleado",
+    "RelativePath": "api/DashboardAnalytics/historial-empleado/{idEmpleado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idEmpleado",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "meses",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetKPIs",
+    "RelativePath": "api/DashboardAnalytics/kpis",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetMaterialesFrecuentes",
+    "RelativePath": "api/DashboardAnalytics/materiales-frecuentes/{idEmpleado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idEmpleado",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "top",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetPerfilEmpleado",
+    "RelativePath": "api/DashboardAnalytics/perfil-empleado/{idEmpleado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idEmpleado",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetProyectosConDesviacion",
+    "RelativePath": "api/DashboardAnalytics/proyectos-desviacion",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "umbral",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetRanking",
+    "RelativePath": "api/DashboardAnalytics/ranking/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "idPuesto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "RecalcularEstadisticas",
+    "RelativePath": "api/DashboardAnalytics/recalcular-estadisticas/{anio}/{mes}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "RecalcularPuntuacionesRiesgo",
+    "RelativePath": "api/DashboardAnalytics/recalcular-riesgos",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetReporteMensual",
+    "RelativePath": "api/DashboardAnalytics/reporte-mensual/{anio}/{mes}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "anio",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "mes",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetTendenciaAlertas",
+    "RelativePath": "api/DashboardAnalytics/tendencia-alertas",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "meses",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.DashboardAnalyticsController",
+    "Method": "GetTendenciaConsumo",
+    "RelativePath": "api/DashboardAnalytics/tendencia-consumo",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "meses",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "idProyecto",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "VH.API.Controllers.EmpleadosController",
@@ -1425,6 +1993,95 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "GetAll",
+    "RelativePath": "api/Puestos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "Create",
+    "RelativePath": "api/Puestos",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.Analytics.PuestoRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "GetById",
+    "RelativePath": "api/Puestos/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "Update",
+    "RelativePath": "api/Puestos/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "VH.Services.DTOs.Analytics.PuestoRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "Delete",
+    "RelativePath": "api/Puestos/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VH.API.Controllers.PuestosController",
+    "Method": "GetActivos",
+    "RelativePath": "api/Puestos/activos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

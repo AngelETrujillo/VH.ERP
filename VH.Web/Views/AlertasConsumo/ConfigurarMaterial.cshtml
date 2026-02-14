@@ -1,0 +1,135 @@
+@using VH.Services.DTOs.Analytics
+@{
+    ViewData["Title"] = ViewBag.Configuracion != null ? "Editar Configuración" : "Nueva Configuración";
+    var config = ViewBag.Configuracion as ConfiguracionMaterialResponseDto;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-gear text-primary me-2"></i>@ViewData["Title"]
+            </h2>
+            <p class="text-muted mb-0">Define los parámetros de control para detección de anomalías</p>
+        </div>
+        <a asp-action="Configuracion" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="ConfigurarMaterial" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Material <span class="text-danger">*</span></label>
+                                <select name="IdMaterial" class="form-select form-select-lg" required 
+                                        @(config != null ? "disabled" : "")>
+                                    <option value="">Seleccione un material...</option>
+                                    @if (ViewBag.Materiales != null)
+                                    {
+                                        @foreach (var m in ViewBag.Materiales as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                        {
+                                            <option value="@m.Value" selected="@(m.Value == config?.IdMaterial.ToString())">@m.Text</option>
+                                        }
+                                    }
+                                </select>
+                                @if (config != null)
+                                {
+                                    <input type="hidden" name="IdMaterial" value="@config.IdMaterial" />
+                                }
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Vida Útil (días) <span class="text-danger">*</span></label>
+                                <input type="number" name="VidaUtilDias" class="form-control" required min="1" max="3650"
+                                       value="@(config?.VidaUtilDias ?? 30)" placeholder="Ej: 90">
+                                <small class="text-muted">Duración esperada del material en días</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Frecuencia Mínima (días) <span class="text-danger">*</span></label>
+                                <input type="number" name="FrecuenciaMinimaDias" class="form-control" required min="1" max="365"
+                                       value="@(config?.FrecuenciaMinimaDias ?? 7)" placeholder="Ej: 30">
+                                <small class="text-muted">Días mínimos entre solicitudes</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Cantidad Máxima Mensual</label>
+                                <input type="number" name="CantidadMaximaMensual" class="form-control" step="0.01" min="0"
+                                       value="@config?.CantidadMaximaMensual" placeholder="Opcional">
+                                <small class="text-muted">Límite de unidades por empleado al mes</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Cantidad Máxima por Entrega</label>
+                                <input type="number" name="CantidadMaximaPorEntrega" class="form-control" step="0.01" min="0"
+                                       value="@config?.CantidadMaximaPorEntrega" placeholder="Opcional">
+                                <small class="text-muted">Límite de unidades en una sola entrega</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Umbral de Alerta (%)</label>
+                                <div class="input-group">
+                                    <input type="number" name="UmbralAlertaPorcentaje" class="form-control" 
+                                           min="1" max="100" value="@(config?.UmbralAlertaPorcentaje ?? 70)">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="text-muted">Porcentaje de vida útil antes de generar alerta</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Requiere Devolución</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input type="checkbox" name="RequiereDevolucion" value="true" 
+                                           class="form-check-input" id="chkDevolucion"
+                                           @(config?.RequiereDevolucion == true ? "checked" : "")>
+                                    <label class="form-check-label" for="chkDevolucion">
+                                        El empleado debe devolver el material dañado
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Configuracion" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Guardar Configuración
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-lightbulb me-2"></i>Guía de Configuración</h5>
+                    <hr>
+                    <h6>Ejemplos de Vida Útil:</h6>
+                    <ul class="small mb-3">
+                        <li><strong>Casco:</strong> 365 días</li>
+                        <li><strong>Guantes de cuero:</strong> 30 días</li>
+                        <li><strong>Guantes desechables:</strong> 1 día</li>
+                        <li><strong>Botas de seguridad:</strong> 180 días</li>
+                        <li><strong>Chaleco reflectante:</strong> 90 días</li>
+                        <li><strong>Lentes de seguridad:</strong> 60 días</li>
+                    </ul>
+                    
+                    <h6>Umbral de Alerta:</h6>
+                    <p class="small mb-0">
+                        Un umbral del <strong>70%</strong> significa que si la vida útil es 100 días, 
+                        se generará alerta si el empleado solicita el material antes de los 70 días.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

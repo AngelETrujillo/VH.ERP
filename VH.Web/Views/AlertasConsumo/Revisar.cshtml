@@ -1,0 +1,151 @@
+@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
+@{
+    ViewData["Title"] = "Revisar Alerta";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-pencil-square text-primary me-2"></i>Revisar Alerta #@Model.IdAlerta
+            </h2>
+            <p class="text-muted mb-0">@Model.TipoAlertaTexto</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-@Model.ColorSeveridad text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi @Model.IconoTipo me-2"></i>Detalle de la Alerta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Empleado</label>
+                        <p class="fw-bold mb-0">@Model.NombreEmpleado (@Model.NumeroNomina)</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Proyecto</label>
+                        <p class="fw-bold mb-0">@Model.NombreProyecto</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Material</label>
+                        <p class="fw-bold mb-0">@(Model.NombreMaterial ?? "N/A")</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Descripción</label>
+                        <p class="mb-0">@Model.Descripcion</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label text-muted">Valor Esperado</label>
+                            <p class="fw-bold text-success">@Model.ValorEsperado</p>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted">Valor Real</label>
+                            <p class="fw-bold text-danger">@Model.ValorReal</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label text-muted">Desviación</label>
+                            <p class="fw-bold">@Model.Desviacion.ToString("N1")%</p>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted">Costo Estimado</label>
+                            <p class="fw-bold text-danger">@(Model.CostoEstimado?.ToString("C") ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Actualizar Estado</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Revisar" method="post">
+                        <input type="hidden" name="id" value="@Model.IdAlerta" />
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted">Estado Actual</label>
+                            <p>
+                                <span class="badge bg-@Model.ColorEstado fs-6">@Model.EstadoTexto</span>
+                            </p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Nuevo Estado <span class="text-danger">*</span></label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="nuevoEstado" id="estado2" value="2" autocomplete="off">
+                                    <label class="btn btn-outline-info w-100" for="estado2">
+                                        <i class="bi bi-search me-1"></i>En Revisión
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="nuevoEstado" id="estado3" value="3" autocomplete="off">
+                                    <label class="btn btn-outline-secondary w-100" for="estado3">
+                                        <i class="bi bi-x-circle me-1"></i>Descartar
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="nuevoEstado" id="estado4" value="4" autocomplete="off">
+                                    <label class="btn btn-outline-danger w-100" for="estado4">
+                                        <i class="bi bi-check-circle me-1"></i>Confirmar
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="nuevoEstado" id="estado5" value="5" autocomplete="off">
+                                    <label class="btn btn-outline-success w-100" for="estado5">
+                                        <i class="bi bi-check2-all me-1"></i>Resolver
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="observaciones" class="form-label fw-bold">Observaciones</label>
+                            <textarea name="observaciones" id="observaciones" class="form-control" rows="4" 
+                                      placeholder="Ingrese sus observaciones sobre esta alerta..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save me-1"></i>Guardar Cambios
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.IdAlerta" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.FechaRevision.HasValue)
+            {
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Última Revisión</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Revisado por:</strong> @(Model.NombreUsuarioReviso ?? "N/A")</p>
+                        <p class="mb-1"><strong>Fecha:</strong> @Model.FechaRevision?.ToString("dd/MM/yyyy HH:mm")</p>
+                        @if (!string.IsNullOrEmpty(Model.Observaciones))
+                        {
+                            <p class="mb-0"><strong>Observaciones:</strong> @Model.Observaciones</p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -7,7 +7,7 @@ builder.Services.AddControllersWithViews();
 // CONFIGURACIÓN DINÁMICA DE API
 builder.Services.AddHttpClient("ApiERP", client =>
 {
-    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://192.168.1.96:8081/";
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://192.168.100.96:8081/";
     client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
