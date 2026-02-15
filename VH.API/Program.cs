@@ -108,7 +108,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWebApp", policy =>
     {
-        policy.WithOrigins("http://192.168.1.96", "https://localhost:7266", "http://localhost:5210")
+        policy.WithOrigins("http://192.168.1.96", "https://localhost:7266", "http://localhost:5210", "http://192.168.100.96")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });

@@ -17,6 +17,10 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        var token = HttpContext.Session.GetString("JwtToken");
+        _logger.LogWarning("=== HOME: Token en sesión = {Token}",
+            string.IsNullOrEmpty(token) ? "NULL/VACÍO" : "EXISTE (" + token.Length + " chars)");
+
         return View();
     }
 

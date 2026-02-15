@@ -44,7 +44,8 @@
                                 <select name="NivelRiesgoEPP" class="form-select" required>
                                     @foreach (var nivel in ViewBag.NivelesRiesgo as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
                                     {
-                                        <option value="@nivel.Value" selected="@(nivel.Value == ((int)Model.NivelRiesgoEPP).ToString())">@nivel.Text</option>
+                                        var isSelected = nivel.Value == ((int)Model.NivelRiesgoEPP).ToString();
+                                        <option value="@nivel.Value" selected="@(isSelected ? "selected" : null)">@nivel.Text</option>
                                     }
                                 </select>
                             </div>
@@ -52,9 +53,18 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Estado</label>
                                 <div class="form-check form-switch mt-2">
-                                    <input type="checkbox" name="Activo" value="true" class="form-check-input" id="chkActivo"
-                                           @(Model?.Activo == true ? "checked" : "")>
-                                    <label class="form-check-label" for="chkActivo">Puesto activo</label>
+                                    <select name="Activo" class="form-select">
+                                        @if (Model?.Activo == true)
+                                        {
+                                            <option value="true" selected>Activo</option>
+                                            <option value="false">Inactivo</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="true">Activo</option>
+                                            <option value="false" selected>Inactivo</option>
+                                        }
+                                    </select>
                                 </div>
                             </div>
                         </div>

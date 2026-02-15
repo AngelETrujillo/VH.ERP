@@ -306,6 +306,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xEZWxldGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xFZGl0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

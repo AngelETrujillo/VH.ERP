@@ -55,6 +55,7 @@ namespace VH.Data.Seeders
                 // Recursos
                 new Modulo { Codigo = "EMPLEADOS", Nombre = "Empleados", ControllerName = "Empleado", IdModuloPadre = recursos.IdModulo, Orden = 21 },
                 new Modulo { Codigo = "PROVEEDORES", Nombre = "Proveedores", ControllerName = "Proveedores", IdModuloPadre = recursos.IdModulo, Orden = 22 },
+                new Modulo { Codigo = "PUESTOS", Nombre = "Puestos", ControllerName = "Puestos", IdModuloPadre = recursos.IdModulo, Orden = 23 },
                 
                 // Almacenes
                 new Modulo { Codigo = "ALMACENES", Nombre = "Almacenes", ControllerName = "Almacenes", IdModuloPadre = almacenesMenu.IdModulo, Orden = 31 },
