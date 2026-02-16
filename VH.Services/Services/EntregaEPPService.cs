@@ -6,10 +6,12 @@ namespace VH.Services.Services
     public class EntregaEPPService : IEntregaEPPService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAlertaConsumoService _alertaConsumoService;
 
-        public EntregaEPPService(IUnitOfWork unitOfWork)
+        public EntregaEPPService(IUnitOfWork unitOfWork, IAlertaConsumoService alertaConsumoService)
         {
             _unitOfWork = unitOfWork;
+            _alertaConsumoService = alertaConsumoService;
         }
 
         private const string IncludeProperties = "Empleado.Proyecto,Compra.Material.UnidadMedida,Compra.Proveedor,Compra.Almacen";
@@ -69,6 +71,16 @@ namespace VH.Services.Services
 
             await _unitOfWork.EntregasEPP.AddAsync(entrega);
             await _unitOfWork.CompleteAsync();
+
+            // *** NUEVO: Evaluar alertas de consumo ***
+            try
+            {
+                await _alertaConsumoService.EvaluarEntregaAsync(entrega);
+            }
+            catch (Exception)
+            {
+                // Log pero no fallar la entrega por error en alertas
+            }
 
             string? alerta = null;
             if (inventario != null && inventario.Existencia <= inventario.StockMinimo)

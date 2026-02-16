@@ -1,5 +1,4 @@
-﻿// VH.API/Controllers/EntregasEPPController.cs
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using VH.Services.DTOs;
 using VH.Services.Entities;
@@ -20,7 +19,6 @@ namespace VH.API.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/entregasepp?idEmpleado=5 (opcional filtrar por empleado)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EntregaEPPResponseDto>>> GetAll([FromQuery] int? idEmpleado = null)
         {
@@ -74,7 +72,6 @@ namespace VH.API.Controllers
                 entrega.IdEntrega = id;
                 var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega);
                 if (!success) return NotFound();
-
                 return Ok(new { alerta = alerta });
             }
             catch (InvalidOperationException ex)
