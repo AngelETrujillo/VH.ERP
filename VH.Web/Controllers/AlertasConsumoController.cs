@@ -241,19 +241,24 @@ namespace VH.Web.Controllers
                 var proyectosResponse = await _httpClient.GetAsync("api/dashboardanalytics/filtros/proyectos");
                 if (proyectosResponse.IsSuccessStatusCode)
                 {
-                    var proyectos = await proyectosResponse.Content.ReadFromJsonAsync<IEnumerable<dynamic>>();
+                    var proyectos = await proyectosResponse.Content.ReadFromJsonAsync<List<FiltroItemDto>>();
                     ViewBag.Proyectos = proyectos?.Select(p => new SelectListItem
                     {
-                        Value = p.GetProperty("id").ToString(),
-                        Text = p.GetProperty("nombre").GetString()
+                        Value = p.Id.ToString(),
+                        Text = p.Nombre
                     }).ToList() ?? new List<SelectListItem>();
+                }
+                else
+                {
+                    ViewBag.Proyectos = new List<SelectListItem>();
                 }
 
                 ViewBag.Severidades = GetSeveridadesSelectList();
                 ViewBag.Estados = GetEstadosSelectList();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al cargar filtros para ViewBag");
                 ViewBag.Proyectos = new List<SelectListItem>();
                 ViewBag.Severidades = GetSeveridadesSelectList();
                 ViewBag.Estados = GetEstadosSelectList();

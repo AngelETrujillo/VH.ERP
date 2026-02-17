@@ -21,9 +21,17 @@
                     <option value="">Todos los proyectos</option>
                     @if (ViewBag.Proyectos != null)
                     {
-                        @foreach (var proyecto in ViewBag.Proyectos as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                        foreach (var proyecto in ViewBag.Proyectos as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
                         {
-                            <option value="@proyecto.Value" selected="@(proyecto.Value == ViewBag.FiltroProyecto?.ToString())">@proyecto.Text</option>
+                            var isSelected = proyecto.Value == ViewBag.FiltroProyecto?.ToString();
+                            if (isSelected)
+                            {
+                                <option value="@proyecto.Value" selected>@proyecto.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@proyecto.Value">@proyecto.Text</option>
+                            }
                         }
                     }
                 </select>
@@ -50,6 +58,7 @@
         </div>
     }
 
+    <!-- KPIs Cards -->
     <div class="row g-4 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
@@ -130,6 +139,7 @@
         </div>
     </div>
 
+    <!-- Gráficos -->
     <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100">
@@ -138,22 +148,49 @@
                     <a asp-action="ConsumoProyectos" class="btn btn-sm btn-outline-primary">Ver detalle</a>
                 </div>
                 <div class="card-body">
-                    <canvas id="chartTendencia" height="300"></canvas>
+                    @if (tendencia?.Puntos != null && tendencia.Puntos.Any())
+                    {
+                        <canvas id="chartTendencia" height="300"></canvas>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">No hay datos de consumo para mostrar.</p>
+                            <p class="text-muted small">Los datos se generarán automáticamente al registrar entregas.</p>
+                            <form method="post" asp-action="RecalcularEstadisticas" asp-route-anio="@ViewBag.Anio" asp-route-mes="@ViewBag.Mes" class="mt-3">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Calcular estadísticas ahora
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white py-3">
                     <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Alertas por Tipo</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="chartAlertas" height="300"></canvas>
+                    @if (resumenAlertas != null && resumenAlertas.TotalPendientes > 0)
+                    {
+                        <canvas id="chartAlertas" height="300"></canvas>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No hay alertas pendientes.</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Rankings -->
     <div class="row g-4">
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm">
@@ -162,33 +199,24 @@
                     <a asp-action="Ranking" class="btn btn-sm btn-outline-primary">Ver completo</a>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="50">#</th>
-                                    <th>Empleado</th>
-                                    <th>Proyecto</th>
-                                    <th class="text-end">Costo</th>
-                                    <th class="text-center">Riesgo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (ranking?.TopConsumidores != null)
-                                {
+                    @if (ranking?.TopConsumidores != null && ranking.TopConsumidores.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Empleado</th>
+                                        <th>Proyecto</th>
+                                        <th class="text-end">Costo</th>
+                                        <th class="text-center">Riesgo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @foreach (var item in ranking.TopConsumidores.Take(10))
                                     {
                                         <tr class="@(item.EsEmpate ? "table-warning" : "")">
-                                            <td>
-                                                @if (item.Posicion <= 3)
-                                                {
-                                                    <span class="badge bg-danger">@item.Posicion</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">@item.Posicion</span>
-                                                }
-                                            </td>
+                                            <td><span class="badge bg-danger">@item.Posicion</span></td>
                                             <td>
                                                 <a asp-action="PerfilEmpleado" asp-route-id="@item.IdEmpleado" class="text-decoration-none">
                                                     <strong>@item.NombreCompleto</strong>
@@ -202,16 +230,17 @@
                                             </td>
                                         </tr>
                                     }
-                                }
-                                else
-                                {
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No hay datos disponibles</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No hay datos de consumo este mes.</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -222,24 +251,24 @@
                     <a asp-action="Ranking" class="btn btn-sm btn-outline-primary">Ver completo</a>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="50">#</th>
-                                    <th>Empleado</th>
-                                    <th>Proyecto</th>
-                                    <th class="text-end">Costo</th>
-                                    <th class="text-center">Riesgo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (ranking?.BottomConsumidores != null)
-                                {
+                    @if (ranking?.BottomConsumidores != null && ranking.BottomConsumidores.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Empleado</th>
+                                        <th>Proyecto</th>
+                                        <th class="text-end">Costo</th>
+                                        <th class="text-center">Riesgo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @foreach (var item in ranking.BottomConsumidores.Take(10))
                                     {
                                         <tr class="@(item.EsEmpate ? "table-info" : "")">
-                                            <td><span class="text-muted">@item.Posicion</span></td>
+                                            <td><span class="badge bg-success">@item.Posicion</span></td>
                                             <td>
                                                 <a asp-action="PerfilEmpleado" asp-route-id="@item.IdEmpleado" class="text-decoration-none">
                                                     <strong>@item.NombreCompleto</strong>
@@ -253,16 +282,17 @@
                                             </td>
                                         </tr>
                                     }
-                                }
-                                else
-                                {
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No hay datos disponibles</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No hay datos disponibles.</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -275,23 +305,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Gráfico de Tendencia
             var tendenciaData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tendencia?.Puntos ?? new List<PuntoTendenciaDto>()));
-            
-            if (tendenciaData.length > 0) {
-                var ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
+
+            var chartTendenciaEl = document.getElementById('chartTendencia');
+            if (chartTendenciaEl && tendenciaData.length > 0) {
+                var ctxTendencia = chartTendenciaEl.getContext('2d');
                 new Chart(ctxTendencia, {
                     type: 'line',
                     data: {
-                        labels: tendenciaData.map(p => p.etiqueta),
+                        labels: tendenciaData.map(p => p.Etiqueta),
                         datasets: [{
                             label: 'Consumo',
-                            data: tendenciaData.map(p => p.valor),
+                            data: tendenciaData.map(p => p.Valor),
                             borderColor: '#0d6efd',
                             backgroundColor: 'rgba(13, 110, 253, 0.1)',
                             fill: true,
                             tension: 0.4
                         }, {
                             label: 'Presupuesto',
-                            data: tendenciaData.map(p => p.presupuestoReferencia),
+                            data: tendenciaData.map(p => p.PresupuestoReferencia),
                             borderColor: '#6c757d',
                             borderDash: [5, 5],
                             fill: false
@@ -319,21 +350,22 @@
 
             // Gráfico de Alertas por Tipo
             var alertasData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(resumenAlertas));
-            
-            if (alertasData) {
-                var ctxAlertas = document.getElementById('chartAlertas').getContext('2d');
+
+            var chartAlertasEl = document.getElementById('chartAlertas');
+            if (chartAlertasEl && alertasData && alertasData.TotalPendientes > 0) {
+                var ctxAlertas = chartAlertasEl.getContext('2d');
                 new Chart(ctxAlertas, {
                     type: 'doughnut',
                     data: {
                         labels: ['Solicitud Prematura', 'Exceso Frecuencia', 'Exceso Cantidad', 'Patrón Anómalo', 'Desviación Presupuestal', 'Top Consumidor'],
                         datasets: [{
                             data: [
-                                alertasData.solicitudesPrematuras,
-                                alertasData.excesosFrecuencia,
-                                alertasData.excesosCantidad,
-                                alertasData.patronesAnomalos,
-                                alertasData.desviacionesPresupuesto,
-                                alertasData.topConsumidores
+                                alertasData.SolicitudesPrematuras || 0,
+                                alertasData.ExcesosFrecuencia || 0,
+                                alertasData.ExcesosCantidad || 0,
+                                alertasData.PatronesAnomalos || 0,
+                                alertasData.DesviacionesPresupuesto || 0,
+                                alertasData.TopConsumidores || 0
                             ],
                             backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6f42c1', '#0dcaf0', '#198754']
                         }]

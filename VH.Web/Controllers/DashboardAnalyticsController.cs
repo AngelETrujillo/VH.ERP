@@ -218,27 +218,36 @@ namespace VH.Web.Controllers
                 var proyectosResponse = await _httpClient.GetAsync("api/dashboardanalytics/filtros/proyectos");
                 if (proyectosResponse.IsSuccessStatusCode)
                 {
-                    var proyectos = await proyectosResponse.Content.ReadFromJsonAsync<IEnumerable<dynamic>>();
+                    var proyectos = await proyectosResponse.Content.ReadFromJsonAsync<List<FiltroItemDto>>();
                     ViewBag.Proyectos = proyectos?.Select(p => new SelectListItem
                     {
-                        Value = p.GetProperty("id").ToString(),
-                        Text = p.GetProperty("nombre").GetString()
+                        Value = p.Id.ToString(),
+                        Text = p.Nombre
                     }).ToList() ?? new List<SelectListItem>();
+                }
+                else
+                {
+                    ViewBag.Proyectos = new List<SelectListItem>();
                 }
 
                 var puestosResponse = await _httpClient.GetAsync("api/dashboardanalytics/filtros/puestos");
                 if (puestosResponse.IsSuccessStatusCode)
                 {
-                    var puestos = await puestosResponse.Content.ReadFromJsonAsync<IEnumerable<dynamic>>();
+                    var puestos = await puestosResponse.Content.ReadFromJsonAsync<List<FiltroItemDto>>();
                     ViewBag.Puestos = puestos?.Select(p => new SelectListItem
                     {
-                        Value = p.GetProperty("id").ToString(),
-                        Text = p.GetProperty("nombre").GetString()
+                        Value = p.Id.ToString(),
+                        Text = p.Nombre
                     }).ToList() ?? new List<SelectListItem>();
                 }
+                else
+                {
+                    ViewBag.Puestos = new List<SelectListItem>();
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al cargar filtros para ViewBag");
                 ViewBag.Proyectos = new List<SelectListItem>();
                 ViewBag.Puestos = new List<SelectListItem>();
             }

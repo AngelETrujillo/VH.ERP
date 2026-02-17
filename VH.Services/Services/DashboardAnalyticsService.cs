@@ -437,6 +437,7 @@ namespace VH.Services.Services
         {
             var fechaInicio = DateTime.Now.AddMonths(-meses);
 
+            // Intentar obtener de estadísticas precalculadas
             var estadisticas = idProyecto.HasValue
                 ? await _unitOfWork.EstadisticasProyectoMensual.FindAsync(
                     e => e.IdProyecto == idProyecto &&
@@ -445,18 +446,58 @@ namespace VH.Services.Services
                 : await _unitOfWork.EstadisticasProyectoMensual.FindAsync(
                     e => e.Anio > fechaInicio.Year || (e.Anio == fechaInicio.Year && e.Mes >= fechaInicio.Month));
 
-            var puntos = estadisticas
-                .GroupBy(e => new { e.Anio, e.Mes })
-                .Select(g => new PuntoTendenciaDto
+            List<PuntoTendenciaDto> puntos;
+
+            if (estadisticas.Any())
+            {
+                // Usar estadísticas precalculadas
+                puntos = estadisticas
+                    .GroupBy(e => new { e.Anio, e.Mes })
+                    .Select(g => new PuntoTendenciaDto
+                    {
+                        Anio = g.Key.Anio,
+                        Mes = g.Key.Mes,
+                        Etiqueta = $"{GetNombreMesCorto(g.Key.Mes)} {g.Key.Anio}",
+                        Valor = g.Sum(e => e.CostoTotal),
+                        PresupuestoReferencia = g.Sum(e => e.PresupuestoAsignado)
+                    })
+                    .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
+                    .ToList();
+            }
+            else
+            {
+                // FALLBACK: Calcular directamente desde entregas
+                var entregas = await _unitOfWork.EntregasEPP.FindAsync(
+                    e => e.FechaEntrega >= fechaInicio &&
+                         (!idProyecto.HasValue || e.Empleado!.IdProyecto == idProyecto),
+                    "Compra,Empleado");
+
+                puntos = entregas
+                    .GroupBy(e => new { e.FechaEntrega.Year, e.FechaEntrega.Month })
+                    .Select(g => new PuntoTendenciaDto
+                    {
+                        Anio = g.Key.Year,
+                        Mes = g.Key.Month,
+                        Etiqueta = $"{GetNombreMesCorto(g.Key.Month)} {g.Key.Year}",
+                        Valor = g.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0)),
+                        PresupuestoReferencia = 0 // No hay presupuesto en este caso
+                    })
+                    .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
+                    .ToList();
+
+                // Intentar obtener presupuesto si hay proyecto específico
+                if (idProyecto.HasValue)
                 {
-                    Anio = g.Key.Anio,
-                    Mes = g.Key.Mes,
-                    Etiqueta = $"{GetNombreMesCorto(g.Key.Mes)} {g.Key.Anio}",
-                    Valor = g.Sum(e => e.CostoTotal),
-                    PresupuestoReferencia = g.Sum(e => e.PresupuestoAsignado)
-                })
-                .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
-                .ToList();
+                    var proyecto = await _unitOfWork.Proyectos.GetByIdAsync(idProyecto.Value);
+                    if (proyecto?.PresupuestoEPPMensual > 0)
+                    {
+                        foreach (var punto in puntos)
+                        {
+                            punto.PresupuestoReferencia = proyecto.PresupuestoEPPMensual.Value;
+                        }
+                    }
+                }
+            }
 
             var promedio = puntos.Any() ? puntos.Average(p => p.Valor) : 0;
 

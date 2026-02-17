@@ -80,7 +80,15 @@
                         {
                             @foreach (var p in ViewBag.Proyectos as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
                             {
-                                <option value="@p.Value" selected="@(p.Value == ViewBag.FiltroProyecto?.ToString())">@p.Text</option>
+                                var isSelected = p.Value == ViewBag.FiltroProyecto?.ToString();
+                                if (isSelected)
+                                {
+                                    <option value="@p.Value" selected>@p.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@p.Value">@p.Text</option>
+                                }
                             }
                         }
                     </select>

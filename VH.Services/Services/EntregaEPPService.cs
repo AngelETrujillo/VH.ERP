@@ -7,11 +7,13 @@ namespace VH.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAlertaConsumoService _alertaConsumoService;
+        private readonly IDashboardAnalyticsService _dashboardService;
 
-        public EntregaEPPService(IUnitOfWork unitOfWork, IAlertaConsumoService alertaConsumoService)
+        public EntregaEPPService(IUnitOfWork unitOfWork, IAlertaConsumoService alertaConsumoService, IDashboardAnalyticsService dashboardService)
         {
             _unitOfWork = unitOfWork;
             _alertaConsumoService = alertaConsumoService;
+            _dashboardService = dashboardService;
         }
 
         private const string IncludeProperties = "Empleado.Proyecto,Compra.Material.UnidadMedida,Compra.Proveedor,Compra.Almacen";
@@ -72,7 +74,7 @@ namespace VH.Services.Services
             await _unitOfWork.EntregasEPP.AddAsync(entrega);
             await _unitOfWork.CompleteAsync();
 
-            // *** NUEVO: Evaluar alertas de consumo ***
+            // *** Evaluar alertas de consumo ***
             try
             {
                 await _alertaConsumoService.EvaluarEntregaAsync(entrega);
@@ -80,6 +82,28 @@ namespace VH.Services.Services
             catch (Exception)
             {
                 // Log pero no fallar la entrega por error en alertas
+            }
+
+            // *** Actualizar estadísticas mensuales ***
+            try
+            {
+                var fechaEntrega = entrega.FechaEntrega;
+                await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
+                    entrega.IdEmpleado,
+                    fechaEntrega.Year,
+                    fechaEntrega.Month);
+
+                if (empleado.IdProyecto > 0)
+                {
+                    await _dashboardService.RecalcularEstadisticasProyectoAsync(
+                        empleado.IdProyecto,
+                        fechaEntrega.Year,
+                        fechaEntrega.Month);
+                }
+            }
+            catch (Exception)
+            {
+                // Log pero no fallar la entrega por error en estadísticas
             }
 
             string? alerta = null;
@@ -158,6 +182,33 @@ namespace VH.Services.Services
                 }
             }
 
+            // *** Actualizar estadísticas si hubo cambios ***
+            if (result && diferencia != 0)
+            {
+                try
+                {
+                    var empleadoStats = await _unitOfWork.Empleados.GetByIdAsync(entregaExistente.IdEmpleado);
+                    var fechaEntrega = entregaExistente.FechaEntrega;
+
+                    await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
+                        entregaExistente.IdEmpleado,
+                        fechaEntrega.Year,
+                        fechaEntrega.Month);
+
+                    if (empleadoStats?.IdProyecto > 0)
+                    {
+                        await _dashboardService.RecalcularEstadisticasProyectoAsync(
+                            empleadoStats.IdProyecto,
+                            fechaEntrega.Year,
+                            fechaEntrega.Month);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Log pero no fallar
+                }
+            }
+
             return (result, alerta);
         }
 
@@ -185,8 +236,40 @@ namespace VH.Services.Services
                 }
             }
 
+            // Guardar datos antes de eliminar
+            var idEmpleado = entrega.IdEmpleado;
+            var fechaEntrega = entrega.FechaEntrega;
+            var empleadoData = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado);
+            var idProyecto = empleadoData?.IdProyecto;
+
             _unitOfWork.EntregasEPP.Remove(entrega);
-            return await _unitOfWork.CompleteAsync() > 0;
+            var result = await _unitOfWork.CompleteAsync() > 0;
+
+            // Actualizar estadísticas después de eliminar
+            if (result)
+            {
+                try
+                {
+                    await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
+                        idEmpleado,
+                        fechaEntrega.Year,
+                        fechaEntrega.Month);
+
+                    if (idProyecto.HasValue)
+                    {
+                        await _dashboardService.RecalcularEstadisticasProyectoAsync(
+                            idProyecto.Value,
+                            fechaEntrega.Year,
+                            fechaEntrega.Month);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Log pero no fallar
+                }
+            }
+
+            return result;
         }
     }
 }

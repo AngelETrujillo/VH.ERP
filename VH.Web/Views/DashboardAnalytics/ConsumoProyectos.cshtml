@@ -1,0 +1,102 @@
+﻿@using VH.Services.DTOs.Analytics
+@{
+    ViewData["Title"] = "Consumo por Proyectos";
+    var consumo = ViewBag.Consumo as IEnumerable<ConsumoProyectoDto>;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-building text-primary me-2"></i>Consumo por Proyectos
+            </h2>
+            <p class="text-muted mb-0">Análisis de consumo de EPP por proyecto - @ViewBag.Mes/@ViewBag.Anio</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    @if (consumo != null && consumo.Any())
+    {
+        <div class="row g-4">
+            @foreach (var proyecto in consumo)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-building me-2"></i>@proyecto.NombreProyecto
+                            </h5>
+                            <small class="text-muted">@proyecto.TipoObra</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <p class="text-muted mb-1 small">Costo Total</p>
+                                    <h4 class="fw-bold text-primary">@proyecto.CostoTotal.ToString("C")</h4>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-muted mb-1 small">Presupuesto</p>
+                                    <h4 class="fw-bold">@proyecto.PresupuestoAsignado.ToString("C")</h4>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-muted mb-1 small">Empleados</p>
+                                    <h5>@proyecto.TotalEmpleados</h5>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-muted mb-1 small">Entregas</p>
+                                    <h5>@proyecto.TotalEntregas</h5>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-muted">Desviación</span>
+                                <span class="badge bg-@proyecto.ColorBarra fs-6">
+                                    @(proyecto.DesviacionPresupuesto > 0 ? "+" : "")@proyecto.DesviacionPresupuesto.ToString("N1")%
+                                </span>
+                            </div>
+
+                            <div class="progress mt-2" style="height: 8px;">
+                                @{
+                                    var porcentajeUso = proyecto.PresupuestoAsignado > 0
+                                    ? Math.Min((proyecto.CostoTotal / proyecto.PresupuestoAsignado) * 100, 100)
+                                    : 0;
+                                }
+                                <div class="progress-bar bg-@proyecto.ColorBarra" style="width: @porcentajeUso%"></div>
+                            </div>
+
+                            @if (proyecto.TotalAlertas > 0)
+                            {
+                                <div class="mt-3">
+                                    <span class="badge bg-danger">@proyecto.AlertasCriticas críticas</span>
+                                    <span class="badge bg-warning text-dark">@proyecto.TotalAlertas alertas total</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a asp-action="DetalleProyecto" asp-route-id="@proyecto.IdProyecto" class="btn btn-sm btn-outline-primary w-100">
+                                Ver detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-building text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3 text-muted">No hay datos de consumo por proyecto</h4>
+                <p class="text-muted">Los datos se generan al registrar entregas de EPP.</p>
+                <a asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    }
+</div>
