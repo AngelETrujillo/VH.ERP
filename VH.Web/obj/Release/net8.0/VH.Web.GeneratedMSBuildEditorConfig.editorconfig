@@ -42,6 +42,26 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxQZXJmaWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/AlertasConsumo/Configuracion.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxlcnRhc0NvbnN1bW9cQ29uZmlndXJhY2lvbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/AlertasConsumo/ConfigurarMaterial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxlcnRhc0NvbnN1bW9cQ29uZmlndXJhck1hdGVyaWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/AlertasConsumo/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxlcnRhc0NvbnN1bW9cRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/AlertasConsumo/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxlcnRhc0NvbnN1bW9cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/AlertasConsumo/Revisar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxlcnRhc0NvbnN1bW9cUmV2aXNhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Almacenes/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWxtYWNlbmVzXENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -84,6 +104,26 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/ComprasEPP/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcHJhc0VQUFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/DashboardAnalytics/ConsumoProyectos.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkQW5hbHl0aWNzXENvbnN1bW9Qcm95ZWN0b3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/DashboardAnalytics/DetalleProyecto.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkQW5hbHl0aWNzXERldGFsbGVQcm95ZWN0by5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/DashboardAnalytics/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkQW5hbHl0aWNzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/DashboardAnalytics/PerfilEmpleado.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkQW5hbHl0aWNzXFBlcmZpbEVtcGxlYWRvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/DashboardAnalytics/Ranking.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkQW5hbHl0aWNzXFJhbmtpbmcuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Empleado/Create.cshtml]
@@ -264,6 +304,26 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Proyectos/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJveWVjdG9zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xEZWxldGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/User/source/repos/VH-ERP/VH.Web/Views/Puestos/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVlc3Rvc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/User/source/repos/VH-ERP/VH.Web/Views/RequisicionesEPP/Aprobar.cshtml]
