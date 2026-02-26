@@ -72,9 +72,12 @@ namespace VH.Services.Services
             if (config == null) return null; // Sin configuración, no evaluar
 
             // Obtener última entrega del mismo material al mismo empleado
-            var entregasAnteriores = await _unitOfWork.EntregasEPP.FindAsync(
-                e => e.IdEmpleado == idEmpleado && e.Compra!.IdMaterial == idMaterial,
+            var todasEntregasEmpleado = await _unitOfWork.EntregasEPP.FindAsync(
+                e => e.IdEmpleado == idEmpleado,
                 "Compra");
+
+            var entregasAnteriores = todasEntregasEmpleado
+                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
 
             var ultimaEntrega = entregasAnteriores
                 .Where(e => idEntrega == null || e.IdEntrega != idEntrega)
@@ -176,11 +179,12 @@ namespace VH.Services.Services
 
             // Contar entregas del mes actual
             var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            var entregasMes = await _unitOfWork.EntregasEPP.FindAsync(
-                e => e.IdEmpleado == idEmpleado &&
-                     e.Compra!.IdMaterial == idMaterial &&
-                     e.FechaEntrega >= inicioMes,
-                "Compra");
+            var todasEntregasMes = await _unitOfWork.EntregasEPP.FindAsync(
+            e => e.IdEmpleado == idEmpleado && e.FechaEntrega >= inicioMes,
+            "Compra");
+
+            var entregasMes = todasEntregasMes
+                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
 
             var totalMes = entregasMes.Sum(e => e.CantidadEntregada);
 

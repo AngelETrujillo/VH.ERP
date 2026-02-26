@@ -1,103 +1,84 @@
 ﻿@model VH.Services.DTOs.ProyectoRequestDto
+
 @{
     ViewData["Title"] = "Editar Proyecto";
 }
 
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3">
-            <i class="bi bi-arrow-left"></i>
-        </a>
-        <div>
-            <h2 class="mb-0 fw-bold text-dark">
-                <i class="bi bi-pencil-square text-warning me-2"></i>Editar Proyecto
-            </h2>
-            <p class="text-muted mb-0">Modifique la información del proyecto</p>
-        </div>
-    </div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Proyecto</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <form asp-action="Edit" method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <div class="mb-3">
+                            <label asp-for="Nombre" class="form-label">Nombre del Proyecto *</label>
+                            <input asp-for="Nombre" class="form-control" />
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                        </div>
 
-                <!-- Información General -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-warning text-dark py-3">
-                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información General</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label asp-for="Nombre" class="form-label fw-semibold">Nombre del Proyecto <span class="text-danger">*</span></label>
-                                <input asp-for="Nombre" class="form-control form-control-lg" />
-                                <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        <div class="mb-3">
+                            <label asp-for="TipoObra" class="form-label">Tipo de Obra</label>
+                            <select asp-for="TipoObra" class="form-select">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="Construcción">Construcción</option>
+                                <option value="Industrial">Industrial</option>
+                                <option value="Logística">Logística</option>
+                                <option value="Administrativa">Administrativa</option>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Rehabilitación">Rehabilitación</option>
+                            </select>
+                            <span asp-validation-for="TipoObra" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FechaInicio" class="form-label">Fecha de Inicio *</label>
+                                <input asp-for="FechaInicio" type="date" class="form-control" />
+                                <span asp-validation-for="FechaInicio" class="text-danger"></span>
                             </div>
-                            <div class="col-md-4">
-                                <label asp-for="TipoObra" class="form-label fw-semibold">Tipo de Obra</label>
-                                <select asp-for="TipoObra" class="form-select form-select-lg">
-                                    <option value="">-- Seleccionar --</option>
-                                    <option value="Residencial">Residencial</option>
-                                    <option value="Comercial">Comercial</option>
-                                    <option value="Industrial">Industrial</option>
-                                    <option value="Infraestructura">Infraestructura</option>
-                                    <option value="Remodelación">Remodelación</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
-                                <span asp-validation-for="TipoObra" class="text-danger small"></span>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FechaFinEstimada" class="form-label">Fecha Fin Estimada</label>
+                                <input asp-for="FechaFinEstimada" type="date" class="form-control" />
+                                <span asp-validation-for="FechaFinEstimada" class="text-danger"></span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Datos Financieros y Fechas -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-success text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Fechas y Presupuesto</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="FechaInicio" class="form-label fw-semibold">Fecha de Inicio <span class="text-danger">*</span></label>
-                                <input asp-for="FechaInicio" type="date" class="form-control form-control-lg" />
-                                <span asp-validation-for="FechaInicio" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="PresupuestoTotal" class="form-label fw-semibold">Presupuesto Total</label>
-                                <div class="input-group input-group-lg">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PresupuestoTotal" class="form-label">Presupuesto Total</label>
+                                <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input asp-for="PresupuestoTotal" type="number" step="0.01" min="0" class="form-control" />
                                 </div>
-                                <span asp-validation-for="PresupuestoTotal" class="text-danger small"></span>
+                                <span asp-validation-for="PresupuestoTotal" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PresupuestoEPPMensual" class="form-label">Presupuesto EPP Mensual</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="PresupuestoEPPMensual" type="number" step="0.01" min="0" class="form-control" />
+                                </div>
+                                <span asp-validation-for="PresupuestoEPPMensual" class="text-danger"></span>
+                                <small class="text-muted">Presupuesto mensual para equipos de protección personal</small>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Botones -->
-                <div class="d-flex justify-content-end gap-3">
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
-                        <i class="bi bi-x-lg me-2"></i>Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-warning btn-lg px-5">
-                        <i class="bi bi-check-lg me-2"></i>Guardar Cambios
-                    </button>
-                </div>
-            </form>
-        </div>
+                        <hr />
 
-        <!-- Panel lateral -->
-        <div class="col-lg-4">
-            <div class="card border-0 bg-light">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold text-warning mb-3">
-                        <i class="bi bi-exclamation-triangle me-2"></i>Advertencia
-                    </h6>
-                    <ul class="list-unstyled text-muted small">
-                        <li class="mb-2"><i class="bi bi-dot text-warning me-1"></i>Los cambios afectarán a todos los registros relacionados</li>
-                        <li><i class="bi bi-dot text-warning me-1"></i>Empleados y almacenes asociados mantendrán su vínculo</li>
-                    </ul>
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -105,5 +86,7 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

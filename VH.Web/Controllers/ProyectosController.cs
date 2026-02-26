@@ -45,7 +45,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("PROYECTOS", "crear")]
-        public async Task<IActionResult> Create([Bind("Nombre,TipoObra,FechaInicio,PresupuestoTotal")] ProyectoRequestDto proyectoDto)
+        public async Task<IActionResult> Create([Bind("Nombre,TipoObra,FechaInicio,FechaFinEstimada,PresupuestoTotal,PresupuestoEPPMensual")] ProyectoRequestDto proyectoDto)
         {
             if (ModelState.IsValid)
             {
@@ -77,7 +77,9 @@ namespace VH.Web.Controllers
                 proyectoResponse!.Nombre,
                 proyectoResponse.TipoObra,
                 proyectoResponse.FechaInicio,
-                proyectoResponse.PresupuestoTotal
+                proyectoResponse.FechaFinEstimada,
+                proyectoResponse.PresupuestoTotal,
+                proyectoResponse.PresupuestoEPPMensual
             );
 
             return View(proyectoRequest);
@@ -86,7 +88,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("PROYECTOS", "editar")]
-        public async Task<IActionResult> Edit(int id, [Bind("Nombre,TipoObra,FechaInicio,PresupuestoTotal")] ProyectoRequestDto proyectoDto)
+        public async Task<IActionResult> Edit(int id, [Bind("Nombre,TipoObra,FechaInicio,FechaFinEstimada,PresupuestoTotal,PresupuestoEPPMensual")] ProyectoRequestDto proyectoDto)
         {
             if (id <= 0)
                 return NotFound();

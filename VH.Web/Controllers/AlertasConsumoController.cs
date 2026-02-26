@@ -29,13 +29,22 @@ namespace VH.Web.Controllers
         }
 
         public async Task<IActionResult> Index(
-            int? idProyecto = null,
-            int? idEmpleado = null,
-            int? severidad = null,
-            int? estado = null,
-            bool soloPendientes = false)
+     int? idProyecto = null,
+     int? idEmpleado = null,
+     int? severidad = null,
+     int? estado = null,
+     bool soloPendientes = false)
         {
             SetAuthHeader();
+
+            // Cargar filtros SIEMPRE primero (antes del try-catch de datos)
+            await CargarFiltrosEnViewBag();
+            ViewBag.FiltroProyecto = idProyecto;
+            ViewBag.FiltroEmpleado = idEmpleado;
+            ViewBag.FiltroSeveridad = severidad;
+            ViewBag.FiltroEstado = estado;
+            ViewBag.SoloPendientes = soloPendientes;
+
             try
             {
                 var url = "api/alertasconsumo?";
@@ -48,15 +57,8 @@ namespace VH.Web.Controllers
                 var alertas = await _httpClient.GetFromJsonAsync<IEnumerable<AlertaConsumoResponseDto>>(url);
                 var resumen = await _httpClient.GetFromJsonAsync<ResumenAlertasDto>($"api/alertasconsumo/resumen?idProyecto={idProyecto}");
 
-                ViewBag.Alertas = alertas;
-                ViewBag.Resumen = resumen;
-
-                await CargarFiltrosEnViewBag();
-                ViewBag.FiltroProyecto = idProyecto;
-                ViewBag.FiltroEmpleado = idEmpleado;
-                ViewBag.FiltroSeveridad = severidad;
-                ViewBag.FiltroEstado = estado;
-                ViewBag.SoloPendientes = soloPendientes;
+                ViewBag.Alertas = alertas ?? new List<AlertaConsumoResponseDto>();
+                ViewBag.Resumen = resumen ?? new ResumenAlertasDto();
 
                 return View();
             }
@@ -64,6 +66,11 @@ namespace VH.Web.Controllers
             {
                 _logger.LogError(ex, "Error al cargar alertas");
                 TempData["Error"] = "Error al cargar las alertas";
+
+                // Asegurar que ViewBag tenga valores por defecto
+                ViewBag.Alertas = new List<AlertaConsumoResponseDto>();
+                ViewBag.Resumen = new ResumenAlertasDto();
+
                 return View();
             }
         }

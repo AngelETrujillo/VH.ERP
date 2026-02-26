@@ -54,6 +54,8 @@ namespace VH.Services.Services
             proyectoExistente.TipoObra = proyectoActualizado.TipoObra;
             proyectoExistente.FechaInicio = proyectoActualizado.FechaInicio;
             proyectoExistente.PresupuestoTotal = proyectoActualizado.PresupuestoTotal;
+            proyectoExistente.PresupuestoEPPMensual = proyectoActualizado.PresupuestoEPPMensual;
+            proyectoExistente.FechaFinEstimada = proyectoActualizado.FechaFinEstimada;
 
             _unitOfWork.Proyectos.Update(proyectoExistente);
             return await _unitOfWork.CompleteAsync() > 0;

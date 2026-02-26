@@ -9,7 +9,10 @@ namespace VH.Services.DTOs
         string Nombre,
         string TipoObra,
         DateTime FechaInicio,
-        decimal PresupuestoTotal
+        DateTime? FechaFinEstimada,
+        decimal PresupuestoTotal,
+        decimal? PresupuestoEPPMensual,
+        bool Activo
     );
 
     // DTO para creación/actualización
@@ -24,7 +27,12 @@ namespace VH.Services.DTOs
         [Required(ErrorMessage = "La fecha de inicio es obligatoria")]
         DateTime FechaInicio,
 
+        DateTime? FechaFinEstimada,
+
         [Range(0, double.MaxValue, ErrorMessage = "El presupuesto debe ser mayor o igual a 0")]
-        decimal PresupuestoTotal
+        decimal PresupuestoTotal,
+
+        [Range(0, double.MaxValue, ErrorMessage = "El presupuesto EPP mensual debe ser mayor o igual a 0")]
+        decimal? PresupuestoEPPMensual
     );
 }

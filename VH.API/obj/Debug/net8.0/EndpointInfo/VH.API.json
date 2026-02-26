@@ -5507,9 +5507,19 @@
             "type": "string",
             "format": "date-time"
           },
+          "fechaFinEstimada": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "presupuestoTotal": {
             "type": "number",
             "format": "double"
+          },
+          "presupuestoEPPMensual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5533,9 +5543,22 @@
             "type": "string",
             "format": "date-time"
           },
+          "fechaFinEstimada": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "presupuestoTotal": {
             "type": "number",
             "format": "double"
+          },
+          "presupuestoEPPMensual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

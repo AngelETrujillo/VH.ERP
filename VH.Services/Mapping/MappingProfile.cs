@@ -10,7 +10,11 @@ namespace VH.Services.Mapping
         {
             // ===== PROYECTOS =====
             CreateMap<Proyecto, ProyectoResponseDto>();
-            CreateMap<ProyectoRequestDto, Proyecto>();
+            CreateMap<ProyectoRequestDto, Proyecto>()
+                .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => true));
+
+            CreateMap<Proyecto, ProyectoResponseDto>();
+
             CreateMap<Proyecto, ProyectoSimpleResponseDto>();
 
             // ===== CONCEPTOS PARTIDAS =====

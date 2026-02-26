@@ -56,86 +56,66 @@
                 <table class="table table-hover align-middle mb-0" id="dataTable">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4">Proyecto</th>
+                            <th>Nombre</th>
                             <th>Tipo de Obra</th>
                             <th>Fecha Inicio</th>
-                            <th class="text-end">Presupuesto</th>
-                            <th class="text-center" style="width:140px;">Acciones</th>
+                            <th>Fecha Fin Est.</th>
+                            <th class="text-end">Presupuesto Total</th>
+                            <th class="text-end">Presupuesto EPP/Mes</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-circle bg-primary-subtle text-primary me-3">
-                                                <i class="bi bi-building"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0 fw-semibold">@item.Nombre</h6>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(item.TipoObra))
-                                        {
-                                            <span class="badge bg-info-subtle text-info">@item.TipoObra</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted fst-italic">Sin especificar</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <i class="bi bi-calendar3 text-muted me-1"></i>
-                                        @item.FechaInicio.ToString("dd/MM/yyyy")
-                                    </td>
-                                    <td class="text-end">
-                                        <span class="fw-bold text-success">@item.PresupuestoTotal.ToString("C2")</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-sm">
-                                            <a asp-action="Details" asp-route-id="@item.IdProyecto"
-                                               class="btn btn-outline-info" title="Ver detalles">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            @if (puedeEditar)
-                                            {
-                                                <a asp-action="Edit" asp-route-id="@item.IdProyecto"
-                                                   class="btn btn-outline-warning" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            }
-                                            @if (puedeEliminar)
-                                            {
-                                                <a asp-action="Delete" asp-route-id="@item.IdProyecto"
-                                                   class="btn btn-outline-danger" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </a>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
+                        @foreach (var item in Model)
                         {
                             <tr>
-                                <td colspan="5">
-                                    <div class="text-center py-5">
-                                        <i class="bi bi-building display-4 text-muted"></i>
-                                        <h5 class="mt-3 text-muted">No hay proyectos registrados</h5>
-                                        <p class="text-muted">Comienza creando tu primer proyecto</p>
-                                        @if (puedeCrear)
-                                        {
-                                            <a asp-action="Create" class="btn btn-primary">
-                                                <i class="bi bi-plus-lg me-2"></i>Crear Proyecto
-                                            </a>
-                                        }
-                                    </div>
+                                <td><strong>@item.Nombre</strong></td>
+                                <td>
+                                    <span class="badge bg-info">@item.TipoObra</span>
+                                </td>
+                                <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (item.FechaFinEstimada.HasValue)
+                                    {
+                                        @item.FechaFinEstimada.Value.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end">@item.PresupuestoTotal.ToString("C2")</td>
+                                <td class="text-end">
+                                    @if (item.PresupuestoEPPMensual.HasValue)
+                                    {
+                                        @item.PresupuestoEPPMensual.Value.ToString("C2")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="badge bg-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-info" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
