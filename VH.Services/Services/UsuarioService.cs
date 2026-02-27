@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
 using VH.Services.DTOs.Usuario;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -94,6 +95,11 @@ namespace VH.Services.Services
             if (existeEmail != null && existeEmail.Id != id)
                 return (false, "Ya existe otro usuario con ese email");
 
+            var existeUserName = await _userManager.FindByNameAsync(request.UserName);
+            if (existeUserName != null && existeUserName.Id != id)
+                return (false, "Ya existe otro usuario con ese nombre de usuario");
+
+            // Actualizar datos básicos
             usuario.Nombre = request.Nombre;
             usuario.ApellidoPaterno = request.ApellidoPaterno;
             usuario.ApellidoMaterno = request.ApellidoMaterno ?? string.Empty;
@@ -105,6 +111,21 @@ namespace VH.Services.Services
             if (!result.Succeeded)
                 return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
 
+            // *** CAMBIO DE CONTRASEÑA ***
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                // Eliminar contraseña actual
+                var removeResult = await _userManager.RemovePasswordAsync(usuario);
+                if (!removeResult.Succeeded)
+                    return (false, "Error al actualizar contraseña: " + string.Join(", ", removeResult.Errors.Select(e => e.Description)));
+
+                // Agregar nueva contraseña
+                var addResult = await _userManager.AddPasswordAsync(usuario, request.Password);
+                if (!addResult.Succeeded)
+                    return (false, "Error al establecer nueva contraseña: " + string.Join(", ", addResult.Errors.Select(e => e.Description)));
+            }
+
+            // Actualizar roles
             if (request.Roles != null)
             {
                 var rolesActuales = await _userManager.GetRolesAsync(usuario);
@@ -114,7 +135,6 @@ namespace VH.Services.Services
 
             return (true, "Usuario actualizado exitosamente");
         }
-
         public async Task<(bool Exitoso, string Mensaje)> DeleteAsync(string id)
         {
             var usuario = await _userManager.FindByIdAsync(id);
