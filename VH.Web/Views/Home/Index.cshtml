@@ -428,36 +428,47 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const apiBase = 'https://localhost:7088/api';
+            // Usar ruta relativa para que funcione en cualquier ambiente
+            const apiBase = '/api';
 
             // Cargar estadísticas
             async function cargarEstadisticas() {
                 try {
                     // Materiales
-                    const materiales = await fetch(`${apiBase}/materiales`).then(r => r.json());
-                    document.getElementById('totalMateriales').textContent = materiales.length;
+                    const materialesRes = await fetch(`${apiBase}/materiales`);
+                    if (materialesRes.ok) {
+                        const materiales = await materialesRes.json();
+                        document.getElementById('totalMateriales').textContent = materiales.length;
+                    }
 
                     // Compras
-                    const compras = await fetch(`${apiBase}/comprasepp`).then(r => r.json());
-                    document.getElementById('totalCompras').textContent = compras.length;
+                    const comprasRes = await fetch(`${apiBase}/comprasepp`);
+                    if (comprasRes.ok) {
+                        const compras = await comprasRes.json();
+                        document.getElementById('totalCompras').textContent = compras.length;
+                    }
 
                     // Entregas
-                    const entregas = await fetch(`${apiBase}/entregasepp`).then(r => r.json());
-                    document.getElementById('totalEntregas').textContent = entregas.length;
+                    const entregasRes = await fetch(`${apiBase}/entregasepp`);
+                    if (entregasRes.ok) {
+                        const entregas = await entregasRes.json();
+                        document.getElementById('totalEntregas').textContent = entregas.length;
+                    }
 
                     // Inventario con alertas
-                    const inventarios = await fetch(`${apiBase}/inventarios`).then(r => r.json());
-                    const alertas = inventarios.filter(i => i.estadoStock !== 'Normal');
-                    document.getElementById('alertasStock').textContent = alertas.length;
-
-                    // Mostrar alertas
-                    mostrarAlertas(inventarios);
+                    const inventariosRes = await fetch(`${apiBase}/inventarios`);
+                    if (inventariosRes.ok) {
+                        const inventarios = await inventariosRes.json();
+                        const alertas = inventarios.filter(i => i.estadoStock !== 'Normal');
+                        document.getElementById('alertasStock').textContent = alertas.length;
+                        mostrarAlertas(inventarios);
+                    }
                 } catch (error) {
                     console.error('Error cargando estadísticas:', error);
                     document.getElementById('alertasContainer').innerHTML = `
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            No se pudieron cargar las estadísticas. Verifique que la API esté en ejecución.
+                            No se pudieron cargar las estadísticas. Verifique la conexión.
                         </div>
                     `;
                 }

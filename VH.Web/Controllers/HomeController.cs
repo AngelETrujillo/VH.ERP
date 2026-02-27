@@ -9,17 +9,23 @@ namespace VH.Web.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly IConfiguration _configuration;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     public IActionResult Index()
     {
+        // Log del token (tu código original)
         var token = HttpContext.Session.GetString("JwtToken");
         _logger.LogWarning("=== HOME: Token en sesión = {Token}",
             string.IsNullOrEmpty(token) ? "NULL/VACÍO" : "EXISTE (" + token.Length + " chars)");
+
+        // Pasar URL de la API a la vista (nuevo)
+        ViewBag.ApiBaseUrl = _configuration["ApiSettings:BaseUrl"]?.TrimEnd('/') ?? "https://localhost:7088";
 
         return View();
     }
