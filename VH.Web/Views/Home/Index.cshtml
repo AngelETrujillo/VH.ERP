@@ -428,50 +428,59 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Usar ruta relativa para que funcione en cualquier ambiente
-            const apiBase = '/api';
+            const apiBase = '@ViewBag.ApiBaseUrl';
+            const token = '@Context.Session.GetString("JwtToken")';
 
-            // Cargar estadísticas
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            };
+
             async function cargarEstadisticas() {
                 try {
-                    // Materiales
-                    const materialesRes = await fetch(`${apiBase}/materiales`);
+                    const [materialesRes, comprasRes, entregasRes, inventariosRes] = await Promise.all([
+                        fetch(`${apiBase}/api/materiales`, { headers }),
+                        fetch(`${apiBase}/api/comprasepp`, { headers }),
+                        fetch(`${apiBase}/api/entregasepp`, { headers }),
+                        fetch(`${apiBase}/api/inventarios`, { headers })
+                    ]);
+
                     if (materialesRes.ok) {
                         const materiales = await materialesRes.json();
                         document.getElementById('totalMateriales').textContent = materiales.length;
                     }
 
-                    // Compras
-                    const comprasRes = await fetch(`${apiBase}/comprasepp`);
                     if (comprasRes.ok) {
                         const compras = await comprasRes.json();
                         document.getElementById('totalCompras').textContent = compras.length;
                     }
 
-                    // Entregas
-                    const entregasRes = await fetch(`${apiBase}/entregasepp`);
                     if (entregasRes.ok) {
                         const entregas = await entregasRes.json();
                         document.getElementById('totalEntregas').textContent = entregas.length;
                     }
 
-                    // Inventario con alertas
-                    const inventariosRes = await fetch(`${apiBase}/inventarios`);
                     if (inventariosRes.ok) {
                         const inventarios = await inventariosRes.json();
                         const alertas = inventarios.filter(i => i.estadoStock !== 'Normal');
                         document.getElementById('alertasStock').textContent = alertas.length;
                         mostrarAlertas(inventarios);
+                    } else {
+                        mostrarErrorAlertas();
                     }
+
                 } catch (error) {
                     console.error('Error cargando estadísticas:', error);
-                    document.getElementById('alertasContainer').innerHTML = `
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            No se pudieron cargar las estadísticas. Verifique la conexión.
-                        </div>
-                    `;
+                    mostrarErrorAlertas();
                 }
+            }
+
+            function mostrarErrorAlertas() {
+                document.getElementById('alertasContainer').innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No se pudieron cargar las estadísticas. Verifique la conexión con la API.
+                    </div>`;
             }
 
             function mostrarAlertas(inventarios) {
@@ -484,8 +493,7 @@
                             <i class="bi bi-check-circle-fill d-block"></i>
                             <h5>¡Todo en orden!</h5>
                             <p>No hay alertas de inventario en este momento.</p>
-                        </div>
-                    `;
+                        </div>`;
                     return;
                 }
 
@@ -502,27 +510,15 @@
                                     <th class="text-center">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                `;
+                            <tbody>`;
 
                 alertas.forEach(alerta => {
-                    let badgeClass = '';
-                    let estadoTexto = '';
-
-                    switch (alerta.estadoStock) {
-                        case 'SinStock':
-                            badgeClass = 'bg-danger';
-                            estadoTexto = 'Sin Stock';
-                            break;
-                        case 'Bajo':
-                            badgeClass = 'bg-warning text-dark';
-                            estadoTexto = 'Stock Bajo';
-                            break;
-                        case 'Excedido':
-                            badgeClass = 'bg-info';
-                            estadoTexto = 'Excedido';
-                            break;
-                    }
+                    const badges = {
+                        'SinStock': ['bg-danger', 'Sin Stock'],
+                        'Bajo': ['bg-warning text-dark', 'Stock Bajo'],
+                        'Excedido': ['bg-info', 'Excedido']
+                    };
+                    const [badgeClass, estadoTexto] = badges[alerta.estadoStock] ?? ['bg-secondary', alerta.estadoStock];
 
                     html += `
                         <tr>
@@ -534,8 +530,7 @@
                             <td class="text-center">
                                 <span class="stock-badge ${badgeClass}">${estadoTexto}</span>
                             </td>
-                        </tr>
-                    `;
+                        </tr>`;
                 });
 
                 html += '</tbody></table></div>';
