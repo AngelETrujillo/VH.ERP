@@ -3,55 +3,66 @@
     ViewData["Title"] = "Nueva Requisición EPP";
 }
 
-<div class="container-fluid">
-    <div class="d-flex align-items-center mb-4">
+<div class="container-fluid px-3 px-md-4">
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3 mb-md-4">
         <a asp-action="Index" class="btn btn-outline-secondary me-3">
             <i class="bi bi-arrow-left"></i>
         </a>
         <div>
-            <h2 class="mb-0 fw-bold text-dark">
+            <h2 class="mb-0 fw-bold text-dark fs-4 fs-md-2">
                 <i class="bi bi-file-earmark-plus text-primary me-2"></i>Nueva Requisición EPP
             </h2>
-            <p class="text-muted mb-0">Solicitar equipos de protección personal</p>
+            <p class="text-muted mb-0 small d-none d-md-block">Solicitar equipos de protección personal</p>
         </div>
     </div>
 
     <form asp-action="Create" method="post" id="formRequisicion">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-        <div class="row">
-            <div class="col-lg-8">
+        <div class="row g-3 g-md-4">
+
+            <!-- Columna principal -->
+            <div class="col-12 col-lg-8">
+
                 <!-- Datos Generales -->
-                <div class="card shadow-sm border-0 mb-4">
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-primary text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Datos de la Requisición</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5">
+                            <i class="bi bi-info-circle me-2"></i>Datos de la Requisición
+                        </h5>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-3 p-md-4">
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label asp-for="IdEmpleadoRecibe" class="form-label fw-semibold">
                                     Empleado Receptor <span class="text-danger">*</span>
                                 </label>
-                                <select asp-for="IdEmpleadoRecibe" asp-items="@(ViewBag.Empleados as List<SelectListItem>)"
-                                        class="form-select">
+                                <select asp-for="IdEmpleadoRecibe"
+                                        asp-items="@(ViewBag.Empleados as List<SelectListItem>)"
+                                        class="form-select form-select-lg-normal">
                                     <option value="">-- Seleccione empleado --</option>
                                 </select>
                                 <span asp-validation-for="IdEmpleadoRecibe" class="text-danger small"></span>
                                 <small class="text-muted">Persona que recibirá el EPP</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label asp-for="IdAlmacen" class="form-label fw-semibold">
                                     Almacén <span class="text-danger">*</span>
                                 </label>
-                                <select asp-for="IdAlmacen" asp-items="@(ViewBag.Almacenes as List<SelectListItem>)"
-                                        class="form-select">
+                                <select asp-for="IdAlmacen"
+                                        asp-items="@(ViewBag.Almacenes as List<SelectListItem>)"
+                                        class="form-select form-select-lg-normal">
                                     <option value="">-- Seleccione almacén --</option>
                                 </select>
                                 <span asp-validation-for="IdAlmacen" class="text-danger small"></span>
                                 <small class="text-muted">De donde se surtirá el material</small>
                             </div>
                             <div class="col-12">
-                                <label asp-for="Justificacion" class="form-label fw-semibold">Justificación</label>
+                                <label asp-for="Justificacion" class="form-label fw-semibold">
+                                    Justificación
+                                </label>
                                 <textarea asp-for="Justificacion" class="form-control" rows="2"
                                           placeholder="Motivo de la requisición..."></textarea>
                                 <span asp-validation-for="Justificacion" class="text-danger small"></span>
@@ -61,51 +72,75 @@
                 </div>
 
                 <!-- Materiales -->
-                <div class="card shadow-sm border-0 mb-4">
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5">
+                            <i class="bi bi-box-seam me-2"></i>Materiales Solicitados
+                        </h5>
                         <button type="button" class="btn btn-light btn-sm" id="btnAgregarMaterial">
-                            <i class="bi bi-plus-lg me-1"></i>Agregar Material
+                            <i class="bi bi-plus-lg me-1"></i>
+                            <span class="d-none d-sm-inline">Agregar </span>Material
                         </button>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="tablaMateriales">
+                    <div class="card-body p-0">
+
+                        <!-- Vista móvil: cards de materiales -->
+                        <div id="materialesCardsMobile" class="d-md-none p-3">
+                            <!-- Cards dinámicas en móvil -->
+                        </div>
+
+                        <!-- Vista escritorio: tabla -->
+                        <div class="d-none d-md-block table-responsive">
+                            <table class="table table-bordered mb-0" id="tablaMateriales">
                                 <thead class="table-light">
                                     <tr>
-                                        <th width="40%">Material <span class="text-danger">*</span></th>
-                                        <th width="20%">Cantidad <span class="text-danger">*</span></th>
-                                        <th width="20%">Talla</th>
-                                        <th width="20%" class="text-center">Acciones</th>
+                                        <th style="width:42%">Material <span class="text-danger">*</span></th>
+                                        <th style="width:20%">Cantidad <span class="text-danger">*</span></th>
+                                        <th style="width:20%">Talla</th>
+                                        <th style="width:18%" class="text-center">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody id="materialesBody">
-                                    <!-- Filas dinámicas -->
                                 </tbody>
                             </table>
                         </div>
-                        <div id="sinMateriales" class="text-center py-4 text-muted">
+
+                        <!-- Estado vacío -->
+                        <div id="sinMateriales" class="text-center py-4 py-md-5 text-muted px-3">
                             <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                            No hay materiales agregados. Haga clic en "Agregar Material".
+                            <p class="mb-1">No hay materiales agregados.</p>
+                            <small>Toca "Agregar Material" para comenzar.</small>
+                        </div>
+
+                        <!-- Totales (visible cuando hay materiales) -->
+                        <div id="seccionTotales" class="d-none bg-light p-3 border-top">
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Total materiales:</span>
+                                <strong id="totalMateriales">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small mt-1">
+                                <span class="text-muted">Total cantidad:</span>
+                                <strong id="totalCantidad">0.00</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <!-- Resumen -->
-                <div class="card shadow-sm border-0 mb-4">
+            <!-- Panel lateral (escritorio) -->
+            <div class="col-12 col-lg-4 d-none d-lg-block">
+                <div class="card shadow-sm border-0 mb-4" style="position: sticky; top: 1rem;">
                     <div class="card-header bg-dark text-white py-3">
                         <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Resumen</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Total Materiales:</span>
-                            <strong id="totalMateriales">0</strong>
+                            <strong id="totalMaterialesDesktop">0</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span>Total Cantidad:</span>
-                            <strong id="totalCantidad">0</strong>
+                            <strong id="totalCantidadDesktop">0.00</strong>
                         </div>
                         <hr>
                         <div class="d-grid gap-2">
@@ -119,21 +154,75 @@
                     </div>
                 </div>
 
-                <!-- Ayuda -->
                 <div class="card shadow-sm border-0 bg-light">
                     <div class="card-body">
-                        <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
+                        <h6 class="fw-bold">
+                            <i class="bi bi-lightbulb text-warning me-2"></i>Información
+                        </h6>
                         <ul class="small text-muted mb-0">
                             <li>La requisición será enviada para aprobación.</li>
                             <li>Una vez aprobada, se procederá a la entrega.</li>
-                            <li>Puede cancelar la requisición mientras esté pendiente.</li>
+                            <li>Puede cancelar mientras esté pendiente.</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Barra de acción fija en móvil -->
+        <div class="d-lg-none fixed-bottom bg-white border-top shadow p-3">
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary flex-shrink-0">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                <button type="submit" class="btn btn-primary flex-fill fw-semibold" id="btnGuardarMobile">
+                    <i class="bi bi-send me-2"></i>Enviar Requisición
+                </button>
+            </div>
+        </div>
+
+        <!-- Espacio para la barra fija en móvil -->
+        <div class="d-lg-none" style="height: 80px;"></div>
+
     </form>
 </div>
+
+<style>
+    /* Inputs táctiles en móvil */
+    @@media (max-width: 991.98px) {
+        .form-control, .form-select {
+            min-height: 48px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            min-height: 48px;
+        }
+
+        .btn-sm {
+            min-height: 44px;
+        }
+    }
+
+    /* Card de material en móvil */
+    .material-card-mobile {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #fff;
+    }
+
+        .material-card-mobile .form-control,
+        .material-card-mobile .form-select {
+            font-size: 0.95rem;
+        }
+
+    .btn-eliminar-material {
+        min-height: 36px !important;
+        padding: 4px 10px;
+    }
+</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -141,107 +230,155 @@
     <script>
         const materiales = @Html.Raw(Json.Serialize(ViewBag.Materiales as List<SelectListItem>));
         let contadorFilas = 0;
+        const esMobile = () => window.innerWidth < 768;
+
+        function buildOptions() {
+            let opts = '<option value="">-- Seleccione --</option>';
+            materiales.forEach(m => {
+                opts += `<option value="${m.value}">${m.text}</option>`;
+            });
+            return opts;
+        }
 
         function agregarFila() {
-            const tbody = document.getElementById('materialesBody');
             const index = contadorFilas++;
 
-            let optionsMaterial = '<option value="">-- Seleccione --</option>';
-            materiales.forEach(m => {
-                optionsMaterial += `<option value="${m.value}">${m.text}</option>`;
-            });
+            // ---- VERSIÓN MÓVIL: card ----
+            const cardMobile = document.createElement('div');
+            cardMobile.className = 'material-card-mobile';
+            cardMobile.id = `card_${index}`;
+            cardMobile.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold small text-muted">Material #${index + 1}</span>
+                    <button type="button" class="btn btn-outline-danger btn-eliminar-material btn-sm"
+                            onclick="eliminarFila(${index})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold mb-1">Material <span class="text-danger">*</span></label>
+                    <select name="Detalles[${index}].IdMaterial"
+                            class="form-select material-select"
+                            required
+                            onchange="sincronizarDesdeCard(${index}, 'material', this.value)">
+                        ${buildOptions()}
+                    </select>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold mb-1">Cantidad <span class="text-danger">*</span></label>
+                        <input type="number"
+                               name="Detalles[${index}].CantidadSolicitada"
+                               class="form-control cantidad-input"
+                               min="0.01" step="0.01" value="1" required
+                               oninput="sincronizarDesdeCard(${index}, 'cantidad', this.value); actualizarTotales()">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold mb-1">Talla</label>
+                        <input type="text"
+                               name="Detalles[${index}].TallaSolicitada"
+                               class="form-control"
+                               placeholder="Ej: M, L, 28"
+                               oninput="sincronizarDesdeCard(${index}, 'talla', this.value)">
+                    </div>
+                </div>
+            `;
+            document.getElementById('materialesCardsMobile').appendChild(cardMobile);
 
+            // ---- VERSIÓN ESCRITORIO: fila tabla ----
+            const tbody = document.getElementById('materialesBody');
             const tr = document.createElement('tr');
             tr.id = `fila_${index}`;
             tr.innerHTML = `
                 <td>
-                    <select name="Detalles[${index}].IdMaterial" class="form-select form-select-sm material-select" required>
-                        ${optionsMaterial}
+                    <select name="Detalles[${index}].IdMaterial"
+                            class="form-select form-select-sm material-select-desk"
+                            required
+                            onchange="sincronizarDesdeTabla(${index}, 'material', this.value)">
+                        ${buildOptions()}
                     </select>
                 </td>
                 <td>
-                    <input type="number" name="Detalles[${index}].CantidadSolicitada"
-                           class="form-control form-control-sm cantidad-input"
-                           min="0.01" step="0.01" required placeholder="0.00" />
+                    <input type="number"
+                           name="Detalles[${index}].CantidadSolicitada"
+                           class="form-control form-control-sm cantidad-input-desk"
+                           min="0.01" step="0.01" value="1" required
+                           oninput="sincronizarDesdeTabla(${index}, 'cantidad', this.value); actualizarTotales()">
                 </td>
                 <td>
-                    <input type="text" name="Detalles[${index}].TallaSolicitada"
-                           class="form-control form-control-sm" maxlength="20" placeholder="Ej: M, L, XL" />
+                    <input type="text"
+                           name="Detalles[${index}].TallaSolicitada"
+                           class="form-control form-control-sm"
+                           placeholder="Ej: M, 28"
+                           oninput="sincronizarDesdeTabla(${index}, 'talla', this.value)">
                 </td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarFila(${index})">
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="eliminarFila(${index})">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
             `;
-
             tbody.appendChild(tr);
+
             actualizarVista();
         }
 
-        function eliminarFila(index) {
+        // Sincroniza cambios de la card móvil → tabla escritorio
+        function sincronizarDesdeCard(index, campo, valor) {
             const fila = document.getElementById(`fila_${index}`);
-            if (fila) {
-                fila.remove();
-                actualizarVista();
-                reindexarFilas();
-            }
+            if (!fila) return;
+            if (campo === 'material') fila.querySelector('.material-select-desk').value = valor;
+            if (campo === 'cantidad') fila.querySelector('.cantidad-input-desk').value = valor;
+            if (campo === 'talla') fila.querySelectorAll('input[type=text]')[0].value = valor;
         }
 
-        function reindexarFilas() {
-            const filas = document.querySelectorAll('#materialesBody tr');
-            filas.forEach((fila, index) => {
-                const selects = fila.querySelectorAll('select');
-                const inputs = fila.querySelectorAll('input');
+        // Sincroniza cambios de la tabla escritorio → card móvil
+        function sincronizarDesdeTabla(index, campo, valor) {
+            const card = document.getElementById(`card_${index}`);
+            if (!card) return;
+            if (campo === 'material') card.querySelector('.material-select').value = valor;
+            if (campo === 'cantidad') card.querySelector('.cantidad-input').value = valor;
+            if (campo === 'talla') card.querySelectorAll('input[type=text]')[0].value = valor;
+        }
 
-                selects.forEach(select => {
-                    const name = select.getAttribute('name');
-                    if (name) {
-                        select.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
-                    }
-                });
-
-                inputs.forEach(input => {
-                    const name = input.getAttribute('name');
-                    if (name) {
-                        input.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
-                    }
-                });
-            });
+        function eliminarFila(index) {
+            document.getElementById(`card_${index}`)?.remove();
+            document.getElementById(`fila_${index}`)?.remove();
+            actualizarVista();
         }
 
         function actualizarVista() {
             const filas = document.querySelectorAll('#materialesBody tr');
             const sinMateriales = document.getElementById('sinMateriales');
-            const totalMateriales = document.getElementById('totalMateriales');
+            const seccionTotales = document.getElementById('seccionTotales');
 
             if (filas.length === 0) {
                 sinMateriales.style.display = 'block';
+                seccionTotales.classList.add('d-none');
             } else {
                 sinMateriales.style.display = 'none';
+                seccionTotales.classList.remove('d-none');
             }
-
-            totalMateriales.textContent = filas.length;
-            calcularTotalCantidad();
+            actualizarTotales();
         }
 
-        function calcularTotalCantidad() {
-            const inputs = document.querySelectorAll('.cantidad-input');
+        function actualizarTotales() {
+            const filas = document.querySelectorAll('#materialesBody tr');
             let total = 0;
-            inputs.forEach(input => {
-                const val = parseFloat(input.value) || 0;
-                total += val;
+            filas.forEach(tr => {
+                const input = tr.querySelector('.cantidad-input-desk');
+                total += parseFloat(input?.value) || 0;
             });
+            const count = filas.length;
+
+            document.getElementById('totalMateriales').textContent = count;
             document.getElementById('totalCantidad').textContent = total.toFixed(2);
+            document.getElementById('totalMaterialesDesktop').textContent = count;
+            document.getElementById('totalCantidadDesktop').textContent = total.toFixed(2);
         }
 
         document.getElementById('btnAgregarMaterial').addEventListener('click', agregarFila);
-
-        document.getElementById('materialesBody').addEventListener('input', function(e) {
-            if (e.target.classList.contains('cantidad-input')) {
-                calcularTotalCantidad();
-            }
-        });
 
         document.getElementById('formRequisicion').addEventListener('submit', function(e) {
             const filas = document.querySelectorAll('#materialesBody tr');

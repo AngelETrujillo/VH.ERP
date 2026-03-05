@@ -16,7 +16,7 @@ namespace VH.Services.Services
 
         public async Task<IEnumerable<RequisicionEPP>> GetAllAsync()
         {
-            return await _unitOfWork.RequisicionesEPP.GetAllAsync();
+            return await _unitOfWork.RequisicionesEPP.GetAllAsync(includeProperties: IncludeProperties);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetByUsuarioAsync(string userId)

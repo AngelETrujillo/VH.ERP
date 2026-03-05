@@ -6,56 +6,91 @@
     var puedeEditar = PermisoHelper.PuedeEditar(Context.Session, "REQUISICIONES_EPP", esSuperAdmin);
 }
 
-<div class="container-fluid">
-    <div class="d-flex align-items-center mb-4">
+<div class="container-fluid px-3 px-md-4">
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3 mb-md-4">
         <a asp-action="Index" class="btn btn-outline-secondary me-3">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <div class="flex-grow-1">
-            <h2 class="mb-0 fw-bold text-dark">
+        <div class="flex-grow-1 min-w-0">
+            <h2 class="mb-0 fw-bold text-dark fs-5 fs-md-2 text-truncate">
                 <i class="bi bi-file-earmark-text text-primary me-2"></i>@Model.NumeroRequisicion
             </h2>
-            <p class="text-muted mb-0">Detalle de la requisición</p>
+            <p class="text-muted mb-0 small">@Model.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</p>
         </div>
-        <span class="badge bg-@Model.EstadoClase fs-6 px-3 py-2">@Model.EstadoTexto</span>
+        <span class="badge bg-@Model.EstadoClase fs-6 px-3 py-2 ms-2">@Model.EstadoTexto</span>
     </div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Información General -->
-            <div class="card shadow-sm border-0 mb-4">
+    <!-- Botones de acción en móvil (arriba) -->
+    <div class="d-md-none mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+            @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+            {
+                <a asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" class="btn btn-warning flex-fill">
+                    <i class="bi bi-check-circle me-1"></i>Aprobar / Rechazar
+                </a>
+            }
+            @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Aprobada)
+            {
+                <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success flex-fill">
+                    <i class="bi bi-box-arrow-right me-1"></i>Entregar
+                </a>
+            }
+            @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+            {
+                <form asp-action="Cancelar" asp-route-id="@Model.IdRequisicion" method="post" class="flex-fill"
+                      onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="row g-3 g-md-4">
+
+        <!-- Columna principal -->
+        <div class="col-12 col-lg-8">
+
+            <!-- Info general -->
+            <div class="card shadow-sm border-0 mb-3 mb-md-4">
                 <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información General</h5>
+                    <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-info-circle me-2"></i>Información General</h5>
                 </div>
-                <div class="card-body p-4">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-semibold">N° Requisición</label>
-                            <p class="fs-5 mb-0 fw-bold text-primary">@Model.NumeroRequisicion</p>
+                <div class="card-body p-3 p-md-4">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">N° Requisición</label>
+                            <span class="fw-bold text-primary">@Model.NumeroRequisicion</span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Fecha Solicitud</label>
-                            <p class="fs-5 mb-0">@Model.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</p>
+                        <div class="col-6 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Fecha Solicitud</label>
+                            <span>@Model.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Solicitante</label>
-                            <p class="fs-5 mb-0">@Model.NombreUsuarioSolicita</p>
+                        <div class="col-12 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Solicitante</label>
+                            <span>@Model.NombreUsuarioSolicita</span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Almacén</label>
-                            <p class="fs-5 mb-0">@Model.NombreAlmacen</p>
+                        <div class="col-12 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Almacén</label>
+                            <span>@Model.NombreAlmacen</span>
                         </div>
-                        <div class="col-12">
-                            <label class="text-muted small text-uppercase fw-semibold">Empleado Receptor</label>
-                            <p class="fs-5 mb-0">
-                                @Model.NombreEmpleadoRecibe
-                                <span class="badge bg-secondary ms-2">@Model.NumeroNominaEmpleado</span>
-                            </p>
+                        <div class="col-12 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Empleado Receptor</label>
+                            <span class="fw-semibold">@Model.NombreEmpleadoRecibe</span>
+                            <span class="text-muted small ms-2">(@Model.NumeroNominaEmpleado)</span>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Estado</label>
+                            <span class="badge bg-@Model.EstadoClase fs-6">@Model.EstadoTexto</span>
                         </div>
                         @if (!string.IsNullOrEmpty(Model.Justificacion))
                         {
                             <div class="col-12">
-                                <label class="text-muted small text-uppercase fw-semibold">Justificación</label>
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Justificación</label>
                                 <p class="mb-0">@Model.Justificacion</p>
                             </div>
                         }
@@ -63,58 +98,73 @@
                 </div>
             </div>
 
-            <!-- Materiales Solicitados -->
-            <div class="card shadow-sm border-0 mb-4">
+            <!-- Materiales -->
+            <div class="card shadow-sm border-0 mb-3 mb-md-4">
                 <div class="card-header bg-success text-white py-3">
-                    <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
+                    <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
                 </div>
-                <div class="card-body p-0">
+
+                <!-- Móvil: cards -->
+                <div class="d-md-none p-3">
+                    @foreach (var detalle in Model.Detalles)
+                    {
+                        <div class="border rounded p-3 mb-2 bg-light">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="fw-semibold">@detalle.NombreMaterial</span>
+                                    <small class="text-muted d-block">@detalle.UnidadMedida</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                    @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
+                                    {
+                                        <br>
+                                
+                                        <span class="badge bg-secondary mt-1">Talla: @detalle.TallaSolicitada</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fw-semibold mt-2 pt-2 border-top">
+                        <span>Total: @Model.TotalMateriales material(es)</span>
+                        <span>@Model.TotalCantidadSolicitada uds.</span>
+                    </div>
+                </div>
+
+                <!-- Escritorio: tabla -->
+                <div class="d-none d-md-block">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Material</th>
-                                    <th class="text-center">Cantidad Solicitada</th>
+                                    <th class="ps-4">Material</th>
+                                    <th class="text-center">Cantidad</th>
                                     <th class="text-center">Talla</th>
-                                    @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Entregada)
-                                    {
-                                        <th class="text-center">Cantidad Entregada</th>
-                                        <th>Lote</th>
-                                    }
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var detalle in Model.Detalles)
                                 {
                                     <tr>
-                                        <td>
+                                        <td class="ps-4">
                                             <strong>@detalle.NombreMaterial</strong>
                                             <br><small class="text-muted">@detalle.UnidadMedida</small>
                                         </td>
-                                        <td class="text-center">@detalle.CantidadSolicitada</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                        </td>
                                         <td class="text-center">
                                             @(string.IsNullOrEmpty(detalle.TallaSolicitada) ? "-" : detalle.TallaSolicitada)
                                         </td>
-                                        @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Entregada)
-                                        {
-                                            <td class="text-center">
-                                                <span class="badge bg-success">@detalle.CantidadEntregada</span>
-                                            </td>
-                                            <td><small>@detalle.DescripcionLote</small></td>
-                                        }
                                     </tr>
                                 }
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
-                                    <th>Total</th>
+                                    <th class="ps-4">Total: @Model.TotalMateriales material(es)</th>
                                     <th class="text-center">@Model.TotalCantidadSolicitada</th>
                                     <th></th>
-                                    @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Entregada)
-                                    {
-                                        <th class="text-center">@Model.Detalles.Sum(d => d.CantidadEntregada ?? 0)</th>
-                                        <th></th>
-                                    }
                                 </tr>
                             </tfoot>
                         </table>
@@ -122,28 +172,31 @@
                 </div>
             </div>
 
-            <!-- Información de Aprobación (si aplica) -->
+            <!-- Info aprobación -->
             @if (Model.FechaAprobacion.HasValue)
             {
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-warning py-3">
-                        <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Información de Aprobación</h5>
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
+                    <div class="card-header bg-@(Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Rechazada ? "danger" : "warning") text-white py-3">
+                        <h5 class="mb-0 fs-6 fs-md-5">
+                            <i class="bi bi-@(Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Rechazada ? "x-circle" : "check-circle") me-2"></i>
+                            @(Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Rechazada ? "Rechazo" : "Aprobación")
+                        </h5>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="text-muted small text-uppercase fw-semibold">Aprobado/Rechazado por</label>
-                                <p class="fs-5 mb-0">@Model.NombreUsuarioAprueba</p>
+                    <div class="card-body p-3 p-md-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Aprobador</label>
+                                <span>@Model.NombreUsuarioAprueba</span>
                             </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small text-uppercase fw-semibold">Fecha</label>
-                                <p class="fs-5 mb-0">@Model.FechaAprobacion?.ToString("dd/MM/yyyy HH:mm")</p>
+                            <div class="col-6">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Fecha</label>
+                                <span>@Model.FechaAprobacion?.ToString("dd/MM/yyyy HH:mm")</span>
                             </div>
                             @if (!string.IsNullOrEmpty(Model.MotivoRechazo))
                             {
                                 <div class="col-12">
-                                    <label class="text-muted small text-uppercase fw-semibold">Motivo de Rechazo</label>
-                                    <p class="mb-0 text-danger">@Model.MotivoRechazo</p>
+                                    <label class="text-muted small text-uppercase fw-semibold d-block">Motivo Rechazo</label>
+                                    <div class="alert alert-danger mb-0 py-2">@Model.MotivoRechazo</div>
                                 </div>
                             }
                         </div>
@@ -151,109 +204,63 @@
                 </div>
             }
 
-            <!-- Información de Entrega (si aplica) -->
+            <!-- Info entrega -->
             @if (Model.FechaEntrega.HasValue)
             {
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-info text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-box-arrow-right me-2"></i>Información de Entrega</h5>
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-box-arrow-right me-2"></i>Entrega</h5>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="text-muted small text-uppercase fw-semibold">Entregado por</label>
-                                <p class="fs-5 mb-0">@Model.NombreUsuarioEntrega</p>
+                    <div class="card-body p-3 p-md-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Entregado por</label>
+                                <span>@Model.NombreUsuarioEntrega</span>
                             </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small text-uppercase fw-semibold">Fecha de Entrega</label>
-                                <p class="fs-5 mb-0">@Model.FechaEntrega?.ToString("dd/MM/yyyy HH:mm")</p>
+                            <div class="col-6">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Fecha Entrega</label>
+                                <span>@Model.FechaEntrega?.ToString("dd/MM/yyyy HH:mm")</span>
                             </div>
-                            @if (!string.IsNullOrEmpty(Model.Observaciones))
-                            {
-                                <div class="col-12">
-                                    <label class="text-muted small text-uppercase fw-semibold">Observaciones</label>
-                                    <p class="mb-0">@Model.Observaciones</p>
-                                </div>
-                            }
                         </div>
                     </div>
                 </div>
-            }
-        </div>
 
-        <div class="col-lg-4">
-            <!-- Acciones -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-dark text-white py-3">
-                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Acciones</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
-                        {
-                            <a asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" class="btn btn-warning">
-                                <i class="bi bi-check-circle me-2"></i>Aprobar / Rechazar
+                @if (!string.IsNullOrEmpty(Model.FirmaDigital))
+                {
+                    <div class="card shadow-sm border-0 mb-3 mb-md-4">
+                        <div class="card-header bg-secondary text-white py-3">
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-pen me-2"></i>Firma Digital</h5>
+                        </div>
+                        <div class="card-body text-center p-3">
+                            <img src="@Model.FirmaDigital" alt="Firma Digital"
+                                 class="img-fluid border rounded" style="max-height: 150px;" />
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.FotoEvidencia))
+                {
+                    <div class="card shadow-sm border-0 mb-3 mb-md-4">
+                        <div class="card-header bg-secondary text-white py-3">
+                            <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-camera me-2"></i>Foto Evidencia</h5>
+                        </div>
+                        <div class="card-body text-center p-3">
+                            <a href="@Model.FotoEvidencia" target="_blank">
+                                <img src="@Model.FotoEvidencia" alt="Evidencia"
+                                     class="img-fluid rounded" style="max-height: 200px;" />
                             </a>
-                        }
-                        @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Aprobada && (esSuperAdmin || esAdmin))
-                        {
-                            <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success">
-                                <i class="bi bi-box-arrow-right me-2"></i>Registrar Entrega
-                            </a>
-                        }
-                        @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
-                        {
-                            <form asp-action="Cancelar" asp-route-id="@Model.IdRequisicion" method="post"
-                                  onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-danger w-100">
-                                    <i class="bi bi-x-circle me-2"></i>Cancelar Requisición
-                                </button>
-                            </form>
-                        }
-                        <a asp-action="Index" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Volver al Listado
-                        </a>
+                            <br><small class="text-muted">Toca para ver completo</small>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Firma Digital (si existe) -->
-            @if (!string.IsNullOrEmpty(Model.FirmaDigital))
-            {
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-secondary text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-pen me-2"></i>Firma Digital</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <img src="@Model.FirmaDigital" alt="Firma Digital" class="img-fluid border rounded" style="max-height: 150px;" />
-                    </div>
-                </div>
+                }
             }
 
-            <!-- Foto Evidencia (si existe) -->
-            @if (!string.IsNullOrEmpty(Model.FotoEvidencia))
-            {
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-secondary text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Foto Evidencia</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <a href="@Model.FotoEvidencia" target="_blank">
-                            <img src="@Model.FotoEvidencia" alt="Evidencia" class="img-fluid rounded" style="max-height: 200px;" />
-                        </a>
-                        <br>
-                        <small class="text-muted">Clic para ver tamaño completo</small>
-                    </div>
-                </div>
-            }
-
-            <!-- Timeline de Estado -->
-            <div class="card shadow-sm border-0">
+            <!-- Timeline -->
+            <div class="card shadow-sm border-0 mb-3 mb-md-4">
                 <div class="card-header bg-light py-3">
-                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial</h5>
+                    <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-clock-history me-2"></i>Historial</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3 p-md-4">
                     <div class="timeline">
                         <div class="timeline-item">
                             <div class="timeline-marker bg-primary"></div>
@@ -286,11 +293,47 @@
                         {
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-secondary"></div>
-                                <div class="timeline-content">
-                                    <strong>Cancelada</strong>
-                                </div>
+                                <div class="timeline-content"><strong>Cancelada</strong></div>
                             </div>
                         }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral acciones (escritorio) -->
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="card shadow-sm border-0 mb-4" style="position: sticky; top: 1rem;">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                        {
+                            <a asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" class="btn btn-warning btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Aprobar / Rechazar
+                            </a>
+                        }
+                        @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Aprobada)
+                        {
+                            <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success btn-lg">
+                                <i class="bi bi-box-arrow-right me-2"></i>Registrar Entrega
+                            </a>
+                        }
+                        @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                        {
+                            <form asp-action="Cancelar" asp-route-id="@Model.IdRequisicion" method="post"
+                                  onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar Requisición
+                                </button>
+                            </form>
+                        }
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                        </a>
                     </div>
                 </div>
             </div>
@@ -303,25 +346,30 @@
         position: relative;
         padding-left: 30px;
     }
+
     .timeline-item {
         position: relative;
         padding-bottom: 20px;
     }
-    .timeline-item:last-child {
-        padding-bottom: 0;
-    }
-    .timeline-item::before {
-        content: '';
-        position: absolute;
-        left: -24px;
-        top: 8px;
-        height: calc(100% + 4px);
-        width: 2px;
-        background: #dee2e6;
-    }
-    .timeline-item:last-child::before {
-        display: none;
-    }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 8px;
+            height: calc(100% + 4px);
+            width: 2px;
+            background: #dee2e6;
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
     .timeline-marker {
         position: absolute;
         left: -30px;
@@ -331,5 +379,11 @@
         border-radius: 50%;
         border: 2px solid #fff;
         box-shadow: 0 0 0 2px #dee2e6;
+    }
+
+    @@media (max-width: 767.98px) {
+        .btn {
+            min-height: 48px;
+        }
     }
 </style>

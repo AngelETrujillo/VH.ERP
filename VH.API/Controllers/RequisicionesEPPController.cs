@@ -143,7 +143,7 @@ namespace VH.API.Controllers
 
         // POST: api/requisicionesepp/5/entregar
         [HttpPost("{id}/entregar")]
-        [Authorize(Roles = "SuperAdmin,Administrador")]
+        //[Authorize(Roles = "SuperAdmin,Administrador")]
         public async Task<IActionResult> Entregar(int id, [FromBody] EntregarRequisicionRequestDto dto)
         {
             if (!ModelState.IsValid)
