@@ -196,7 +196,7 @@
                                                    class="btn btn-outline-info" title="Ver detalles">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                                                @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
                                                 {
                                                     <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                                        class="btn btn-outline-warning" title="Aprobar/Rechazar">

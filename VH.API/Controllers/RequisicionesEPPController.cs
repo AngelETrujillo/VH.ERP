@@ -57,7 +57,7 @@ namespace VH.API.Controllers
 
         // GET: api/requisicionesepp/pendientes-aprobacion
         [HttpGet("pendientes-aprobacion")]
-        [Authorize(Roles = "SuperAdmin,Administrador")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<RequisicionEPPResponseDto>>> GetPendientesAprobacion()
         {
             var requisiciones = await _requisicionService.GetPendientesAprobacionAsync();
@@ -66,7 +66,7 @@ namespace VH.API.Controllers
 
         // GET: api/requisicionesepp/pendientes-entrega
         [HttpGet("pendientes-entrega")]
-        [Authorize(Roles = "SuperAdmin,Administrador")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<RequisicionEPPResponseDto>>> GetPendientesEntrega()
         {
             var requisiciones = await _requisicionService.GetPendientesEntregaAsync();
@@ -115,7 +115,7 @@ namespace VH.API.Controllers
 
         // POST: api/requisicionesepp/5/aprobar
         [HttpPost("{id}/aprobar")]
-        [Authorize(Roles = "SuperAdmin,Administrador")]
+        [Authorize]
         public async Task<IActionResult> Aprobar(int id, [FromBody] AprobarRequisicionRequestDto dto)
         {
             try
@@ -144,6 +144,7 @@ namespace VH.API.Controllers
         // POST: api/requisicionesepp/5/entregar
         [HttpPost("{id}/entregar")]
         //[Authorize(Roles = "SuperAdmin,Administrador")]
+        [Authorize]
         public async Task<IActionResult> Entregar(int id, [FromBody] EntregarRequisicionRequestDto dto)
         {
             if (!ModelState.IsValid)
