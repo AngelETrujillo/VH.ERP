@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "7Fxru0tTHBWWpwWz8gv6sDTnT8Hm+eBTTgGkcnJ6eEk=",
+  "Hash": "n1Dgr/9kT9WzKRY6/KCFzKq4XcluLfbYLTYyeMSod2o=",
   "Source": "VH.Web",
   "BasePath": "_content/VH.Web",
   "Mode": "Default",
@@ -1250,6 +1250,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\evidencias\\d1632f44-c438-47d0-b107-5253fdad56a7.png"
+    },
+    {
+      "Identity": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\uploads\\evidencias\\f08eef9f-0889-4794-9ae0-ba8fde7acce6.png",
+      "SourceId": "VH.Web",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\",
+      "BasePath": "_content/VH.Web",
+      "RelativePath": "uploads/evidencias/f08eef9f-0889-4794-9ae0-ba8fde7acce6.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\evidencias\\f08eef9f-0889-4794-9ae0-ba8fde7acce6.png"
     },
     {
       "Identity": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\wwwroot\\uploads\\evidencias\\fe0e7467-1df5-4b40-be2f-e7f52f789168.png",

@@ -4,64 +4,139 @@
     var lotesDisponibles = ViewBag.LotesDisponibles as Dictionary<int, List<SelectListItem>> ?? new Dictionary<int, List<SelectListItem>>();
 }
 
-<div class="container-fluid">
-    <div class="d-flex align-items-center mb-4">
+<div class="container-fluid px-3 px-md-4">
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3 mb-md-4">
         <a asp-action="Index" class="btn btn-outline-secondary me-3">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <div class="flex-grow-1">
-            <h2 class="mb-0 fw-bold text-dark">
+        <div class="flex-grow-1 min-w-0">
+            <h2 class="mb-0 fw-bold text-dark fs-5 fs-md-2">
                 <i class="bi bi-box-arrow-right text-success me-2"></i>Registrar Entrega
             </h2>
-            <p class="text-muted mb-0">@Model.NumeroRequisicion</p>
+            <p class="text-muted mb-0 small">@Model.NumeroRequisicion</p>
         </div>
-        <span class="badge bg-info fs-6 px-3 py-2">Aprobada</span>
+        <span class="badge bg-info ms-2 fs-6 px-3 py-2">Aprobada</span>
     </div>
 
-    <form asp-action="Entregar" asp-route-id="@Model.IdRequisicion" method="post" id="formEntrega" enctype="multipart/form-data">
+    <form asp-action="Entregar" asp-route-id="@Model.IdRequisicion" method="post"
+          id="formEntrega" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <input type="hidden" name="FirmaDigital" id="firmaDigitalInput" />
         <input type="hidden" name="FotoEvidencia" id="fotoEvidenciaInput" />
 
-        <div class="row">
-            <div class="col-lg-8">
-                <!-- Información del Receptor -->
-                <div class="card shadow-sm border-0 mb-4">
+        <div class="row g-3 g-md-4">
+
+            <!-- Columna principal -->
+            <div class="col-12 col-lg-8">
+
+                <!-- Receptor -->
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-primary text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Receptor</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-person-badge me-2"></i>Receptor</h5>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-3 p-md-4">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="text-muted small text-uppercase fw-semibold">Empleado</label>
-                                <p class="fs-5 mb-0 fw-bold">@Model.NombreEmpleadoRecibe</p>
+                            <div class="col-12 col-md-6">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Empleado</label>
+                                <span class="fw-bold fs-5">@Model.NombreEmpleadoRecibe</span>
                             </div>
-                            <div class="col-md-3">
-                                <label class="text-muted small text-uppercase fw-semibold">N° Nómina</label>
-                                <p class="fs-5 mb-0"><code>@Model.NumeroNominaEmpleado</code></p>
+                            <div class="col-6 col-md-3">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">N° Nómina</label>
+                                <code class="fs-6">@Model.NumeroNominaEmpleado</code>
                             </div>
-                            <div class="col-md-3">
-                                <label class="text-muted small text-uppercase fw-semibold">Almacén</label>
-                                <p class="fs-5 mb-0">@Model.NombreAlmacen</p>
+                            <div class="col-6 col-md-3">
+                                <label class="text-muted small text-uppercase fw-semibold d-block">Almacén</label>
+                                <span>@Model.NombreAlmacen</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Materiales a Entregar -->
-                <div class="card shadow-sm border-0 mb-4">
+                <!-- Materiales a entregar -->
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-success text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiales a Entregar</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-box-seam me-2"></i>Materiales a Entregar</h5>
                     </div>
                     <div class="card-body p-0">
-                        <div class="table-responsive">
+
+                        <!-- Móvil: una card por material -->
+                        <div class="d-md-none p-3">
+                            @for (int i = 0; i < Model.Detalles.Count; i++)
+                            {
+                                var detalle = Model.Detalles[i];
+                                var lotes = lotesDisponibles.ContainsKey(detalle.IdMaterial)
+                                ? lotesDisponibles[detalle.IdMaterial]
+                                : new List<SelectListItem>();
+                                var tieneLotes = lotes.Any();
+
+                                <div class="border rounded p-3 mb-3 @(tieneLotes ? "" : "border-danger bg-danger-subtle")">
+                                    <input type="hidden" name="Detalles[@i].IdRequisicionDetalle"
+                                           value="@detalle.IdRequisicionDetalle" />
+
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <span class="fw-semibold">@detalle.NombreMaterial</span>
+                                            <small class="text-muted d-block">@detalle.UnidadMedida</small>
+                                            @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
+                                            {
+                                                <span class="badge bg-secondary mt-1">Talla: @detalle.TallaSolicitada</span>
+                                            }
+                                        </div>
+                                        <span class="badge bg-primary fs-6">Solicitado: @detalle.CantidadSolicitada</span>
+                                    </div>
+
+                                    @if (tieneLotes)
+                                    {
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold mb-1">
+                                                Lote <span class="text-danger">*</span>
+                                            </label>
+                                            <select name="Detalles[@i].IdCompra"
+                                                    class="form-select lote-select"
+                                                    data-max="@detalle.CantidadSolicitada" required>
+                                                <option value="">-- Seleccione lote --</option>
+                                                @foreach (var lote in lotes)
+                                                {
+                                                    <option value="@lote.Value">@lote.Text</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label small fw-semibold mb-1">
+                                                Cantidad a Entregar <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number"
+                                                   name="Detalles[@i].CantidadEntregada"
+                                                   class="form-control cantidad-entrega"
+                                                   min="0.01" step="0.01"
+                                                   max="@detalle.CantidadSolicitada"
+                                                   value="@detalle.CantidadSolicitada"
+                                                   required />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-danger mb-0 py-2 small">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Sin stock disponible en este almacén
+                                        </div>
+                                        <input type="hidden" name="Detalles[@i].IdCompra" value="0" />
+                                        <input type="hidden" name="Detalles[@i].CantidadEntregada" value="0" />
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Escritorio: tabla -->
+                        <div class="d-none d-md-block table-responsive">
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Material</th>
+                                        <th class="ps-4">Material</th>
                                         <th class="text-center">Solicitado</th>
                                         <th>Lote <span class="text-danger">*</span></th>
-                                        <th>Cantidad a Entregar <span class="text-danger">*</span></th>
+                                        <th>Cantidad <span class="text-danger">*</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -71,9 +146,10 @@
                                         var lotes = lotesDisponibles.ContainsKey(detalle.IdMaterial)
                                         ? lotesDisponibles[detalle.IdMaterial]
                                         : new List<SelectListItem>();
+                                        var tieneLotes = lotes.Any();
 
                                         <tr>
-                                            <td>
+                                            <td class="ps-4">
                                                 <strong>@detalle.NombreMaterial</strong>
                                                 <br><small class="text-muted">@detalle.UnidadMedida</small>
                                                 @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
@@ -82,16 +158,18 @@
                                             
                                                     <small class="badge bg-secondary">Talla: @detalle.TallaSolicitada</small>
                                                 }
-                                                <input type="hidden" name="Detalles[@i].IdRequisicionDetalle" value="@detalle.IdRequisicionDetalle" />
+                                                <input type="hidden" name="Detalles[@i].IdRequisicionDetalle"
+                                                       value="@detalle.IdRequisicionDetalle" />
                                             </td>
                                             <td class="text-center">
                                                 <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
                                             </td>
                                             <td>
-                                                @if (lotes.Any())
+                                                @if (tieneLotes)
                                                 {
-                                                    <select name="Detalles[@i].IdCompra" class="form-select form-select-sm lote-select"
-                                                            data-material="@detalle.IdMaterial" required>
+                                                    <select name="Detalles[@i].IdCompra"
+                                                            class="form-select form-select-sm lote-select"
+                                                            required>
                                                         <option value="">-- Seleccione lote --</option>
                                                         @foreach (var lote in lotes)
                                                         {
@@ -102,17 +180,20 @@
                                                 else
                                                 {
                                                     <span class="text-danger small">
-                                                        <i class="bi bi-exclamation-triangle me-1"></i>Sin stock disponible
+                                                        <i class="bi bi-exclamation-triangle me-1"></i>Sin stock
                                                     </span>
                                                     <input type="hidden" name="Detalles[@i].IdCompra" value="0" />
                                                 }
                                             </td>
                                             <td>
-                                                <input type="number" name="Detalles[@i].CantidadEntregada"
+                                                <input type="number"
+                                                       name="Detalles[@i].CantidadEntregada"
                                                        class="form-control form-control-sm cantidad-entrega"
-                                                       min="0.01" step="0.01" max="@detalle.CantidadSolicitada"
-                                                       value="@detalle.CantidadSolicitada" required
-                                                       @(lotes.Any() ? "" : "disabled") />
+                                                       min="0.01" step="0.01"
+                                                       max="@detalle.CantidadSolicitada"
+                                                       value="@detalle.CantidadSolicitada"
+                                                       required
+                                                       @(tieneLotes ? "" : "disabled") />
                                             </td>
                                         </tr>
                                     }
@@ -123,85 +204,121 @@
                 </div>
 
                 <!-- Observaciones -->
-                <div class="card shadow-sm border-0 mb-4">
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-secondary text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Observaciones</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-chat-left-text me-2"></i>Observaciones</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-3">
                         <textarea name="Observaciones" class="form-control" rows="2"
-                                  placeholder="Observaciones adicionales sobre la entrega (opcional)..."></textarea>
+                                  placeholder="Observaciones adicionales (opcional)..."></textarea>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <!-- Firma Digital -->
-                <div class="card shadow-sm border-0 mb-4">
+            <!-- Panel lateral -->
+            <div class="col-12 col-lg-4">
+
+                <!-- Firma digital -->
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-dark text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-pen me-2"></i>Firma Digital <span class="text-danger">*</span></h5>
+                        <h5 class="mb-0 fs-6 fs-md-5">
+                            <i class="bi bi-pen me-2"></i>Firma Digital <span class="text-danger">*</span>
+                        </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-3">
                         <p class="small text-muted mb-2">El empleado debe firmar para confirmar la recepción:</p>
-                        <div class="border rounded mb-2" style="background: #f8f9fa;">
-                            <canvas id="firmaCanvas" width="350" height="150" style="width: 100%; touch-action: none;"></canvas>
+                        <div class="border rounded mb-2" style="background: #f8f9fa; touch-action: none;">
+                            <canvas id="firmaCanvas" style="width: 100%; height: 160px; display: block; touch-action: none;"></canvas>
                         </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" id="btnLimpiarFirma">
-                                <i class="bi bi-eraser me-1"></i>Limpiar
-                            </button>
-                        </div>
-                        <div id="firmaError" class="text-danger small mt-2" style="display: none;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-2" id="btnLimpiarFirma">
+                            <i class="bi bi-eraser me-1"></i>Limpiar Firma
+                        </button>
+                        <div id="firmaError" class="text-danger small mt-1" style="display: none;">
                             <i class="bi bi-exclamation-circle me-1"></i>La firma es obligatoria
                         </div>
                     </div>
                 </div>
 
-                <!-- Foto Evidencia -->
-                <div class="card shadow-sm border-0 mb-4">
+                <!-- Foto evidencia -->
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
                     <div class="card-header bg-info text-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Foto Evidencia (Opcional)</h5>
+                        <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-camera me-2"></i>Foto Evidencia <small class="opacity-75">(opcional)</small></h5>
                     </div>
-                    <div class="card-body">
-                        <input type="file" id="fotoInput" accept="image/*" capture="environment" class="form-control mb-2" />
+                    <div class="card-body p-3">
+                        <input type="file" id="fotoInput" accept="image/*" capture="environment"
+                               class="form-control mb-2" />
                         <div id="previewContainer" style="display: none;">
-                            <img id="fotoPreview" class="img-fluid rounded border" style="max-height: 200px;" />
-                            <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="btnQuitarFoto">
+                            <img id="fotoPreview" class="img-fluid rounded border mb-2" style="max-height: 150px; width: 100%; object-fit: cover;" />
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100" id="btnQuitarFoto">
                                 <i class="bi bi-trash me-1"></i>Quitar foto
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Botón Entregar -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success btn-lg" id="btnEntregar">
-                                <i class="bi bi-check-lg me-2"></i>Confirmar Entrega
-                            </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-lg me-2"></i>Cancelar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Información -->
-                <div class="card shadow-sm border-0 bg-light">
+                <!-- Info escritorio -->
+                <div class="card shadow-sm border-0 bg-light d-none d-lg-block mb-4">
                     <div class="card-body">
                         <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
                         <ul class="small text-muted mb-0">
                             <li>Seleccione el lote de donde se entregará cada material.</li>
                             <li>La firma digital es <strong>obligatoria</strong>.</li>
-                            <li>La foto de evidencia es opcional pero recomendada.</li>
-                            <li>Al confirmar, se descontará del inventario automáticamente.</li>
+                            <li>La foto de evidencia es opcional.</li>
+                            <li>Al confirmar, se descontará del inventario.</li>
                         </ul>
                     </div>
                 </div>
+
+                <!-- Botón confirmar escritorio -->
+                <div class="d-none d-lg-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg" id="btnEntregar">
+                        <i class="bi bi-check-lg me-2"></i>Confirmar Entrega
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- Barra de acción fija móvil -->
+        <div class="d-lg-none fixed-bottom bg-white border-top shadow p-3">
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary flex-shrink-0">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                <button type="submit" class="btn btn-success flex-fill fw-semibold">
+                    <i class="bi bi-check-lg me-2"></i>Confirmar Entrega
+                </button>
+            </div>
+        </div>
+
+        <!-- Espacio para barra fija móvil -->
+        <div class="d-lg-none" style="height: 80px;"></div>
+
     </form>
 </div>
+
+<style>
+    @@media (max-width: 991.98px) {
+        .btn {
+            min-height: 48px;
+        }
+
+        .form-control, .form-select {
+            min-height: 48px;
+            font-size: 1rem;
+        }
+
+        .btn-sm {
+            min-height: 44px;
+        }
+    }
+
+    #firmaCanvas {
+        cursor: crosshair;
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -211,74 +328,41 @@
         let dibujando = false;
         let hayFirma = false;
 
-        // Ajustar canvas para alta resolución
         function ajustarCanvas() {
             const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * 2;
-            canvas.height = rect.height * 2;
-            ctx.scale(2, 2);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            ctx.strokeStyle = '#1a1a2e';
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
         }
 
         ajustarCanvas();
-        window.addEventListener('resize', ajustarCanvas);
+        window.addEventListener('resize', () => { ajustarCanvas(); hayFirma = false; });
 
-        function obtenerPosicion(e) {
+        function obtenerPos(e) {
             const rect = canvas.getBoundingClientRect();
-            if (e.touches) {
-                return {
-                    x: e.touches[0].clientX - rect.left,
-                    y: e.touches[0].clientY - rect.top
-                };
-            }
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
+            const src = e.touches ? e.touches[0] : e;
+            return { x: src.clientX - rect.left, y: src.clientY - rect.top };
         }
 
-        function iniciarDibujo(e) {
-            e.preventDefault();
-            dibujando = true;
-            const pos = obtenerPosicion(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        }
+        canvas.addEventListener('mousedown', e => { e.preventDefault(); dibujando = true; const p = obtenerPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+        canvas.addEventListener('mousemove', e => { if (!dibujando) return; e.preventDefault(); const p = obtenerPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hayFirma = true; });
+        canvas.addEventListener('mouseup', e => { dibujando = false; });
+        canvas.addEventListener('mouseleave', e => { dibujando = false; });
 
-        function dibujar(e) {
-            if (!dibujando) return;
-            e.preventDefault();
-            const pos = obtenerPosicion(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-            hayFirma = true;
-        }
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); dibujando = true; const p = obtenerPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+        canvas.addEventListener('touchmove', e => { if (!dibujando) return; e.preventDefault(); const p = obtenerPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hayFirma = true; }, { passive: false });
+        canvas.addEventListener('touchend', e => { dibujando = false; });
 
-        function finalizarDibujo(e) {
-            if (dibujando) {
-                e.preventDefault();
-                dibujando = false;
-            }
-        }
-
-        // Eventos mouse
-        canvas.addEventListener('mousedown', iniciarDibujo);
-        canvas.addEventListener('mousemove', dibujar);
-        canvas.addEventListener('mouseup', finalizarDibujo);
-        canvas.addEventListener('mouseout', finalizarDibujo);
-
-        // Eventos touch
-        canvas.addEventListener('touchstart', iniciarDibujo);
-        canvas.addEventListener('touchmove', dibujar);
-        canvas.addEventListener('touchend', finalizarDibujo);
-
-        // Limpiar firma
-        document.getElementById('btnLimpiarFirma').addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
+            const rect = canvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
             hayFirma = false;
+            document.getElementById('firmaError').style.display = 'none';
         });
 
         // ===== FOTO EVIDENCIA =====
@@ -287,44 +371,35 @@
         const previewContainer = document.getElementById('previewContainer');
         const fotoEvidenciaInput = document.getElementById('fotoEvidenciaInput');
 
-        fotoInput.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Mostrar preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    fotoPreview.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+        fotoInput.addEventListener('change', async function() {
+            if (!this.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                fotoPreview.src = e.target.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
 
-                // Subir foto
+            try {
                 const formData = new FormData();
-                formData.append('foto', file);
-
-                try {
-                    const response = await fetch('@Url.Action("SubirFoto", "RequisicionesEPP")', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        fotoEvidenciaInput.value = data.ruta;
-                    } else {
-                        alert('Error al subir la foto');
+                formData.append('foto', this.files[0]);
+                const response = await fetch('@Url.Action("SubirFoto", "RequisicionesEPP")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error al subir la foto');
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    fotoEvidenciaInput.value = data.ruta;
                 }
+            } catch (error) {
+                console.error('Error al subir foto:', error);
             }
         });
 
-        document.getElementById('btnQuitarFoto').addEventListener('click', function() {
+        document.getElementById('btnQuitarFoto').addEventListener('click', () => {
             fotoInput.value = '';
             fotoPreview.src = '';
             previewContainer.style.display = 'none';
@@ -333,7 +408,6 @@
 
         // ===== VALIDACIÓN Y ENVÍO =====
         document.getElementById('formEntrega').addEventListener('submit', function(e) {
-            // Validar firma
             if (!hayFirma) {
                 e.preventDefault();
                 document.getElementById('firmaError').style.display = 'block';
@@ -341,16 +415,15 @@
                 return false;
             }
 
-            // Convertir firma a base64
             document.getElementById('firmaDigitalInput').value = canvas.toDataURL('image/png');
             document.getElementById('firmaError').style.display = 'none';
 
-            // Validar que todos los lotes estén seleccionados
             const loteSelects = document.querySelectorAll('.lote-select');
             for (let select of loteSelects) {
-                if (select.value === '') {
+                if (!select.value) {
                     e.preventDefault();
                     alert('Debe seleccionar un lote para cada material.');
+                    select.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     select.focus();
                     return false;
                 }
