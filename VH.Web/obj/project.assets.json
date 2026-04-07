@@ -8222,23 +8222,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {},
+    "C:\\Users\\angel\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\VH.Web.csproj",
+      "projectUniqueName": "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Web\\VH.Web.csproj",
       "projectName": "VH.Web",
-      "projectPath": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\VH.Web.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Web\\obj\\",
+      "projectPath": "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Web\\VH.Web.csproj",
+      "packagesPath": "C:\\Users\\angel\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Web\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\angel\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -8254,11 +8254,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Data\\VH.Data.csproj": {
-              "projectPath": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Data\\VH.Data.csproj"
+            "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Data\\VH.Data.csproj": {
+              "projectPath": "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Data\\VH.Data.csproj"
             },
-            "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Services\\VH.Services.csproj": {
-              "projectPath": "C:\\Users\\User\\source\\repos\\VH-ERP\\VH.Services\\VH.Services.csproj"
+            "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Services\\VH.Services.csproj": {
+              "projectPath": "C:\\Users\\angel\\source\\repos\\VH.ERP\\VH.Services\\VH.Services.csproj"
             }
           }
         }
@@ -8272,7 +8272,8 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -8302,7 +8303,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.416/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

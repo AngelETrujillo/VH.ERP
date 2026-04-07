@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "0ymXbUP2KUc4IdQGCnTdnK4yf0WPlc79NSsN4hyeAoE=",
-  "Source": "VH.API",
-  "BasePath": "_content/VH.API",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"XBbg+O4ujjgk7aMkVU9zP71I+gkeE0i2pGnUL2cj9mE=","Source":"VH.API","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
