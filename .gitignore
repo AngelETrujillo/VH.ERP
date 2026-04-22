@@ -1,1 +1,41 @@
-.vs/ 
+## Compilación
+bin/
+obj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Archivos de usuario
+*.rsuser
+*.csproj.user
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## NuGet
+**/packages/*
+*.nupkg
+*.snupkg
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Publish
+publish/
+
+## Logs
+*.log
+
+## OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
