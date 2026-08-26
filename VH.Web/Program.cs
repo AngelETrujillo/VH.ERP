@@ -35,6 +35,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
+// Cultura México (moneda MXN)
+var culturaMx = new System.Globalization.CultureInfo("es-MX");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culturaMx;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaMx;
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

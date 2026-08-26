@@ -60,5 +60,8 @@ wwwroot\lib\jquery\dist\jquery.js
 wwwroot\lib\jquery\dist\jquery.min.js
 wwwroot\lib\jquery\dist\jquery.min.map
 wwwroot\uploads\evidencias\75d9ed96-e72e-4bb6-985c-ee9c16234786.png
+wwwroot\uploads\evidencias\93c7e049-57aa-47a4-b0b7-6b64714b9809.png
 wwwroot\uploads\evidencias\d1632f44-c438-47d0-b107-5253fdad56a7.png
+wwwroot\uploads\evidencias\ed9186ff-a291-4a94-ba7d-5e88a21a6708.png
+wwwroot\uploads\evidencias\f08eef9f-0889-4794-9ae0-ba8fde7acce6.png
 wwwroot\uploads\evidencias\fe0e7467-1df5-4b40-be2f-e7f52f789168.png

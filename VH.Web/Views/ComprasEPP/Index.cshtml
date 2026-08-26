@@ -147,14 +147,14 @@
                                             <i class="bi bi-box-seam me-1"></i>@item.NombreAlmacen
                                         </span>
                                     </td>
-                                    <td class="text-center fw-semibold">@item.CantidadComprada</td>
+                                    <td class="text-center fw-semibold">@item.CantidadComprada.FormatoCantidad()</td>
                                     <td class="text-end">@item.PrecioUnitario.ToString("C2")</td>
                                     <td class="text-end fw-bold text-success">@item.CostoTotal.ToString("C2")</td>
                                     <td class="text-center">
                                         @if (item.CantidadDisponible > 0)
                                         {
                                             <span class="badge bg-success-subtle text-success">
-                                                @item.CantidadDisponible
+                                                @item.CantidadDisponible.FormatoCantidad()
                                             </span>
                                         }
                                         else

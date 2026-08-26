@@ -114,6 +114,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Cultura México (moneda MXN)
+var culturaMx = new System.Globalization.CultureInfo("es-MX");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culturaMx;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaMx;
+
 var app = builder.Build();
 
 // SEEDER CON PROTECCIÓN (EVITA EL ERROR 500.30)
@@ -127,6 +132,10 @@ using (var scope = app.Services.CreateScope())
 
         await VH.Data.Seeders.IdentitySeeder.SeedAsync(roleManager, userManager);
         await VH.Data.Seeders.ModuloSeeder.SeedAsync(context);
+
+        // Datos de demostracion. Solo corre con VHERP_SEED_DEMO=true,
+        // nunca en la instalacion de un cliente.
+        await VH.Data.Seeders.DemoSeeder.SeedAsync(context);
     }
     catch (Exception ex)
     {

@@ -172,11 +172,11 @@
                                     </td>
                                     <td class="text-center">
                                         <span class="fs-5 fw-bold @(item.Existencia == 0 ? "text-danger" : item.Existencia <= item.StockMinimo ? "text-warning" : "text-success")">
-                                            @item.Existencia
+                                            @item.Existencia.FormatoCantidad()
                                         </span>
                                     </td>
-                                    <td class="text-center text-muted">@item.StockMinimo</td>
-                                    <td class="text-center text-muted">@(item.StockMaximo > 0 ? item.StockMaximo.ToString() : "-")</td>
+                                    <td class="text-center text-muted">@item.StockMinimo.FormatoCantidad()</td>
+                                    <td class="text-center text-muted">@(item.StockMaximo > 0 ? item.StockMaximo.FormatoCantidad() : "-")</td>
                                     <td class="text-center">
                                         <span class="badge @badgeClass px-3 py-2">
                                             <i class="bi @estadoIcono me-1"></i>@estadoTexto
