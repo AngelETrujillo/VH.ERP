@@ -65,7 +65,7 @@ namespace VH.Data.Seeders
                 
                 // Almacenes
                 new Modulo { Codigo = "ALMACENES", Nombre = "Almacenes", ControllerName = "Almacenes", IdModuloPadre = almacenesMenu.IdModulo, Orden = 31 },
-                new Modulo { Codigo = "MATERIALES_EPP", Nombre = "Materiales EPP", ControllerName = "Materiales", IdModuloPadre = almacenesMenu.IdModulo, Orden = 32 },
+                new Modulo { Codigo = "MATERIALES_EPP", Nombre = "Materiales", ControllerName = "Materiales", IdModuloPadre = almacenesMenu.IdModulo, Orden = 32 },
             };
 
             await context.Modulos.AddRangeAsync(subModulos);

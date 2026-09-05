@@ -188,12 +188,12 @@ namespace VH.Data.Seeders
                 ("Chaleco reflejante",          "Alta visibilidad",                  120m, 180, false, CategoriaRiesgoMaterial.Bajo,  1),
                 ("Tapones auditivos",           "Espuma, desechables",                18m,   7, true,  CategoriaRiesgoMaterial.Bajo,  2),
             };
-            var materiales = new List<MaterialEPP>();
+            var materiales = new List<Material>();
             foreach (var (nombre, desc, costo, vida, desech, cat, uni) in catalogo)
             {
-                var m = await ObtenerOCrear(db.MaterialesEPP,
+                var m = await ObtenerOCrear(db.Materiales,
                     x => x.Nombre == nombre,
-                    () => new MaterialEPP
+                    () => new Material
                     {
                         Nombre = nombre,
                         Descripcion = desc,

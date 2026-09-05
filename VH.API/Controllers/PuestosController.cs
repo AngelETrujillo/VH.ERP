@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -10,6 +11,7 @@ namespace VH.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [RequierePermisoApi("PUESTOS")]
     public class PuestosController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -58,6 +60,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("PUESTOS", "crear")]
         public async Task<IActionResult> Create([FromBody] PuestoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -81,6 +84,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("PUESTOS", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] PuestoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -105,6 +109,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("PUESTOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             var puesto = await _unitOfWork.Puestos.GetByIdAsync(id, "Empleados");

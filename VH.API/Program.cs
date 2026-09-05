@@ -61,7 +61,17 @@ builder.Services.AddIdentity<Usuario, Rol>(options =>
 .AddDefaultTokenProviders();
 
 // 5. JWT
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "VH_ERP_SecretKey_2024_MuySegura_DebeSerLarga_32Chars!";
+// Sin clave configurada la aplicación no arranca. Antes había una de respaldo en
+// el código: si alguien la dejaba pasar en producción, cualquiera con acceso al
+// repositorio podía firmar tokens válidos.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Falta la configuración 'Jwt:Key' o es más corta que 32 caracteres. " +
+        "En desarrollo: dotnet user-secrets set \"Jwt:Key\" \"<cadena aleatoria larga>\". " +
+        "En servidor: variable de entorno Jwt__Key.");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -81,14 +91,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 6 a 9. Inyecci�n de Dependencias (Mantenemos tus servicios)
+// 6 a 9. Inyecci�n de Dependencias (Mantenemos tus servicios)
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IProyectoService, ProyectoService>();
 builder.Services.AddScoped<IConceptoPartidaService, ConceptoPartidaService>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<IProveedorService, ProveedorService>();
-builder.Services.AddScoped<IMaterialEPPService, MaterialEPPService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IEntregaEPPService, EntregaEPPService>();
 builder.Services.AddScoped<IUnidadMedidaService, UnidadMedidaService>();
 builder.Services.AddScoped<IAlmacenService, AlmacenService>();
@@ -114,14 +124,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Cultura M�xico (moneda MXN)
+// Cultura M�xico (moneda MXN)
 var culturaMx = new System.Globalization.CultureInfo("es-MX");
 System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culturaMx;
 System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaMx;
 
 var app = builder.Build();
 
-// SEEDER CON PROTECCI�N (EVITA EL ERROR 500.30)
+// SEEDER CON PROTECCI�N (EVITA EL ERROR 500.30)
 using (var scope = app.Services.CreateScope())
 {
     try

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -11,6 +12,7 @@ namespace VH.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [RequierePermisoApi("REQUISICIONES_EPP")]
     public class RequisicionesEPPController : ControllerBase
     {
         private readonly IRequisicionEPPService _requisicionService;
@@ -86,6 +88,7 @@ namespace VH.API.Controllers
 
         // POST: api/requisicionesepp
         [HttpPost]
+        [RequierePermisoApi("REQUISICIONES_EPP", "crear")]
         public async Task<ActionResult<RequisicionEPPResponseDto>> Create([FromBody] RequisicionEPPRequestDto dto)
         {
             if (!ModelState.IsValid)
@@ -115,7 +118,7 @@ namespace VH.API.Controllers
 
         // POST: api/requisicionesepp/5/aprobar
         [HttpPost("{id}/aprobar")]
-        [Authorize]
+        [RequierePermisoApi("REQUISICIONES_EPP", "editar")]
         public async Task<IActionResult> Aprobar(int id, [FromBody] AprobarRequisicionRequestDto dto)
         {
             try
@@ -125,15 +128,17 @@ namespace VH.API.Controllers
                     return NotFound();
 
                 var accion = dto.Aprobada ? "Aprobar" : "Rechazar";
+                var participio = dto.Aprobada ? "aprobada" : "rechazada";
+
                 await _logService.RegistrarAsync(
                     GetUserId(),
                     accion,
                     "RequisicionEPP",
                     id,
-                    $"Requisición {accion.ToLower()}da",
+                    $"Requisición {participio}",
                     GetUserIP());
 
-                return Ok(new { mensaje = $"Requisición {accion.ToLower()}da exitosamente" });
+                return Ok(new { mensaje = $"Requisición {participio} exitosamente" });
             }
             catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException)
             {
@@ -143,8 +148,7 @@ namespace VH.API.Controllers
 
         // POST: api/requisicionesepp/5/entregar
         [HttpPost("{id}/entregar")]
-        //[Authorize(Roles = "SuperAdmin,Administrador")]
-        [Authorize]
+        [RequierePermisoApi("REQUISICIONES_EPP", "editar")]
         public async Task<IActionResult> Entregar(int id, [FromBody] EntregarRequisicionRequestDto dto)
         {
             if (!ModelState.IsValid)

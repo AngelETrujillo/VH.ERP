@@ -104,7 +104,7 @@ namespace VH.Services.Services
 
             // Obtener datos del empleado y material
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             // Calcular costo estimado
             var costoEstimado = material?.CostoUnitarioEstimado ?? 0;
@@ -143,7 +143,7 @@ namespace VH.Services.Services
             if (cantidad <= config.CantidadMaximaPorEntrega) return null;
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((cantidad - config.CantidadMaximaPorEntrega.Value) / config.CantidadMaximaPorEntrega.Value) * 100;
             var costoExceso = (cantidad - config.CantidadMaximaPorEntrega.Value) * (material?.CostoUnitarioEstimado ?? 0);
@@ -200,7 +200,7 @@ namespace VH.Services.Services
             if (alertaExistente.Any()) return null; // Ya se generó alerta este mes
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((totalMes - config.CantidadMaximaMensual.Value) / config.CantidadMaximaMensual.Value) * 100;
 
@@ -350,6 +350,18 @@ namespace VH.Services.Services
 
         public async Task<ConfiguracionMaterialEPP> GuardarConfiguracionMaterialAsync(ConfiguracionMaterialRequestDto dto)
         {
+            // Vida útil, frecuencia y solicitud prematura describen el desgaste de un
+            // equipo de protección asignado a una persona. Sobre un consumible o una
+            // herramienta no significan nada, y generarían alertas sin sentido.
+            var material = await _unitOfWork.Materiales.GetByIdAsync(dto.IdMaterial);
+            if (material == null)
+                throw new ArgumentException($"El material con ID {dto.IdMaterial} no existe.");
+
+            if (material.TipoMaterial != TipoMaterial.EPP)
+                throw new InvalidOperationException(
+                    $"'{material.Nombre}' es {material.TipoMaterial.ToString().ToLowerInvariant()}, " +
+                    "y el control de consumo sólo aplica a equipo de protección personal.");
+
             var existente = await GetConfiguracionMaterialAsync(dto.IdMaterial);
 
             if (existente != null)

@@ -1,6 +1,6 @@
-﻿@model VH.Services.DTOs.MaterialEPPRequestDto
+﻿@model VH.Services.DTOs.MaterialRequestDto
 @{
-    ViewData["Title"] = "Nuevo Material EPP";
+    ViewData["Title"] = "Nuevo Material";
 }
 
 <div class="container-fluid">
@@ -11,9 +11,9 @@
         </a>
         <div>
             <h2 class="mb-0 fw-bold text-dark">
-                <i class="bi bi-shield-plus text-primary me-2"></i>Nuevo Material EPP
+                <i class="bi bi-box-seam text-primary me-2"></i>Nuevo Material
             </h2>
-            <p class="text-muted mb-0">Registre un nuevo equipo de protección personal</p>
+            <p class="text-muted mb-0">Equipo de protección, consumible o herramienta</p>
         </div>
     </div>
 
@@ -70,6 +70,44 @@
                     </div>
                 </div>
 
+                <!-- Clasificación -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Clasificación</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="TipoMaterial" class="form-label fw-semibold">Tipo de Material <span class="text-danger">*</span></label>
+                                <select asp-for="TipoMaterial" class="form-select form-select-lg" id="selectTipo">
+                                    <option value="1">EPP — Equipo de protección personal</option>
+                                    <option value="2">Consumible</option>
+                                    <option value="3">Herramienta</option>
+                                </select>
+                                <span asp-validation-for="TipoMaterial" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1" id="ayudaTipo">
+                                    Sólo el EPP entra al control de consumo y a las alertas.
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Características</label>
+                                <div class="form-check form-switch">
+                                    <input asp-for="RequiereTalla" class="form-check-input" type="checkbox" role="switch" id="switchTalla">
+                                    <label class="form-check-label" for="switchTalla">Se entrega por talla</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="EsRetornable" class="form-check-input" type="checkbox" role="switch" id="switchRetornable">
+                                    <label class="form-check-label" for="switchRetornable">Debe devolverse</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="ControlaCaducidad" class="form-check-input" type="checkbox" role="switch" id="switchCaducidad">
+                                    <label class="form-check-label" for="switchCaducidad">Caduca en almacén</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Estado -->
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body p-4">
@@ -114,15 +152,27 @@
             <div class="card border-0 bg-info-subtle mt-3">
                 <div class="card-body p-4">
                     <h6 class="fw-bold text-info mb-2">
-                        <i class="bi bi-lightbulb me-2"></i>Ejemplos de EPP
+                        <i class="bi bi-lightbulb me-2"></i>Ejemplos por tipo
                     </h6>
-                    <div class="d-flex flex-wrap gap-2">
+                    <p class="small fw-semibold mb-1">EPP</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
                         <span class="badge bg-white text-dark border">Casco</span>
                         <span class="badge bg-white text-dark border">Guantes</span>
                         <span class="badge bg-white text-dark border">Lentes</span>
-                        <span class="badge bg-white text-dark border">Chaleco</span>
                         <span class="badge bg-white text-dark border">Botas</span>
                         <span class="badge bg-white text-dark border">Arnés</span>
+                    </div>
+                    <p class="small fw-semibold mb-1">Consumible</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-white text-dark border">Cemento</span>
+                        <span class="badge bg-white text-dark border">Cinta</span>
+                        <span class="badge bg-white text-dark border">Silicón</span>
+                    </div>
+                    <p class="small fw-semibold mb-1">Herramienta</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-white text-dark border">Martillo</span>
+                        <span class="badge bg-white text-dark border">Taladro</span>
+                        <span class="badge bg-white text-dark border">Escalera</span>
                     </div>
                 </div>
             </div>
@@ -132,4 +182,30 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Cada tipo trae características distintas por omisión; el usuario puede
+        // cambiarlas después. Un martillo no tiene talla y sí se devuelve.
+        (function () {
+            var tipo = document.getElementById('selectTipo');
+            var talla = document.getElementById('switchTalla');
+            var retornable = document.getElementById('switchRetornable');
+            var ayuda = document.getElementById('ayudaTipo');
+
+            var textos = {
+                '1': 'Sólo el EPP entra al control de consumo y a las alertas.',
+                '2': 'Un consumible se carga a la obra o a una partida, no a una persona.',
+                '3': 'La herramienta se resguarda y normalmente se devuelve.'
+            };
+
+            function aplicar() {
+                var v = tipo.value;
+                ayuda.textContent = textos[v] || '';
+                talla.checked = (v === '1');
+                retornable.checked = (v === '3');
+            }
+
+            tipo.addEventListener('change', aplicar);
+            aplicar();
+        })();
+    </script>
 }

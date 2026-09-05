@@ -19,7 +19,7 @@ namespace VH.Data
         // Catálogos EPP
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<Proveedor> Proveedores { get; set; }
-        public DbSet<MaterialEPP> MaterialesEPP { get; set; }
+        public DbSet<Material> Materiales { get; set; }
         public DbSet<Almacen> Almacenes { get; set; }
 
         // Transacciones EPP
@@ -48,7 +48,7 @@ namespace VH.Data
             ConfigurarPuesto(modelBuilder);
             ConfigurarEmpleado(modelBuilder);
             ConfigurarProveedor(modelBuilder);
-            ConfigurarMaterialEPP(modelBuilder);
+            ConfigurarMaterial(modelBuilder);
             ConfigurarAlmacen(modelBuilder);
             ConfigurarCompraEPP(modelBuilder);
             ConfigurarInventario(modelBuilder);
@@ -152,14 +152,18 @@ namespace VH.Data
             });
         }
 
-        private void ConfigurarMaterialEPP(ModelBuilder modelBuilder)
+        private void ConfigurarMaterial(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<MaterialEPP>(entity =>
+            modelBuilder.Entity<Material>(entity =>
             {
                 entity.HasKey(m => m.IdMaterial);
                 entity.Property(m => m.Nombre).IsRequired().HasMaxLength(200);
                 entity.Property(m => m.Descripcion).HasMaxLength(500);
                 entity.Property(m => m.CostoUnitarioEstimado).HasPrecision(18, 2);
+                entity.Property(m => m.TipoMaterial).IsRequired();
+
+                // Las pantallas de compras, requisiciones y alertas filtran por tipo.
+                entity.HasIndex(m => m.TipoMaterial);
 
                 entity.HasOne(m => m.UnidadMedida)
                     .WithMany()

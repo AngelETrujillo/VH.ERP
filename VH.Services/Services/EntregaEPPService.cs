@@ -18,6 +18,31 @@ namespace VH.Services.Services
 
         private const string IncludeProperties = "Empleado.Proyecto,Compra.Material.UnidadMedida,Compra.Proveedor,Compra.Almacen";
 
+        /// <summary>
+        /// Obtiene el registro de inventario del par material/almacén, o falla.
+        ///
+        /// Todo movimiento de existencia necesita este registro: si no está, el lote
+        /// se movería y la existencia no, y la diferencia no vuelve a aparecer en
+        /// ningún lado. Se crea automáticamente en la primera compra, así que su
+        /// ausencia significa que alguien lo borró y hay que revisarlo a mano.
+        /// </summary>
+        private async Task<Inventario> GetInventarioObligatorioAsync(
+            int idMaterial, int idAlmacen, string? nombreMaterial, string? nombreAlmacen)
+        {
+            var inventarios = await _unitOfWork.Inventarios.FindAsync(
+                i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen);
+
+            var inventario = inventarios.FirstOrDefault();
+
+            if (inventario == null)
+                throw new InvalidOperationException(
+                    $"No existe registro de inventario para '{nombreMaterial ?? $"material {idMaterial}"}' " +
+                    $"en '{nombreAlmacen ?? $"almacén {idAlmacen}"}'. " +
+                    "Debe darse de alta el inventario antes de mover existencias.");
+
+            return inventario;
+        }
+
         public async Task<IEnumerable<EntregaEPP>> GetEntregasAsync(int? idEmpleado = null)
         {
             if (idEmpleado.HasValue)
@@ -60,16 +85,15 @@ namespace VH.Services.Services
             compra.CantidadDisponible -= entrega.CantidadEntregada;
             _unitOfWork.ComprasEPP.Update(compra);
 
-            var inventarios = await _unitOfWork.Inventarios.FindAsync(
-                i => i.IdMaterial == compra.IdMaterial && i.IdAlmacen == compra.IdAlmacen);
-            var inventario = inventarios.FirstOrDefault();
+            // Sin registro de inventario la salida descontaba el lote y dejaba la
+            // existencia intacta, sin error ni aviso. Es preferible detener la entrega
+            // a generar un descuadre invisible.
+            var inventario = await GetInventarioObligatorioAsync(
+                compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-            if (inventario != null)
-            {
-                inventario.Existencia -= entrega.CantidadEntregada;
-                inventario.FechaUltimoMovimiento = DateTime.Now;
-                _unitOfWork.Inventarios.Update(inventario);
-            }
+            inventario.Existencia -= entrega.CantidadEntregada;
+            inventario.FechaUltimoMovimiento = DateTime.Now;
+            _unitOfWork.Inventarios.Update(inventario);
 
             await _unitOfWork.EntregasEPP.AddAsync(entrega);
             await _unitOfWork.CompleteAsync();
@@ -107,7 +131,7 @@ namespace VH.Services.Services
             }
 
             string? alerta = null;
-            if (inventario != null && inventario.Existencia <= inventario.StockMinimo)
+            if (inventario.Existencia <= inventario.StockMinimo)
             {
                 var materialNombre = compra.Material?.Nombre ?? "Material";
                 var almacenNombre = compra.Almacen?.Nombre ?? "Almacén";
@@ -148,16 +172,12 @@ namespace VH.Services.Services
                 compra.CantidadDisponible -= diferencia;
                 _unitOfWork.ComprasEPP.Update(compra);
 
-                var inventarios = await _unitOfWork.Inventarios.FindAsync(
-                    i => i.IdMaterial == compra.IdMaterial && i.IdAlmacen == compra.IdAlmacen);
-                var inventario = inventarios.FirstOrDefault();
+                var inventario = await GetInventarioObligatorioAsync(
+                    compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-                if (inventario != null)
-                {
-                    inventario.Existencia -= diferencia;
-                    inventario.FechaUltimoMovimiento = DateTime.Now;
-                    _unitOfWork.Inventarios.Update(inventario);
-                }
+                inventario.Existencia -= diferencia;
+                inventario.FechaUltimoMovimiento = DateTime.Now;
+                _unitOfWork.Inventarios.Update(inventario);
             }
 
             entregaExistente.FechaEntrega = entrega.FechaEntrega;
@@ -218,22 +238,18 @@ namespace VH.Services.Services
             if (entrega == null)
                 return false;
 
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra);
+            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, includeProperties: "Material,Almacen");
             if (compra != null)
             {
                 compra.CantidadDisponible += entrega.CantidadEntregada;
                 _unitOfWork.ComprasEPP.Update(compra);
 
-                var inventarios = await _unitOfWork.Inventarios.FindAsync(
-                    i => i.IdMaterial == compra.IdMaterial && i.IdAlmacen == compra.IdAlmacen);
-                var inventario = inventarios.FirstOrDefault();
+                var inventario = await GetInventarioObligatorioAsync(
+                    compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-                if (inventario != null)
-                {
-                    inventario.Existencia += entrega.CantidadEntregada;
-                    inventario.FechaUltimoMovimiento = DateTime.Now;
-                    _unitOfWork.Inventarios.Update(inventario);
-                }
+                inventario.Existencia += entrega.CantidadEntregada;
+                inventario.FechaUltimoMovimiento = DateTime.Now;
+                _unitOfWork.Inventarios.Update(inventario);
             }
 
             // Guardar datos antes de eliminar

@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -8,6 +10,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("ENTREGAS_EPP")]
     public class EntregasEPPController : ControllerBase
     {
         private readonly IEntregaEPPService _entregaService;
@@ -35,6 +39,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("ENTREGAS_EPP", "crear")]
         public async Task<ActionResult<object>> Create([FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -62,6 +67,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("ENTREGAS_EPP", "editar")]
         public async Task<ActionResult<object>> Update(int id, [FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -81,6 +87,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("ENTREGAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _entregaService.DeleteEntregaAsync(id);

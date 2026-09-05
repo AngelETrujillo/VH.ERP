@@ -60,7 +60,7 @@ namespace VH.Services.Services
                 return existente;
             }
 
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(inventario.IdMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(inventario.IdMaterial);
             if (material == null)
                 throw new ArgumentException($"El material con ID {inventario.IdMaterial} no existe.");
 

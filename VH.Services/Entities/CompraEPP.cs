@@ -35,7 +35,7 @@ namespace VH.Services.Entities
         // ===== PROPIEDADES DE NAVEGACIÓN =====
 
         [ForeignKey("IdMaterial")]
-        public virtual MaterialEPP? Material { get; set; }
+        public virtual Material? Material { get; set; }
         [ForeignKey("IdProveedor")]
         public virtual Proveedor? Proveedor { get; set; }
         [ForeignKey("IdAlmacen")]

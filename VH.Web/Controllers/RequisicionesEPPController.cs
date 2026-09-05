@@ -296,7 +296,7 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode)
                 return Json(new List<object>());
 
-            var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+            var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
             return Json(materiales?.Select(m => new { m.IdMaterial, m.Nombre, UnidadMedida = m.AbreviaturaUnidadMedida }));
         }
 
@@ -348,7 +348,7 @@ namespace VH.Web.Controllers
             var matResponse = await _httpClient.GetAsync("api/materiales");
             if (matResponse.IsSuccessStatusCode)
             {
-                var materiales = await matResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                var materiales = await matResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                 ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                 {
                     Value = m.IdMaterial.ToString(),

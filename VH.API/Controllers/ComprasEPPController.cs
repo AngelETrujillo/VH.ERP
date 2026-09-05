@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -8,6 +10,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("COMPRAS_EPP")]
     public class ComprasEPPController : ControllerBase
     {
         private readonly ICompraEPPService _compraService;
@@ -61,6 +65,7 @@ namespace VH.API.Controllers
 
         // POST: api/comprasepp
         [HttpPost]
+        [RequierePermisoApi("COMPRAS_EPP", "crear")]
         public async Task<ActionResult<object>> Create([FromBody] CompraEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -89,6 +94,7 @@ namespace VH.API.Controllers
 
         // PUT: api/comprasepp/5
         [HttpPut("{id}")]
+        [RequierePermisoApi("COMPRAS_EPP", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] CompraEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -109,6 +115,7 @@ namespace VH.API.Controllers
 
         // DELETE: api/comprasepp/5
         [HttpDelete("{id}")]
+        [RequierePermisoApi("COMPRAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -33,7 +33,7 @@ namespace VH.Services.Entities
         public virtual RequisicionEPP? Requisicion { get; set; }
 
         [ForeignKey("IdMaterial")]
-        public virtual MaterialEPP? Material { get; set; }
+        public virtual Material? Material { get; set; }
 
         [ForeignKey("IdCompra")]
         public virtual CompraEPP? Compra { get; set; }

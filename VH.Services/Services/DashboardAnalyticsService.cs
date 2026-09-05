@@ -871,7 +871,7 @@ namespace VH.Services.Services
 
         public async Task<IEnumerable<(int Id, string Nombre)>> GetMaterialesParaFiltroAsync()
         {
-            var materiales = await _unitOfWork.MaterialesEPP.FindAsync(m => m.Activo);
+            var materiales = await _unitOfWork.Materiales.FindAsync(m => m.Activo);
             return materiales.Select(m => (m.IdMaterial, m.Nombre));
         }
 

@@ -38,14 +38,14 @@ namespace VH.Web.Controllers
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                 return View(materiales);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar materiales");
                 ViewBag.ErrorMessage = "Error al cargar los materiales";
-                return View(new List<MaterialEPPResponseDto>());
+                return View(new List<MaterialResponseDto>());
             }
         }
 
@@ -56,7 +56,7 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
             return View(material);
         }
 
@@ -73,7 +73,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("MATERIALES_EPP", "crear")]
-        public async Task<IActionResult> Create(MaterialEPPRequestDto materialDto)
+        public async Task<IActionResult> Create(MaterialRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
@@ -107,13 +107,17 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
-            var dto = new MaterialEPPRequestDto(
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
+            var dto = new MaterialRequestDto(
                 material!.Nombre,
                 material.Descripcion,
                 material.IdUnidadMedida,
                 material.CostoUnitarioEstimado,
-                material.Activo
+                material.Activo,
+                material.TipoMaterial,
+                material.RequiereTalla,
+                material.EsRetornable,
+                material.ControlaCaducidad
             );
 
             await CargarUnidadesMedidaEnViewBag();
@@ -125,7 +129,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("MATERIALES_EPP", "editar")]
-        public async Task<IActionResult> Edit(int id, MaterialEPPRequestDto materialDto)
+        public async Task<IActionResult> Edit(int id, MaterialRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
@@ -151,7 +155,7 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
             return View(material);
         }
 

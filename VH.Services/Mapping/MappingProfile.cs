@@ -44,9 +44,9 @@ namespace VH.Services.Mapping
             CreateMap<UnidadMedida, UnidadMedidaResponseDto>();
 
             // ===== MATERIALES EPP =====
-            CreateMap<MaterialEPPRequestDto, MaterialEPP>();
+            CreateMap<MaterialRequestDto, Material>();
 
-            CreateMap<MaterialEPP, MaterialEPPResponseDto>()
+            CreateMap<Material, MaterialResponseDto>()
                 .ForMember(dest => dest.IdUnidadMedida, opt => opt.MapFrom(src => src.IdUnidadMedida))
                 .ForMember(dest => dest.NombreUnidadMedida, opt => opt.MapFrom(src =>
                     src.UnidadMedida != null ? src.UnidadMedida.Nombre : string.Empty))

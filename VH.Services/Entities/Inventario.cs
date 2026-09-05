@@ -26,7 +26,7 @@ namespace VH.Services.Entities
         public virtual Almacen? Almacen { get; set; }
 
         [ForeignKey("IdMaterial")]
-        public virtual MaterialEPP? Material { get; set; }
+        public virtual Material? Material { get; set; }
 
         // ===== PROPIEDADES CALCULADAS (No se guardan en BD) =====
         [NotMapped]

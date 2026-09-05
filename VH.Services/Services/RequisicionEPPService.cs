@@ -6,12 +6,14 @@ namespace VH.Services.Services
     public class RequisicionEPPService : IRequisicionEPPService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEntregaEPPService _entregaService;
 
         //private const string IncludeProperties = "UsuarioSolicita,EmpleadoRecibe.Proyecto,Almacen.Proyecto,UsuarioAprueba,UsuarioEntrega,Detalles.Material.UnidadMedida,Detalles.Compra.Proveedor";
         private const string IncludeProperties = "UsuarioSolicita,EmpleadoRecibe,Almacen,UsuarioAprueba,UsuarioEntrega,Detalles.Material.UnidadMedida,Detalles.Compra";
-        public RequisicionEPPService(IUnitOfWork unitOfWork)
+        public RequisicionEPPService(IUnitOfWork unitOfWork, IEntregaEPPService entregaService)
         {
             _unitOfWork = unitOfWork;
+            _entregaService = entregaService;
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetAllAsync()
@@ -74,7 +76,7 @@ namespace VH.Services.Services
             // Validar materiales
             foreach (var detalle in requisicion.Detalles)
             {
-                var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(detalle.IdMaterial);
+                var material = await _unitOfWork.Materiales.GetByIdAsync(detalle.IdMaterial);
                 if (material == null)
                     throw new ArgumentException($"El material con ID {detalle.IdMaterial} no existe.");
 
@@ -102,6 +104,14 @@ namespace VH.Services.Services
 
             if (requisicion.EstadoRequisicion != EstadoRequisicion.Pendiente)
                 throw new InvalidOperationException("Solo se pueden aprobar/rechazar requisiciones pendientes.");
+
+            // Segregación de funciones: quien solicita no puede autorizar su propia
+            // requisición. Es el control interno básico de cualquier almacén y hasta
+            // ahora nada lo impedía.
+            if (requisicion.IdUsuarioSolicita == userId)
+                throw new InvalidOperationException(
+                    "No puede aprobar ni rechazar una requisición que usted mismo solicitó. " +
+                    "Debe autorizarla otra persona.");
 
             if (!aprobada && string.IsNullOrWhiteSpace(motivoRechazo))
                 throw new ArgumentException("Debe especificar el motivo del rechazo.");
@@ -133,14 +143,34 @@ namespace VH.Services.Services
             if (string.IsNullOrWhiteSpace(firmaDigital))
                 return (false, "La firma digital es obligatoria.");
 
-            // Procesar cada detalle
+            if (detalles == null || detalles.Count == 0)
+                return (false, "Debe especificar al menos un material a entregar.");
+
+            // Un mismo renglón repetido en la petición se procesaría dos veces y
+            // descontaría el doble del inventario.
+            var repetido = detalles
+                .GroupBy(d => d.IdDetalle)
+                .FirstOrDefault(g => g.Count() > 1);
+            if (repetido != null)
+                return (false, $"El renglón {repetido.Key} viene repetido en la entrega.");
+
+            // Validación completa antes de tocar nada: si un renglón es inválido,
+            // no queremos haber movido inventario por los anteriores.
             foreach (var entrega in detalles)
             {
                 var detalle = requisicion.Detalles.FirstOrDefault(d => d.IdRequisicionDetalle == entrega.IdDetalle);
                 if (detalle == null)
                     return (false, $"Detalle {entrega.IdDetalle} no encontrado.");
 
-                // Validar lote
+                if (entrega.CantidadEntregada <= 0)
+                    return (false, $"La cantidad entregada del renglón {entrega.IdDetalle} debe ser mayor a 0.");
+
+                // El tope contra lo solicitado sólo existía en el HTML del formulario.
+                if (entrega.CantidadEntregada > detalle.CantidadSolicitada)
+                    return (false,
+                        $"No se puede entregar más de lo solicitado. " +
+                        $"Solicitado: {detalle.CantidadSolicitada}, a entregar: {entrega.CantidadEntregada}.");
+
                 var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra);
                 if (compra == null)
                     return (false, $"El lote {entrega.IdCompra} no existe.");
@@ -148,55 +178,64 @@ namespace VH.Services.Services
                 if (compra.IdMaterial != detalle.IdMaterial)
                     return (false, $"El lote {entrega.IdCompra} no corresponde al material solicitado.");
 
+                // Sin esta validación se descontaba la disponibilidad del lote de un
+                // almacén y la existencia del inventario de otro: descuadre permanente.
+                if (compra.IdAlmacen != requisicion.IdAlmacen)
+                    return (false,
+                        $"El lote {entrega.IdCompra} pertenece a otro almacén y no puede surtir " +
+                        $"esta requisición.");
+
                 if (compra.CantidadDisponible < entrega.CantidadEntregada)
                     return (false, $"El lote {entrega.IdCompra} no tiene suficiente cantidad. Disponible: {compra.CantidadDisponible}");
-
-                // Descontar del lote
-                compra.CantidadDisponible -= entrega.CantidadEntregada;
-                _unitOfWork.ComprasEPP.Update(compra);
-
-                // Actualizar inventario
-                var inventarios = await _unitOfWork.Inventarios.FindAsync(
-                    i => i.IdMaterial == detalle.IdMaterial && i.IdAlmacen == requisicion.IdAlmacen);
-                var inventario = inventarios.FirstOrDefault();
-
-                if (inventario != null)
-                {
-                    inventario.Existencia -= entrega.CantidadEntregada;
-                    inventario.FechaUltimoMovimiento = DateTime.Now;
-                    _unitOfWork.Inventarios.Update(inventario);
-                }
-
-                // Actualizar detalle
-                detalle.IdCompra = entrega.IdCompra;
-                detalle.CantidadEntregada = entrega.CantidadEntregada;
-
-                // Crear registro de EntregaEPP
-                var entregaEPP = new EntregaEPP
-                {
-                    IdEmpleado = requisicion.IdEmpleadoRecibe,
-                    IdCompra = entrega.IdCompra,
-                    FechaEntrega = DateTime.Now,
-                    CantidadEntregada = entrega.CantidadEntregada,
-                    TallaEntregada = detalle.TallaSolicitada ?? string.Empty,
-                    Observaciones = $"Requisición: {requisicion.NumeroRequisicion}"
-                };
-
-                await _unitOfWork.EntregasEPP.AddAsync(entregaEPP);
             }
 
-            // Actualizar requisición
-            requisicion.EstadoRequisicion = EstadoRequisicion.Entregada;
-            requisicion.IdUsuarioEntrega = userId;
-            requisicion.FechaEntrega = DateTime.Now;
-            requisicion.FirmaDigital = firmaDigital;
-            requisicion.FotoEvidencia = fotoEvidencia;
-            requisicion.Observaciones = observaciones;
+            // A partir de aquí sí se escribe. La entrega de cada material pasa por
+            // EntregaEPPService, que es quien descuenta lote e inventario, evalúa las
+            // alertas de consumo y recalcula las estadísticas mensuales. Antes esto se
+            // escribía directo al repositorio y el motor de alertas nunca corría para
+            // el material surtido por requisición, que es el flujo formal.
+            await _unitOfWork.BeginTransactionAsync();
 
-            _unitOfWork.RequisicionesEPP.Update(requisicion);
-            await _unitOfWork.CompleteAsync();
+            try
+            {
+                foreach (var entrega in detalles)
+                {
+                    var detalle = requisicion.Detalles.First(d => d.IdRequisicionDetalle == entrega.IdDetalle);
 
-            return (true, null);
+                    var entregaEPP = new EntregaEPP
+                    {
+                        IdEmpleado = requisicion.IdEmpleadoRecibe,
+                        IdCompra = entrega.IdCompra,
+                        FechaEntrega = DateTime.Now,
+                        CantidadEntregada = entrega.CantidadEntregada,
+                        TallaEntregada = detalle.TallaSolicitada ?? string.Empty,
+                        Observaciones = $"Requisición: {requisicion.NumeroRequisicion}"
+                    };
+
+                    await _entregaService.CreateEntregaAsync(entregaEPP);
+
+                    detalle.IdCompra = entrega.IdCompra;
+                    detalle.CantidadEntregada = entrega.CantidadEntregada;
+                }
+
+                requisicion.EstadoRequisicion = EstadoRequisicion.Entregada;
+                requisicion.IdUsuarioEntrega = userId;
+                requisicion.FechaEntrega = DateTime.Now;
+                requisicion.FirmaDigital = firmaDigital;
+                requisicion.FotoEvidencia = fotoEvidencia;
+                requisicion.Observaciones = observaciones;
+
+                _unitOfWork.RequisicionesEPP.Update(requisicion);
+                await _unitOfWork.CompleteAsync();
+
+                await _unitOfWork.CommitTransactionAsync();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return (false, ex.Message);
+            }
         }
 
         public async Task<bool> CancelarAsync(int id, string userId)

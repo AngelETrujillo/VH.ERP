@@ -80,7 +80,7 @@ namespace VH.Services.Services
             }
 
             // Verificar si está siendo usada por materiales o conceptos
-            var materialesUsandola = await _unitOfWork.MaterialesEPP.FindAsync(m => m.IdUnidadMedida == id);
+            var materialesUsandola = await _unitOfWork.Materiales.FindAsync(m => m.IdUnidadMedida == id);
             var conceptosUsandola = await _unitOfWork.ConceptosPartidas.FindAsync(c => c.IdUnidadMedida == id);
 
             if (materialesUsandola.Any() || conceptosUsandola.Any())

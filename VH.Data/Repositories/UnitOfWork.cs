@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Data.Repositories
@@ -10,6 +11,7 @@ namespace VH.Data.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly VHERPContext _context;
+        private IDbContextTransaction? _transaction;
 
         // ===== CAMPOS PRIVADOS (Backing fields) =====
         // Se inicializan de forma perezosa (lazy) cuando se acceden por primera vez
@@ -22,7 +24,7 @@ namespace VH.Data.Repositories
         // Catálogos EPP
         private IGenericRepository<Empleado>? _empleados;
         private IGenericRepository<Proveedor>? _proveedores;
-        private IGenericRepository<MaterialEPP>? _materialesEPP;
+        private IGenericRepository<Material>? _materialesEPP;
         private IGenericRepository<Almacen>? _almacenes;
         private IGenericRepository<Puesto>? _puestos;
 
@@ -69,8 +71,8 @@ namespace VH.Data.Repositories
         public IGenericRepository<Proveedor> Proveedores =>
             _proveedores ??= new GenericRepository<Proveedor>(_context);
 
-        public IGenericRepository<MaterialEPP> MaterialesEPP =>
-            _materialesEPP ??= new GenericRepository<MaterialEPP>(_context);
+        public IGenericRepository<Material> Materiales =>
+            _materialesEPP ??= new GenericRepository<Material>(_context);
 
         public IGenericRepository<Almacen> Almacenes =>
             _almacenes ??= new GenericRepository<Almacen>(_context);
@@ -123,9 +125,50 @@ namespace VH.Data.Repositories
             return await _context.SaveChangesAsync();
         }
 
+        // ===== TRANSACCIONES EXPLÍCITAS =====
+        public async Task BeginTransactionAsync()
+        {
+            // Anidar transacciones no aporta nada aquí: la operación que la abrió
+            // primero es la dueña del commit y del rollback.
+            if (_transaction != null) return;
+
+            _transaction = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_transaction == null) return;
+
+            try
+            {
+                await _transaction.CommitAsync();
+            }
+            finally
+            {
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_transaction == null) return;
+
+            try
+            {
+                await _transaction.RollbackAsync();
+            }
+            finally
+            {
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+        }
+
         // ===== LIBERACIÓN DE RECURSOS =====
         public void Dispose()
         {
+            _transaction?.Dispose();
             _context.Dispose();
             GC.SuppressFinalize(this);
         }

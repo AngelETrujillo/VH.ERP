@@ -16,7 +16,7 @@ namespace VH.Services.Interfaces
         // ===== REPOSITORIOS DE CATÁLOGOS EPP =====
         IGenericRepository<Empleado> Empleados { get; }
         IGenericRepository<Proveedor> Proveedores { get; }
-        IGenericRepository<MaterialEPP> MaterialesEPP { get; }
+        IGenericRepository<Material> Materiales { get; }
         IGenericRepository<Almacen> Almacenes { get; }
         IGenericRepository<Puesto> Puestos { get; }
 
@@ -40,5 +40,26 @@ namespace VH.Services.Interfaces
 
         // ===== MÉTODO DE PERSISTENCIA =====
         Task<int> CompleteAsync();
+
+        // ===== TRANSACCIONES EXPLÍCITAS =====
+        // Necesarias cuando una operación de negocio encadena varios CompleteAsync
+        // (por ejemplo, entregar una requisición con varios materiales) y todos
+        // los cambios deben confirmarse o deshacerse juntos.
+
+        /// <summary>
+        /// Abre una transacción explícita. Si ya hay una abierta en este
+        /// UnitOfWork, no hace nada: la operación externa es la que manda.
+        /// </summary>
+        Task BeginTransactionAsync();
+
+        /// <summary>
+        /// Confirma la transacción abierta. Sin transacción abierta, no hace nada.
+        /// </summary>
+        Task CommitTransactionAsync();
+
+        /// <summary>
+        /// Deshace la transacción abierta. Sin transacción abierta, no hace nada.
+        /// </summary>
+        Task RollbackTransactionAsync();
     }
 }

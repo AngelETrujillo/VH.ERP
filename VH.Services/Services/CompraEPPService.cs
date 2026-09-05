@@ -48,7 +48,7 @@ namespace VH.Services.Services
 
         public async Task<(CompraEPP Compra, string? Alerta)> CreateCompraAsync(CompraEPP compra)
         {
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(compra.IdMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(compra.IdMaterial);
             if (material == null)
                 throw new ArgumentException($"El material con ID {compra.IdMaterial} no existe.");
 
@@ -65,7 +65,7 @@ namespace VH.Services.Services
             await _unitOfWork.ComprasEPP.AddAsync(compra);
 
             material.CostoUnitarioEstimado = compra.PrecioUnitario;
-            _unitOfWork.MaterialesEPP.Update(material);
+            _unitOfWork.Materiales.Update(material);
 
             // Buscar inventario existente
             var inventarios = await _unitOfWork.Inventarios.FindAsync(
