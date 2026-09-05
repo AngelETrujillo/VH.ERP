@@ -309,12 +309,12 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode)
                 return Json(new List<object>());
 
-            var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+            var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPSimpleDto>>();
             return Json(lotes?.Select(l => new
             {
-                l.IdCompra,
+                l.IdCompraDetalle,
                 l.CantidadDisponible,
-                Descripcion = $"Lote #{l.IdCompra} - {l.NombreProveedor} - Disp: {l.CantidadDisponible}"
+                Descripcion = $"Lote #{l.IdCompraDetalle} - {l.NombreProveedor} - Disp: {l.CantidadDisponible}"
             }));
         }
 
@@ -366,11 +366,11 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.GetAsync($"api/comprasepp/lotes-disponibles?idMaterial={detalle.IdMaterial}&idAlmacen={requisicion.IdAlmacen}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+                    var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPSimpleDto>>();
                     lotesDict[detalle.IdMaterial] = lotes?.Select(l => new SelectListItem
                     {
-                        Value = l.IdCompra.ToString(),
-                        Text = $"Lote #{l.IdCompra} - {l.NombreProveedor} - Disponible: {l.CantidadDisponible}"
+                        Value = l.IdCompraDetalle.ToString(),
+                        Text = $"Lote #{l.IdCompraDetalle} - {l.NombreProveedor} - Disponible: {l.CantidadDisponible}"
                     }).ToList() ?? new List<SelectListItem>();
                 }
                 else

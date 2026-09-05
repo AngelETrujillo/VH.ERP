@@ -30,6 +30,7 @@ namespace VH.Data.Repositories
 
         // Transacciones EPP
         private IGenericRepository<CompraEPP>? _comprasEPP;
+        private IGenericRepository<CompraEPPDetalle>? _comprasEPPDetalle;
         private IGenericRepository<Inventario>? _inventarios;
         private IGenericRepository<EntregaEPP>? _entregasEPP;
         private IGenericRepository<RequisicionEPP>? _requisicionesEPP;
@@ -83,6 +84,9 @@ namespace VH.Data.Repositories
         // --- Transacciones EPP ---
         public IGenericRepository<CompraEPP> ComprasEPP =>
             _comprasEPP ??= new GenericRepository<CompraEPP>(_context);
+
+        public IGenericRepository<CompraEPPDetalle> ComprasEPPDetalle =>
+            _comprasEPPDetalle ??= new GenericRepository<CompraEPPDetalle>(_context);
 
         public IGenericRepository<Inventario> Inventarios =>
             _inventarios ??= new GenericRepository<Inventario>(_context);

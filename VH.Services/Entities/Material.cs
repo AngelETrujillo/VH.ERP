@@ -61,7 +61,7 @@ namespace VH.Services.Entities
 
         [ForeignKey("IdUnidadMedida")]
         public virtual UnidadMedida? UnidadMedida { get; set; }
-        public virtual ICollection<CompraEPP> Compras { get; set; } = new List<CompraEPP>();
+        public virtual ICollection<CompraEPPDetalle> Compras { get; set; } = new List<CompraEPPDetalle>();
         public virtual ICollection<Inventario> Inventarios { get; set; } = new List<Inventario>();
         public virtual ConfiguracionMaterialEPP? Configuracion { get; set; }
         public virtual ICollection<AlertaConsumo> Alertas { get; set; } = new List<AlertaConsumo>();

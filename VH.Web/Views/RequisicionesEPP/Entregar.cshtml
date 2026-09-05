@@ -93,7 +93,7 @@
                                             <label class="form-label small fw-semibold mb-1">
                                                 Lote <span class="text-danger">*</span>
                                             </label>
-                                            <select name="Detalles[@i].IdCompra"
+                                            <select name="Detalles[@i].IdCompraDetalle"
                                                     class="form-select lote-select"
                                                     data-max="@detalle.CantidadSolicitada" required>
                                                 <option value="">-- Seleccione lote --</option>
@@ -121,7 +121,7 @@
                                         <div class="alert alert-danger mb-0 py-2 small">
                                             <i class="bi bi-exclamation-triangle me-1"></i>Sin stock disponible en este almacén
                                         </div>
-                                        <input type="hidden" name="Detalles[@i].IdCompra" value="0" />
+                                        <input type="hidden" name="Detalles[@i].IdCompraDetalle" value="0" />
                                         <input type="hidden" name="Detalles[@i].CantidadEntregada" value="0" />
                                     }
                                 </div>
@@ -167,7 +167,7 @@
                                             <td>
                                                 @if (tieneLotes)
                                                 {
-                                                    <select name="Detalles[@i].IdCompra"
+                                                    <select name="Detalles[@i].IdCompraDetalle"
                                                             class="form-select form-select-sm lote-select"
                                                             required>
                                                         <option value="">-- Seleccione lote --</option>
@@ -182,7 +182,7 @@
                                                     <span class="text-danger small">
                                                         <i class="bi bi-exclamation-triangle me-1"></i>Sin stock
                                                     </span>
-                                                    <input type="hidden" name="Detalles[@i].IdCompra" value="0" />
+                                                    <input type="hidden" name="Detalles[@i].IdCompraDetalle" value="0" />
                                                 }
                                             </td>
                                             <td>

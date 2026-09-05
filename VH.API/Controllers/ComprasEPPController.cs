@@ -55,12 +55,12 @@ namespace VH.API.Controllers
 
         // GET: api/comprasepp/historial-precios/5?idProveedor=2
         [HttpGet("historial-precios/{idMaterial}")]
-        public async Task<ActionResult<IEnumerable<CompraEPPResponseDto>>> GetHistorialPrecios(
+        public async Task<ActionResult<IEnumerable<HistorialPrecioDto>>> GetHistorialPrecios(
             int idMaterial,
             [FromQuery] int? idProveedor = null)
         {
             var historial = await _compraService.GetHistorialPreciosAsync(idMaterial, idProveedor);
-            return Ok(_mapper.Map<IEnumerable<CompraEPPResponseDto>>(historial));
+            return Ok(_mapper.Map<IEnumerable<HistorialPrecioDto>>(historial));
         }
 
         // POST: api/comprasepp
@@ -73,13 +73,13 @@ namespace VH.API.Controllers
             try
             {
                 var compra = _mapper.Map<CompraEPP>(dto);
-                var (created, alerta) = await _compraService.CreateCompraAsync(compra);
+                var (created, alertas) = await _compraService.CreateCompraAsync(compra);
                 var response = _mapper.Map<CompraEPPResponseDto>(created);
 
                 return CreatedAtAction(nameof(GetById), new { id = response.IdCompra }, new
                 {
                     data = response,
-                    alerta = alerta
+                    alertas = alertas
                 });
             }
             catch (ArgumentException ex)
@@ -93,17 +93,19 @@ namespace VH.API.Controllers
         }
 
         // PUT: api/comprasepp/5
+        // Sólo los datos del documento. Los renglones no se editan: cambiar el
+        // precio de un lote ya consumido reescribiría el costo de entregas pasadas.
         [HttpPut("{id}")]
         [RequierePermisoApi("COMPRAS_EPP", "editar")]
-        public async Task<IActionResult> Update(int id, [FromBody] CompraEPPRequestDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] CompraEPPUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var compra = _mapper.Map<CompraEPP>(dto);
-                compra.IdCompra = id;
-                var result = await _compraService.UpdateCompraAsync(compra);
+                var result = await _compraService.UpdateCompraAsync(
+                    id, dto.FechaCompra, dto.NumeroDocumento, dto.UuidCFDI, dto.Iva, dto.Observaciones);
+
                 if (!result) return NotFound();
                 return NoContent();
             }

@@ -99,8 +99,8 @@ namespace VH.Services.Services
             if (inventario == null)
                 return false;
 
-            var compras = await _unitOfWork.ComprasEPP.FindAsync(
-                c => c.IdMaterial == inventario.IdMaterial && c.IdAlmacen == inventario.IdAlmacen);
+            var compras = await _unitOfWork.ComprasEPPDetalle.FindAsync(
+                d => d.IdMaterial == inventario.IdMaterial && d.IdAlmacen == inventario.IdAlmacen);
 
             if (compras.Any())
                 throw new InvalidOperationException(
@@ -128,10 +128,10 @@ namespace VH.Services.Services
 
         public async Task<decimal> RecalcularExistenciaAsync(int idMaterial, int idAlmacen)
         {
-            var compras = await _unitOfWork.ComprasEPP.FindAsync(
-                c => c.IdMaterial == idMaterial && c.IdAlmacen == idAlmacen);
+            var compras = await _unitOfWork.ComprasEPPDetalle.FindAsync(
+                d => d.IdMaterial == idMaterial && d.IdAlmacen == idAlmacen);
 
-            return compras.Sum(c => c.CantidadDisponible);
+            return compras.Sum(d => d.CantidadDisponible);
         }
     }
 }

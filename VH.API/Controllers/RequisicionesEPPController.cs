@@ -156,7 +156,7 @@ namespace VH.API.Controllers
 
             try
             {
-                var detalles = dto.Detalles.Select(d => (d.IdRequisicionDetalle, d.IdCompra, d.CantidadEntregada)).ToList();
+                var detalles = dto.Detalles.Select(d => (d.IdRequisicionDetalle, d.IdCompraDetalle, d.CantidadEntregada)).ToList();
 
                 var (success, error) = await _requisicionService.EntregarAsync(
                     id,

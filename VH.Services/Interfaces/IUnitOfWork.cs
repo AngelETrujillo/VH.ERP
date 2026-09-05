@@ -22,6 +22,7 @@ namespace VH.Services.Interfaces
 
         // ===== REPOSITORIOS DE TRANSACCIONES EPP =====
         IGenericRepository<CompraEPP> ComprasEPP { get; }
+        IGenericRepository<CompraEPPDetalle> ComprasEPPDetalle { get; }
         IGenericRepository<Inventario> Inventarios { get; }
         IGenericRepository<EntregaEPP> EntregasEPP { get; }
         IGenericRepository<RequisicionEPP> RequisicionesEPP { get; }

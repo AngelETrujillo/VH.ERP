@@ -23,7 +23,8 @@ namespace VH.Services.Entities
 
         // ===== ENTREGA =====
 
-        public int? IdCompra { get; set; }
+        /// <summary>Lote del que se surtió el renglón.</summary>
+        public int? IdCompraDetalle { get; set; }
 
         public decimal? CantidadEntregada { get; set; }
 
@@ -35,7 +36,7 @@ namespace VH.Services.Entities
         [ForeignKey("IdMaterial")]
         public virtual Material? Material { get; set; }
 
-        [ForeignKey("IdCompra")]
-        public virtual CompraEPP? Compra { get; set; }
+        [ForeignKey("IdCompraDetalle")]
+        public virtual CompraEPPDetalle? CompraDetalle { get; set; }
     }
 }

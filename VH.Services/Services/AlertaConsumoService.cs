@@ -23,7 +23,7 @@ namespace VH.Services.Services
             var alertas = new List<AlertaConsumo>();
 
             // Obtener el material desde la compra
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, "Material");
+            var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, "Material");
             if (compra == null) return alertas;
 
             var idMaterial = compra.IdMaterial;
@@ -74,10 +74,10 @@ namespace VH.Services.Services
             // Obtener última entrega del mismo material al mismo empleado
             var todasEntregasEmpleado = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
-                "Compra");
+                "CompraDetalle");
 
             var entregasAnteriores = todasEntregasEmpleado
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var ultimaEntrega = entregasAnteriores
                 .Where(e => idEntrega == null || e.IdEntrega != idEntrega)
@@ -181,10 +181,10 @@ namespace VH.Services.Services
             var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             var todasEntregasMes = await _unitOfWork.EntregasEPP.FindAsync(
             e => e.IdEmpleado == idEmpleado && e.FechaEntrega >= inicioMes,
-            "Compra");
+            "CompraDetalle");
 
             var entregasMes = todasEntregasMes
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var totalMes = entregasMes.Sum(e => e.CantidadEntregada);
 

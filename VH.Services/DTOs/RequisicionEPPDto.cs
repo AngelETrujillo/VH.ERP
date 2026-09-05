@@ -63,7 +63,7 @@ namespace VH.Services.DTOs
 
         [Required(ErrorMessage = "Debe seleccionar un lote")]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un lote válido")]
-        int IdCompra,
+        int IdCompraDetalle,
 
         [Required(ErrorMessage = "La cantidad entregada es obligatoria")]
         [Range(0.01, double.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
@@ -144,7 +144,7 @@ namespace VH.Services.DTOs
         public string? TallaSolicitada { get; set; }
 
         // Entrega
-        public int? IdCompra { get; set; }
+        public int? IdCompraDetalle { get; set; }
         public string? DescripcionLote { get; set; }
         public decimal? CantidadEntregada { get; set; }
 

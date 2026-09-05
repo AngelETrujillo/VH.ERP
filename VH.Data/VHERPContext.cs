@@ -24,6 +24,7 @@ namespace VH.Data
 
         // Transacciones EPP
         public DbSet<CompraEPP> ComprasEPP { get; set; }
+        public DbSet<CompraEPPDetalle> ComprasEPPDetalle { get; set; }
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
         public DbSet<RequisicionEPP> RequisicionesEPP { get; set; }
@@ -51,6 +52,7 @@ namespace VH.Data
             ConfigurarMaterial(modelBuilder);
             ConfigurarAlmacen(modelBuilder);
             ConfigurarCompraEPP(modelBuilder);
+            ConfigurarCompraEPPDetalle(modelBuilder);
             ConfigurarInventario(modelBuilder);
             ConfigurarEntregaEPP(modelBuilder);
             ConfigurarRequisicionEPP(modelBuilder);
@@ -220,13 +222,54 @@ namespace VH.Data
             {
                 entity.HasKey(c => c.IdCompra);
                 entity.Property(c => c.FechaCompra).IsRequired();
-                entity.Property(c => c.CantidadComprada).IsRequired().HasPrecision(18, 4);
-                entity.Property(c => c.CantidadDisponible).IsRequired().HasPrecision(18, 4);
-                entity.Property(c => c.PrecioUnitario).IsRequired().HasPrecision(18, 2);
                 entity.Property(c => c.NumeroDocumento).HasMaxLength(50);
+                entity.Property(c => c.UuidCFDI).HasMaxLength(36);
+                entity.Property(c => c.Moneda).HasMaxLength(3);
                 entity.Property(c => c.Observaciones).HasMaxLength(500);
+                entity.Property(c => c.Subtotal).HasPrecision(18, 2);
+                entity.Property(c => c.Iva).HasPrecision(18, 2);
+                entity.Property(c => c.Total).HasPrecision(18, 2);
 
                 entity.HasIndex(c => c.FechaCompra);
+                entity.HasIndex(c => c.NumeroDocumento);
+
+                entity.HasOne(c => c.Proveedor)
+                    .WithMany(p => p.Compras)
+                    .HasForeignKey(c => c.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Cancelar la compra se lleva sus renglones: un lote no existe fuera
+                // del documento que lo trajo.
+                entity.HasMany(c => c.Detalles)
+                    .WithOne(d => d.Compra)
+                    .HasForeignKey(d => d.IdCompra)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarCompraEPPDetalle(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CompraEPPDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdCompraDetalle);
+                entity.Property(d => d.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.CantidadDisponible).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.PrecioUnitario).IsRequired().HasPrecision(18, 2);
+                entity.Property(d => d.Talla).HasMaxLength(20);
+
+                // La búsqueda de lotes disponibles al surtir va siempre por este par.
+                entity.HasIndex(d => new { d.IdMaterial, d.IdAlmacen });
+                entity.HasIndex(d => d.FechaCaducidad);
+
+                entity.HasOne(d => d.Material)
+                    .WithMany(m => m.Compras)
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Almacen)
+                    .WithMany(a => a.Compras)
+                    .HasForeignKey(d => d.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 
@@ -256,9 +299,9 @@ namespace VH.Data
 
                 entity.HasIndex(e => e.FechaEntrega);
 
-                entity.HasOne(e => e.Compra)
+                entity.HasOne(e => e.CompraDetalle)
                     .WithMany()
-                    .HasForeignKey(e => e.IdCompra)
+                    .HasForeignKey(e => e.IdCompraDetalle)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
@@ -328,9 +371,9 @@ namespace VH.Data
                     .HasForeignKey(d => d.IdMaterial)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(d => d.Compra)
+                entity.HasOne(d => d.CompraDetalle)
                     .WithMany()
-                    .HasForeignKey(d => d.IdCompra)
+                    .HasForeignKey(d => d.IdCompraDetalle)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }

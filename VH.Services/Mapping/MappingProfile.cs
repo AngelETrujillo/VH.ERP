@@ -63,35 +63,50 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.NombreProyecto, opt => opt.MapFrom(src =>
                     src.Proyecto != null ? src.Proyecto.Nombre : string.Empty));
 
-            // ===== COMPRAS EPP (NUEVO) =====
+            // ===== COMPRAS EPP: cabecera y renglones =====
             CreateMap<CompraEPPRequestDto, CompraEPP>()
-                .ForMember(dest => dest.CantidadDisponible, opt => opt.MapFrom(src => src.CantidadComprada))
                 .ForMember(dest => dest.NumeroDocumento, opt => opt.MapFrom(src => src.NumeroDocumento ?? string.Empty))
-                .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones ?? string.Empty));
+                .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones ?? string.Empty))
+                // Subtotal y Total los calcula el servicio a partir de los renglones.
+                .ForMember(dest => dest.Subtotal, opt => opt.Ignore())
+                .ForMember(dest => dest.Total, opt => opt.Ignore());
+
+            CreateMap<CompraEPPDetalleRequestDto, CompraEPPDetalle>()
+                // Un lote nace completo; el servicio iguala disponible a cantidad.
+                .ForMember(dest => dest.CantidadDisponible, opt => opt.MapFrom(src => src.Cantidad));
 
             CreateMap<CompraEPP, CompraEPPResponseDto>()
-                // Información del Material
-                .ForMember(dest => dest.IdMaterial, opt => opt.MapFrom(src => src.IdMaterial))
+                .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
+                    src.Proveedor != null ? src.Proveedor.Nombre : string.Empty));
+
+            CreateMap<CompraEPPDetalle, CompraEPPDetalleResponseDto>()
                 .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
                     src.Material != null ? src.Material.Nombre : string.Empty))
                 .ForMember(dest => dest.UnidadMedidaMaterial, opt => opt.MapFrom(src =>
                     src.Material != null && src.Material.UnidadMedida != null
                         ? src.Material.UnidadMedida.Abreviatura
                         : string.Empty))
-                // Información del Proveedor
-                .ForMember(dest => dest.IdProveedor, opt => opt.MapFrom(src => src.IdProveedor))
-                .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
-                    src.Proveedor != null ? src.Proveedor.Nombre : string.Empty))
-                // Información del Almacén
-                .ForMember(dest => dest.IdAlmacen, opt => opt.MapFrom(src => src.IdAlmacen))
                 .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
                     src.Almacen != null ? src.Almacen.Nombre : string.Empty));
 
-            CreateMap<CompraEPP, CompraEPPSimpleDto>()
+            // El lote que se elige al surtir es un renglón de compra.
+            CreateMap<CompraEPPDetalle, CompraEPPSimpleDto>()
                 .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
-                    src.Proveedor != null ? src.Proveedor.Nombre : string.Empty))
+                    src.Compra != null && src.Compra.Proveedor != null ? src.Compra.Proveedor.Nombre : string.Empty))
+                .ForMember(dest => dest.FechaCompra, opt => opt.MapFrom(src =>
+                    src.Compra != null ? src.Compra.FechaCompra : DateTime.MinValue))
                 .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src =>
-                    $"Lote #{src.IdCompra} - {(src.Proveedor != null ? src.Proveedor.Nombre : "?")} - {src.CantidadDisponible} disponibles @ ${src.PrecioUnitario}"));
+                    $"Lote #{src.IdCompraDetalle} - {(src.Compra != null && src.Compra.Proveedor != null ? src.Compra.Proveedor.Nombre : "?")} - {src.CantidadDisponible} disponibles @ ${src.PrecioUnitario}"));
+
+            CreateMap<CompraEPPDetalle, HistorialPrecioDto>()
+                .ForMember(dest => dest.FechaCompra, opt => opt.MapFrom(src =>
+                    src.Compra != null ? src.Compra.FechaCompra : DateTime.MinValue))
+                .ForMember(dest => dest.NumeroDocumento, opt => opt.MapFrom(src =>
+                    src.Compra != null ? src.Compra.NumeroDocumento : string.Empty))
+                .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
+                    src.Compra != null && src.Compra.Proveedor != null ? src.Compra.Proveedor.Nombre : string.Empty))
+                .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
+                    src.Almacen != null ? src.Almacen.Nombre : string.Empty));
 
             // ===== INVENTARIOS =====
             CreateMap<InventarioRequestDto, Inventario>()
@@ -147,36 +162,38 @@ namespace VH.Services.Mapping
                         : string.Empty))
                 .ForMember(dest => dest.NumeroNominaEmpleado, opt => opt.MapFrom(src =>
                     src.Empleado != null ? src.Empleado.NumeroNomina : string.Empty))
-                // Información del Lote/Compra
-                .ForMember(dest => dest.IdCompra, opt => opt.MapFrom(src => src.IdCompra))
-                // Información del Material (desde la Compra)
+                // El lote del que salió: un renglón de compra
+                .ForMember(dest => dest.IdCompraDetalle, opt => opt.MapFrom(src => src.IdCompraDetalle))
+                .ForMember(dest => dest.IdCompra, opt => opt.MapFrom(src =>
+                    src.CompraDetalle != null ? src.CompraDetalle.IdCompra : 0))
+                // Material (desde el lote)
                 .ForMember(dest => dest.IdMaterial, opt => opt.MapFrom(src =>
-                    src.Compra != null ? src.Compra.IdMaterial : 0))
+                    src.CompraDetalle != null ? src.CompraDetalle.IdMaterial : 0))
                 .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
-                    src.Compra != null && src.Compra.Material != null
-                        ? src.Compra.Material.Nombre
+                    src.CompraDetalle != null && src.CompraDetalle.Material != null
+                        ? src.CompraDetalle.Material.Nombre
                         : string.Empty))
                 .ForMember(dest => dest.UnidadMedidaMaterial, opt => opt.MapFrom(src =>
-                    src.Compra != null && src.Compra.Material != null && src.Compra.Material.UnidadMedida != null
-                        ? src.Compra.Material.UnidadMedida.Abreviatura
+                    src.CompraDetalle != null && src.CompraDetalle.Material != null && src.CompraDetalle.Material.UnidadMedida != null
+                        ? src.CompraDetalle.Material.UnidadMedida.Abreviatura
                         : string.Empty))
-                // Información del Proveedor (desde la Compra)
+                // Proveedor (desde la cabecera de la compra)
                 .ForMember(dest => dest.IdProveedor, opt => opt.MapFrom(src =>
-                    src.Compra != null ? src.Compra.IdProveedor : 0))
+                    src.CompraDetalle != null && src.CompraDetalle.Compra != null ? src.CompraDetalle.Compra.IdProveedor : 0))
                 .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
-                    src.Compra != null && src.Compra.Proveedor != null
-                        ? src.Compra.Proveedor.Nombre
+                    src.CompraDetalle != null && src.CompraDetalle.Compra != null && src.CompraDetalle.Compra.Proveedor != null
+                        ? src.CompraDetalle.Compra.Proveedor.Nombre
                         : string.Empty))
-                // Información del Almacén (desde la Compra)
+                // Almacén (del renglón)
                 .ForMember(dest => dest.IdAlmacen, opt => opt.MapFrom(src =>
-                    src.Compra != null ? src.Compra.IdAlmacen : 0))
+                    src.CompraDetalle != null ? src.CompraDetalle.IdAlmacen : 0))
                 .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
-                    src.Compra != null && src.Compra.Almacen != null
-                        ? src.Compra.Almacen.Nombre
+                    src.CompraDetalle != null && src.CompraDetalle.Almacen != null
+                        ? src.CompraDetalle.Almacen.Nombre
                         : string.Empty))
                 // Precio del lote
                 .ForMember(dest => dest.PrecioUnitarioCompra, opt => opt.MapFrom(src =>
-                    src.Compra != null ? src.Compra.PrecioUnitario : 0));
+                    src.CompraDetalle != null ? src.CompraDetalle.PrecioUnitario : 0));
 
             // ===== REQUISICIONES EPP =====
             CreateMap<RequisicionEPP, RequisicionEPPResponseDto>()
@@ -200,7 +217,9 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
                     src.Material != null && src.Material.UnidadMedida != null ? src.Material.UnidadMedida.Abreviatura : string.Empty))
                 .ForMember(dest => dest.DescripcionLote, opt => opt.MapFrom(src =>
-                    src.Compra != null ? $"Lote #{src.Compra.IdCompra} - {(src.Compra.Proveedor != null ? src.Compra.Proveedor.Nombre : "")}" : null));
+                    src.CompraDetalle != null
+                        ? $"Lote #{src.CompraDetalle.IdCompraDetalle} - {(src.CompraDetalle.Compra != null && src.CompraDetalle.Compra.Proveedor != null ? src.CompraDetalle.Compra.Proveedor.Nombre : "")}"
+                        : null));
 
             CreateMap<RequisicionEPPRequestDto, RequisicionEPP>()
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));

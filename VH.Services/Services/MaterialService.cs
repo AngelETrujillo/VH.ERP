@@ -85,6 +85,13 @@ namespace VH.Services.Services
             materialExistente.CostoUnitarioEstimado = material.CostoUnitarioEstimado;
             materialExistente.Activo = material.Activo;
 
+            // Clasificación: sin esto, cambiar el tipo desde la pantalla de edición
+            // se guardaba en silencio sin efecto.
+            materialExistente.TipoMaterial = material.TipoMaterial;
+            materialExistente.RequiereTalla = material.RequiereTalla;
+            materialExistente.EsRetornable = material.EsRetornable;
+            materialExistente.ControlaCaducidad = material.ControlaCaducidad;
+
             _unitOfWork.Materiales.Update(materialExistente);
             return await _unitOfWork.CompleteAsync() > 0;
         }
@@ -105,7 +112,7 @@ namespace VH.Services.Services
             }
 
             // Verificar si tiene entregas EPP (a través de las compras)
-            var compras = await _unitOfWork.ComprasEPP.FindAsync(c => c.IdMaterial == id);
+            var compras = await _unitOfWork.ComprasEPPDetalle.FindAsync(d => d.IdMaterial == id);
             if (compras.Any())
             {
                 throw new InvalidOperationException("No se puede eliminar el material porque tiene compras/entregas EPP asociadas.");

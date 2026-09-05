@@ -48,7 +48,11 @@ namespace VH.API.Controllers
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
                 var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega);
-                var response = _mapper.Map<EntregaEPPResponseDto>(created);
+
+                // La entidad recién creada no trae cargadas sus navegaciones, así que
+                // se relee para que la respuesta incluya material, proveedor y almacén.
+                var completa = await _entregaService.GetEntregaByIdAsync(created.IdEntrega) ?? created;
+                var response = _mapper.Map<EntregaEPPResponseDto>(completa);
 
                 return CreatedAtAction(nameof(GetById), new { id = response.IdEntrega }, new
                 {

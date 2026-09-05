@@ -210,27 +210,54 @@ namespace VH.Data.Seeders
 
             // ── Compras ───────────────────────────────────────────────────
             // Dos meses de abasto, para que las entregas tengan de dónde salir.
-            var compras = new List<CompraEPP>();
-            for (int i = 0; i < materiales.Count; i++)
+            // Cada factura trae dos materiales, que es como llegan en la realidad
+            // y como se ven en la pantalla de compras.
+            var lotes = new List<CompraEPPDetalle>();
+            for (int i = 0; i < materiales.Count; i += 2)
             {
-                var m = materiales[i];
-                var esTorre = i % 3 != 2;
+                var proveedor = (i % 4 == 0 ? provSeg : provEquipo);
+
                 var compra = new CompraEPP
                 {
-                    IdMaterial = m.IdMaterial,
-                    IdProveedor = (i % 2 == 0 ? provSeg : provEquipo).IdProveedor,
-                    IdAlmacen = (esTorre ? bodegaTorre : bodegaVial).IdAlmacen,
+                    IdProveedor = proveedor.IdProveedor,
                     FechaCompra = hoy.AddDays(-(45 - i * 3)),
-                    CantidadComprada = 30 + i * 5,
-                    CantidadDisponible = 12 + i * 3,
-                    PrecioUnitario = m.CostoUnitarioEstimado,
                     NumeroDocumento = $"FAC-{2600 + i}",
+                    Moneda = "MXN",
                     Observaciones = "Abasto programado"
                 };
+
+                // Uno o dos renglones, según alcancen los materiales.
+                for (int j = i; j < Math.Min(i + 2, materiales.Count); j++)
+                {
+                    var m = materiales[j];
+                    var esTorre = j % 3 != 2;
+
+                    compra.Detalles.Add(new CompraEPPDetalle
+                    {
+                        IdMaterial = m.IdMaterial,
+                        IdAlmacen = (esTorre ? bodegaTorre : bodegaVial).IdAlmacen,
+                        Cantidad = 30 + j * 5,
+                        CantidadDisponible = 12 + j * 3,
+                        PrecioUnitario = m.CostoUnitarioEstimado,
+                        Talla = "-"
+                    });
+                }
+
+                compra.Subtotal = compra.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+                compra.Iva = Math.Round(compra.Subtotal * 0.16m, 2);
+                compra.Total = compra.Subtotal + compra.Iva;
+
                 db.ComprasEPP.Add(compra);
-                compras.Add(compra);
             }
             await db.SaveChangesAsync();
+
+            // Los lotes quedan en el mismo orden que los materiales, para que el
+            // guion de entregas de más abajo siga siendo legible.
+            foreach (var m in materiales)
+            {
+                var lote = await db.ComprasEPPDetalle.FirstAsync(d => d.IdMaterial == m.IdMaterial);
+                lotes.Add(lote);
+            }
 
             // ── Inventarios ───────────────────────────────────────────────
             for (int i = 0; i < materiales.Count; i++)
@@ -273,7 +300,7 @@ namespace VH.Data.Seeders
                 db.EntregasEPP.Add(new EntregaEPP
                 {
                     IdEmpleado = empleados[emp].IdEmpleado,
-                    IdCompra = compras[comp].IdCompra,
+                    IdCompraDetalle = lotes[comp].IdCompraDetalle,
                     FechaEntrega = hoy.AddDays(-dias),
                     CantidadEntregada = cant,
                     TallaEntregada = talla,

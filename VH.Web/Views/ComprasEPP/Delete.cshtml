@@ -1,97 +1,111 @@
-﻿@model VH.Services.DTOs.CompraEPPResponseDto
+@model VH.Services.DTOs.CompraEPPResponseDto
+@using VH.Web.Extensions
 @{
-    ViewData["Title"] = "Eliminar Compra";
+    ViewData["Title"] = "Cancelar Compra";
 }
 
 <div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-5">
-            <!-- Tarjeta de confirmación -->
-            <div class="card shadow border-0">
-                <div class="card-body p-0">
-                    <!-- Header de advertencia -->
-                    <div class="bg-danger text-white p-4 text-center">
-                        <i class="bi bi-exclamation-triangle display-4"></i>
-                        <h3 class="mt-3 mb-0 fw-bold">¿Eliminar Compra?</h3>
-                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-exclamation-triangle text-danger me-2"></i>Cancelar Compra
+            </h2>
+            <p class="text-muted mb-0">Esta acción devuelve las existencias al estado anterior</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 border-danger">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt me-2"></i>
+                        @(string.IsNullOrEmpty(Model.NumeroDocumento) ? $"Compra #{Model.IdCompra}" : Model.NumeroDocumento)
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <dl class="row mb-4">
+                        <dt class="col-sm-4 text-muted fw-normal">Proveedor</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.NombreProveedor</dd>
+
+                        <dt class="col-sm-4 text-muted fw-normal">Fecha</dt>
+                        <dd class="col-sm-8">@Model.FechaCompra.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4 text-muted fw-normal">Total</dt>
+                        <dd class="col-sm-8 fw-bold text-success">@Model.Total.ToString("C2")</dd>
+                    </dl>
+
+                    <h6 class="fw-semibold mb-3">Materiales que se darán de baja</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Almacén</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-center">Disponible</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var d in Model.Detalles)
+                                {
+                                    <tr>
+                                        <td>@d.NombreMaterial</td>
+                                        <td><small class="text-muted">@d.NombreAlmacen</small></td>
+                                        <td class="text-center">@d.Cantidad.FormatoCantidad()</td>
+                                        <td class="text-center">
+                                            @if (d.CantidadDisponible == d.Cantidad)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">Intacto</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">
+                                                    Consumido @((d.Cantidad - d.CantidadDisponible).FormatoCantidad())
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
 
-                    <!-- Datos de la compra -->
-                    <div class="p-4">
-                        <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
-                            <div class="icon-circle bg-danger text-white me-3">
-                                <i class="bi bi-cart-x"></i>
-                            </div>
-                            <div>
-                                <h5 class="mb-0 fw-bold">@Model.NombreMaterial</h5>
-                                <small class="text-muted">@Model.FechaCompra.ToString("dd/MM/yyyy") - @Model.NombreProveedor</small>
-                            </div>
+                    @if (!Model.PuedeCancelarse)
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <i class="bi bi-x-circle me-2"></i>
+                            <strong>No se puede cancelar.</strong> Ya se entregó material de esta compra.
+                            Cancelarla dejaría entregas sin lote de origen.
                         </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-6">
-                                <label class="text-muted small">Cantidad Comprada</label>
-                                <p class="mb-0 fw-semibold">@Model.CantidadComprada @Model.UnidadMedidaMaterial</p>
-                            </div>
-                            <div class="col-6">
-                                <label class="text-muted small">Disponible</label>
-                                <p class="mb-0 fw-semibold">@Model.CantidadDisponible @Model.UnidadMedidaMaterial</p>
-                            </div>
-                            <div class="col-6">
-                                <label class="text-muted small">Precio Unitario</label>
-                                <p class="mb-0 fw-semibold">@Model.PrecioUnitario.ToString("C2")</p>
-                            </div>
-                            <div class="col-6">
-                                <label class="text-muted small">Total</label>
-                                <p class="mb-0 fw-semibold text-success">@Model.CostoTotal.ToString("C2")</p>
-                            </div>
-                            <div class="col-12">
-                                <label class="text-muted small">Almacén</label>
-                                <p class="mb-0 fw-semibold">@Model.NombreAlmacen</p>
-                            </div>
-                        </div>
-
-                        <!-- Alerta -->
-                        <div class="alert alert-warning border-0 mb-4">
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-3">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>Advertencia:</strong>
-                            @if (Model.CantidadDisponible < Model.CantidadComprada)
-                            {
-                                <span>Este lote tiene entregas registradas. No podrá eliminarse.</span>
-                            }
-                            else
-                            {
-                                <span>Se eliminará el registro y se actualizará el inventario.</span>
-                            }
+                            Se eliminarán los @Model.TotalRenglones renglones y se restarán
+                            @Model.TotalUnidades.FormatoCantidad() unidades de las existencias.
                         </div>
-
-                        <!-- Botones -->
-                        <form asp-action="Delete" asp-route-id="@Model.IdCompra">
-                            <div class="d-flex justify-content-center gap-3">
-                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
-                                    <i class="bi bi-x-lg me-2"></i>Cancelar
-                                </a>
-                                <button type="submit" class="btn btn-danger btn-lg px-4"
-                                        @(Model.CantidadDisponible < Model.CantidadComprada ? "disabled" : "")>
-                                    <i class="bi bi-trash me-2"></i>Sí, Eliminar
-                                </button>
-                            </div>
+                    }
+                </div>
+                <div class="card-footer bg-light d-flex justify-content-end gap-3 py-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-x-lg me-2"></i>Volver
+                    </a>
+                    @if (Model.PuedeCancelarse)
+                    {
+                        <form asp-action="Delete" asp-route-id="@Model.IdCompra" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash me-2"></i>Sí, cancelar la compra
+                            </button>
                         </form>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .icon-circle {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-    }
-</style>

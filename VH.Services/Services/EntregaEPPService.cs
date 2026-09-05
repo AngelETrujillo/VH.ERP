@@ -16,7 +16,7 @@ namespace VH.Services.Services
             _dashboardService = dashboardService;
         }
 
-        private const string IncludeProperties = "Empleado.Proyecto,Compra.Material.UnidadMedida,Compra.Proveedor,Compra.Almacen";
+        private const string IncludeProperties = "Empleado.Proyecto,CompraDetalle.Material.UnidadMedida,CompraDetalle.Almacen,CompraDetalle.Compra.Proveedor";
 
         /// <summary>
         /// Obtiene el registro de inventario del par material/almacén, o falla.
@@ -63,7 +63,7 @@ namespace VH.Services.Services
         public async Task<IEnumerable<EntregaEPP>> GetEntregasByMaterialAsync(int idMaterial)
         {
             return await _unitOfWork.EntregasEPP.FindAsync(
-                filter: e => e.Compra != null && e.Compra.IdMaterial == idMaterial,
+                filter: e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial,
                 includeProperties: IncludeProperties);
         }
 
@@ -73,9 +73,9 @@ namespace VH.Services.Services
             if (empleado == null)
                 throw new ArgumentException($"El empleado con ID {entrega.IdEmpleado} no existe.");
 
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, includeProperties: "Material,Almacen");
+            var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, includeProperties: "Material,Almacen");
             if (compra == null)
-                throw new ArgumentException($"El lote/compra con ID {entrega.IdCompra} no existe.");
+                throw new ArgumentException($"El lote con ID {entrega.IdCompraDetalle} no existe.");
 
             if (compra.CantidadDisponible < entrega.CantidadEntregada)
                 throw new InvalidOperationException(
@@ -83,7 +83,7 @@ namespace VH.Services.Services
                     $"Disponible: {compra.CantidadDisponible}, Solicitado: {entrega.CantidadEntregada}");
 
             compra.CantidadDisponible -= entrega.CantidadEntregada;
-            _unitOfWork.ComprasEPP.Update(compra);
+            _unitOfWork.ComprasEPPDetalle.Update(compra);
 
             // Sin registro de inventario la salida descontaba el lote y dejaba la
             // existencia intacta, sin error ni aviso. Es preferible detener la entrega
@@ -152,7 +152,7 @@ namespace VH.Services.Services
 
         public async Task<(bool Success, string? Alerta)> UpdateEntregaAsync(EntregaEPP entrega)
         {
-            var entregaExistente = await _unitOfWork.EntregasEPP.GetByIdAsync(entrega.IdEntrega, includeProperties: "Compra");
+            var entregaExistente = await _unitOfWork.EntregasEPP.GetByIdAsync(entrega.IdEntrega, includeProperties: "CompraDetalle");
             if (entregaExistente == null)
                 return (false, null);
 
@@ -160,7 +160,7 @@ namespace VH.Services.Services
 
             if (diferencia != 0)
             {
-                var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entregaExistente.IdCompra, includeProperties: "Material,Almacen");
+                var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entregaExistente.IdCompraDetalle, includeProperties: "Material,Almacen");
                 if (compra == null)
                     return (false, null);
 
@@ -170,7 +170,7 @@ namespace VH.Services.Services
                         $"Disponible: {compra.CantidadDisponible}, Adicional solicitado: {diferencia}");
 
                 compra.CantidadDisponible -= diferencia;
-                _unitOfWork.ComprasEPP.Update(compra);
+                _unitOfWork.ComprasEPPDetalle.Update(compra);
 
                 var inventario = await GetInventarioObligatorioAsync(
                     compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
@@ -191,7 +191,7 @@ namespace VH.Services.Services
             string? alerta = null;
             if (diferencia > 0)
             {
-                var compraActualizada = await _unitOfWork.ComprasEPP.GetByIdAsync(entregaExistente.IdCompra, includeProperties: "Material,Almacen");
+                var compraActualizada = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entregaExistente.IdCompraDetalle, includeProperties: "Material,Almacen");
                 var inventarios = await _unitOfWork.Inventarios.FindAsync(
                     i => i.IdMaterial == compraActualizada!.IdMaterial && i.IdAlmacen == compraActualizada.IdAlmacen);
                 var inventario = inventarios.FirstOrDefault();
@@ -238,11 +238,11 @@ namespace VH.Services.Services
             if (entrega == null)
                 return false;
 
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, includeProperties: "Material,Almacen");
+            var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, includeProperties: "Material,Almacen");
             if (compra != null)
             {
                 compra.CantidadDisponible += entrega.CantidadEntregada;
-                _unitOfWork.ComprasEPP.Update(compra);
+                _unitOfWork.ComprasEPPDetalle.Update(compra);
 
                 var inventario = await GetInventarioObligatorioAsync(
                     compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);

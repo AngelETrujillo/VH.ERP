@@ -123,20 +123,21 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
-            var dto = new CompraEPPRequestDto(
-                compra!.IdMaterial,
-                compra.IdProveedor,
-                compra.IdAlmacen,
-                compra.FechaCompra,
-                compra.CantidadComprada,
-                compra.PrecioUnitario,
+
+            // Sólo se editan los datos del documento; los renglones se muestran
+            // como referencia porque cambiar el precio de un lote ya consumido
+            // reescribiría el costo de entregas pasadas.
+            var dto = new CompraEPPUpdateDto(
+                compra!.FechaCompra,
                 compra.NumeroDocumento,
+                compra.UuidCFDI,
+                compra.Iva,
                 compra.Observaciones
             );
 
             await CargarListasEnViewBag();
             ViewBag.Id = id;
-            ViewBag.CantidadDisponible = compra.CantidadDisponible;
+            ViewBag.Compra = compra;
             return View(dto);
         }
 
@@ -144,7 +145,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("COMPRAS_EPP", "editar")]
-        public async Task<IActionResult> Edit(int id, CompraEPPRequestDto dto)
+        public async Task<IActionResult> Edit(int id, CompraEPPUpdateDto dto)
         {
             if (ModelState.IsValid)
             {
@@ -157,6 +158,12 @@ namespace VH.Web.Controllers
                 }
                 ModelState.AddModelError("", "Error al actualizar");
             }
+
+            SetAuthHeader();
+            var actual = await _httpClient.GetAsync($"api/comprasepp/{id}");
+            if (actual.IsSuccessStatusCode)
+                ViewBag.Compra = await actual.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
+
             await CargarListasEnViewBag();
             ViewBag.Id = id;
             return View(dto);
@@ -202,7 +209,7 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode) return RedirectToAction(nameof(Index));
 
-                var historial = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+                var historial = await response.Content.ReadFromJsonAsync<IEnumerable<HistorialPrecioDto>>();
 
                 var materialResponse = await _httpClient.GetAsync($"api/materiales/{idMaterial}");
                 if (materialResponse.IsSuccessStatusCode)

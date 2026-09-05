@@ -8,8 +8,11 @@ namespace VH.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEntregaEPPService _entregaService;
 
-        //private const string IncludeProperties = "UsuarioSolicita,EmpleadoRecibe.Proyecto,Almacen.Proyecto,UsuarioAprueba,UsuarioEntrega,Detalles.Material.UnidadMedida,Detalles.Compra.Proveedor";
-        private const string IncludeProperties = "UsuarioSolicita,EmpleadoRecibe,Almacen,UsuarioAprueba,UsuarioEntrega,Detalles.Material.UnidadMedida,Detalles.Compra";
+        // El lote de cada renglón es ahora un CompraEPPDetalle, y el proveedor
+        // cuelga de la cabecera de su compra.
+        private const string IncludeProperties =
+            "UsuarioSolicita,EmpleadoRecibe,Almacen,UsuarioAprueba,UsuarioEntrega," +
+            "Detalles.Material.UnidadMedida,Detalles.CompraDetalle.Compra.Proveedor";
         public RequisicionEPPService(IUnitOfWork unitOfWork, IEntregaEPPService entregaService)
         {
             _unitOfWork = unitOfWork;
@@ -131,7 +134,7 @@ namespace VH.Services.Services
             string firmaDigital,
             string? fotoEvidencia,
             string? observaciones,
-            List<(int IdDetalle, int IdCompra, decimal CantidadEntregada)> detalles)
+            List<(int IdDetalle, int IdCompraDetalle, decimal CantidadEntregada)> detalles)
         {
             var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: "Detalles");
             if (requisicion == null)
@@ -171,22 +174,22 @@ namespace VH.Services.Services
                         $"No se puede entregar más de lo solicitado. " +
                         $"Solicitado: {detalle.CantidadSolicitada}, a entregar: {entrega.CantidadEntregada}.");
 
-                var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra);
+                var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle);
                 if (compra == null)
-                    return (false, $"El lote {entrega.IdCompra} no existe.");
+                    return (false, $"El lote {entrega.IdCompraDetalle} no existe.");
 
                 if (compra.IdMaterial != detalle.IdMaterial)
-                    return (false, $"El lote {entrega.IdCompra} no corresponde al material solicitado.");
+                    return (false, $"El lote {entrega.IdCompraDetalle} no corresponde al material solicitado.");
 
                 // Sin esta validación se descontaba la disponibilidad del lote de un
                 // almacén y la existencia del inventario de otro: descuadre permanente.
                 if (compra.IdAlmacen != requisicion.IdAlmacen)
                     return (false,
-                        $"El lote {entrega.IdCompra} pertenece a otro almacén y no puede surtir " +
+                        $"El lote {entrega.IdCompraDetalle} pertenece a otro almacén y no puede surtir " +
                         $"esta requisición.");
 
                 if (compra.CantidadDisponible < entrega.CantidadEntregada)
-                    return (false, $"El lote {entrega.IdCompra} no tiene suficiente cantidad. Disponible: {compra.CantidadDisponible}");
+                    return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {compra.CantidadDisponible}");
             }
 
             // A partir de aquí sí se escribe. La entrega de cada material pasa por
@@ -205,7 +208,7 @@ namespace VH.Services.Services
                     var entregaEPP = new EntregaEPP
                     {
                         IdEmpleado = requisicion.IdEmpleadoRecibe,
-                        IdCompra = entrega.IdCompra,
+                        IdCompraDetalle = entrega.IdCompraDetalle,
                         FechaEntrega = DateTime.Now,
                         CantidadEntregada = entrega.CantidadEntregada,
                         TallaEntregada = detalle.TallaSolicitada ?? string.Empty,
@@ -214,7 +217,7 @@ namespace VH.Services.Services
 
                     await _entregaService.CreateEntregaAsync(entregaEPP);
 
-                    detalle.IdCompra = entrega.IdCompra;
+                    detalle.IdCompraDetalle = entrega.IdCompraDetalle;
                     detalle.CantidadEntregada = entrega.CantidadEntregada;
                 }
 
