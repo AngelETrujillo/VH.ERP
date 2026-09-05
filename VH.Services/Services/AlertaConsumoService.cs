@@ -53,9 +53,13 @@ namespace VH.Services.Services
 
             foreach (var detalle in detalles)
             {
-                // Evaluar cada material solicitado
+                // El destino vive en el renglón: cada uno puede ir a una persona
+                // distinta. Lo que se carga a la obra no se evalúa, porque el
+                // consumo prematuro se mide contra el historial de una persona.
+                if (!detalle.IdEmpleadoDestino.HasValue) continue;
+
                 var alertaPrematura = await EvaluarSolicitudPrematuraAsync(
-                    requisicion.IdEmpleadoRecibe,
+                    detalle.IdEmpleadoDestino.Value,
                     detalle.IdMaterial,
                     idRequisicion: requisicion.IdRequisicion);
 

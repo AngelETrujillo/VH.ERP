@@ -123,7 +123,9 @@ namespace VH.API.Controllers
         {
             try
             {
-                var result = await _requisicionService.AprobarAsync(id, GetUserId(), dto.Aprobada, dto.MotivoRechazo);
+                var result = await _requisicionService.AprobarAsync(
+                    id, GetUserId(), dto.Aprobada, dto.MotivoRechazo, dto.IdsRenglones);
+
                 if (!result)
                     return NotFound();
 
@@ -147,6 +149,8 @@ namespace VH.API.Controllers
         }
 
         // POST: api/requisicionesepp/5/entregar
+        // Entrega lo que recibe UNA persona, con su firma. Un documento con
+        // renglones para varios obreros se surte con una llamada por obrero.
         [HttpPost("{id}/entregar")]
         [RequierePermisoApi("REQUISICIONES_EPP", "editar")]
         public async Task<IActionResult> Entregar(int id, [FromBody] EntregarRequisicionRequestDto dto)
@@ -158,8 +162,9 @@ namespace VH.API.Controllers
             {
                 var detalles = dto.Detalles.Select(d => (d.IdRequisicionDetalle, d.IdCompraDetalle, d.CantidadEntregada)).ToList();
 
-                var (success, error) = await _requisicionService.EntregarAsync(
+                var (success, error) = await _requisicionService.EntregarAEmpleadoAsync(
                     id,
+                    dto.IdEmpleado,
                     GetUserId(),
                     dto.FirmaDigital,
                     dto.FotoEvidencia,
@@ -169,15 +174,24 @@ namespace VH.API.Controllers
                 if (!success)
                     return BadRequest(new { mensaje = error });
 
+                var requisicion = await _requisicionService.GetByIdAsync(id);
+                var estado = requisicion?.EstadoRequisicion;
+
                 await _logService.RegistrarAsync(
                     GetUserId(),
                     "Entregar",
                     "RequisicionEPP",
                     id,
-                    "Requisición entregada",
+                    $"Entrega firmada por el empleado {dto.IdEmpleado}",
                     GetUserIP());
 
-                return Ok(new { mensaje = "Requisición entregada exitosamente" });
+                return Ok(new
+                {
+                    mensaje = estado == EstadoRequisicion.Entregada
+                        ? "Entrega registrada. La requisición queda surtida por completo."
+                        : "Entrega registrada. Quedan materiales por surtir a otros empleados.",
+                    estado = estado?.ToString()
+                });
             }
             catch (Exception ex)
             {

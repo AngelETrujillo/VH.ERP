@@ -35,6 +35,7 @@ namespace VH.Data.Repositories
         private IGenericRepository<EntregaEPP>? _entregasEPP;
         private IGenericRepository<RequisicionEPP>? _requisicionesEPP;
         private IGenericRepository<RequisicionEPPDetalle>? _requisicionesEPPDetalle;
+        private IGenericRepository<RequisicionEntrega>? _requisicionesEntregas;
 
         // Analytics
         private IGenericRepository<ConfiguracionMaterialEPP>? _configuracionesMaterialEPP;
@@ -99,6 +100,9 @@ namespace VH.Data.Repositories
 
         public IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle =>
             _requisicionesEPPDetalle ??= new GenericRepository<RequisicionEPPDetalle>(_context);
+
+        public IGenericRepository<RequisicionEntrega> RequisicionesEntregas =>
+            _requisicionesEntregas ??= new GenericRepository<RequisicionEntrega>(_context);
 
         // --- Analytics ---
         public IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP =>

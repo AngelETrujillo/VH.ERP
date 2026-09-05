@@ -178,9 +178,10 @@ namespace VH.Web.Controllers
             return RedirectToAction(nameof(Aprobar), new { id });
         }
 
-        // GET: RequisicionesEPP/Entregar/5
+        // GET: RequisicionesEPP/Entregar/5?idEmpleado=7
+        // Se surte de persona en persona: cada trabajador firma lo suyo.
         [RequierePermiso("REQUISICIONES_EPP", "editar")]
-        public async Task<IActionResult> Entregar(int id)
+        public async Task<IActionResult> Entregar(int id, int? idEmpleado = null)
         {
             SetAuthHeader();
             var response = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
@@ -188,14 +189,34 @@ namespace VH.Web.Controllers
                 return NotFound();
 
             var requisicion = await response.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+            if (requisicion == null)
+                return NotFound();
 
-            if (requisicion?.EstadoRequisicion != EstadoRequisicion.Aprobada)
+            if (requisicion.EstadoRequisicion != EstadoRequisicion.Aprobada &&
+                requisicion.EstadoRequisicion != EstadoRequisicion.Parcial)
             {
-                TempData["Error"] = "Solo se pueden entregar requisiciones aprobadas";
+                TempData["Error"] = "Solo se puede surtir material de requisiciones autorizadas";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Cargar lotes disponibles para cada material
+            var pendientes = requisicion.EmpleadosPorSurtir;
+            if (pendientes.Count == 0)
+            {
+                TempData["Error"] = "Esta requisición ya no tiene material por surtir a trabajadores";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Sin empleado en la URL se atiende al primero que quede por recibir.
+            var destino = idEmpleado ?? pendientes.First();
+            if (!pendientes.Contains(destino))
+            {
+                TempData["Error"] = "Ese trabajador no tiene material pendiente en esta requisición";
+                return RedirectToAction(nameof(Entregar), new { id });
+            }
+
+            ViewBag.IdEmpleadoDestino = destino;
+            ViewBag.EmpleadosPendientes = pendientes;
+
             await CargarLotesDisponibles(requisicion);
 
             return View(requisicion);
@@ -213,8 +234,23 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsJsonAsync($"api/requisicionesepp/{id}/entregar", dto);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = "Requisición entregada exitosamente";
-                    return RedirectToAction(nameof(Index));
+                    // Si quedan trabajadores por recibir, se sigue con el siguiente
+                    // en lugar de volver al listado.
+                    var actual = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
+                    if (actual.IsSuccessStatusCode)
+                    {
+                        var req = await actual.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+                        var pendientes = req?.EmpleadosPorSurtir ?? new List<int>();
+
+                        if (pendientes.Count > 0)
+                        {
+                            TempData["Mensaje"] = "Entrega firmada. Continúe con el siguiente trabajador.";
+                            return RedirectToAction(nameof(Entregar), new { id, idEmpleado = pendientes.First() });
+                        }
+                    }
+
+                    TempData["Mensaje"] = "Entrega firmada. La requisición quedó surtida por completo.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
                 var error = await response.Content.ReadAsStringAsync();

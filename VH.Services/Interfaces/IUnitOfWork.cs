@@ -27,6 +27,7 @@ namespace VH.Services.Interfaces
         IGenericRepository<EntregaEPP> EntregasEPP { get; }
         IGenericRepository<RequisicionEPP> RequisicionesEPP { get; }
         IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; }
+        IGenericRepository<RequisicionEntrega> RequisicionesEntregas { get; }
 
         // ===== REPOSITORIOS DE ANALYTICS =====
         IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }

@@ -200,16 +200,18 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.Justificacion, opt => opt.MapFrom(src => src.Justificacion ?? string.Empty))
                 .ForMember(dest => dest.NombreUsuarioSolicita, opt => opt.MapFrom(src =>
                     src.UsuarioSolicita != null ? src.UsuarioSolicita.NombreCompleto : string.Empty))
-                .ForMember(dest => dest.NombreEmpleadoRecibe, opt => opt.MapFrom(src =>
-                    src.EmpleadoRecibe != null ? $"{src.EmpleadoRecibe.Nombre} {src.EmpleadoRecibe.ApellidoPaterno}" : string.Empty))
-                .ForMember(dest => dest.NumeroNominaEmpleado, opt => opt.MapFrom(src =>
-                    src.EmpleadoRecibe != null ? src.EmpleadoRecibe.NumeroNomina : string.Empty))
                 .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
                     src.Almacen != null ? src.Almacen.Nombre : string.Empty))
                 .ForMember(dest => dest.NombreUsuarioAprueba, opt => opt.MapFrom(src =>
-                    src.UsuarioAprueba != null ? src.UsuarioAprueba.NombreCompleto : null))
+                    src.UsuarioAprueba != null ? src.UsuarioAprueba.NombreCompleto : null));
+
+            CreateMap<RequisicionEntrega, RequisicionEntregaResponseDto>()
+                .ForMember(dest => dest.NombreEmpleado, opt => opt.MapFrom(src =>
+                    src.Empleado != null ? src.Empleado.NombreCompleto : string.Empty))
+                .ForMember(dest => dest.NumeroNomina, opt => opt.MapFrom(src =>
+                    src.Empleado != null ? src.Empleado.NumeroNomina : string.Empty))
                 .ForMember(dest => dest.NombreUsuarioEntrega, opt => opt.MapFrom(src =>
-                    src.UsuarioEntrega != null ? src.UsuarioEntrega.NombreCompleto : null));
+                    src.UsuarioEntrega != null ? src.UsuarioEntrega.NombreCompleto : string.Empty));
 
             CreateMap<RequisicionEPPDetalle, RequisicionEPPDetalleResponseDto>()
                 .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
@@ -218,8 +220,17 @@ namespace VH.Services.Mapping
                     src.Material != null && src.Material.UnidadMedida != null ? src.Material.UnidadMedida.Abreviatura : string.Empty))
                 .ForMember(dest => dest.DescripcionLote, opt => opt.MapFrom(src =>
                     src.CompraDetalle != null
-                        ? $"Lote #{src.CompraDetalle.IdCompraDetalle} - {(src.CompraDetalle.Compra != null && src.CompraDetalle.Compra.Proveedor != null ? src.CompraDetalle.Compra.Proveedor.Nombre : "")}"
-                        : null));
+                        ? $"Lote #{src.CompraDetalle.IdCompraDetalle} - {(src.CompraDetalle.Talla ?? "")}"
+                        : null))
+                // Destino del renglón: la persona, o la obra/partida
+                .ForMember(dest => dest.NombreEmpleadoDestino, opt => opt.MapFrom(src =>
+                    src.EmpleadoDestino != null ? src.EmpleadoDestino.NombreCompleto : string.Empty))
+                .ForMember(dest => dest.NumeroNominaDestino, opt => opt.MapFrom(src =>
+                    src.EmpleadoDestino != null ? src.EmpleadoDestino.NumeroNomina : string.Empty))
+                .ForMember(dest => dest.NombreProyectoDestino, opt => opt.MapFrom(src =>
+                    src.ProyectoDestino != null ? src.ProyectoDestino.Nombre : null))
+                .ForMember(dest => dest.DescripcionPartida, opt => opt.MapFrom(src =>
+                    src.ConceptoPartida != null ? src.ConceptoPartida.Descripcion : null));
 
             CreateMap<RequisicionEPPRequestDto, RequisicionEPP>()
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));

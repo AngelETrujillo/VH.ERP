@@ -1,4 +1,4 @@
-﻿using VH.Services.Entities;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -8,11 +8,24 @@ namespace VH.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEntregaEPPService _entregaService;
 
-        // El lote de cada renglón es ahora un CompraEPPDetalle, y el proveedor
-        // cuelga de la cabecera de su compra.
-        private const string IncludeProperties =
-            "UsuarioSolicita,EmpleadoRecibe,Almacen,UsuarioAprueba,UsuarioEntrega," +
-            "Detalles.Material.UnidadMedida,Detalles.CompraDetalle.Compra.Proveedor";
+        /// <summary>
+        /// Para listados. Deliberadamente sin Entregas: cada firma es un PNG de
+        /// varios KB y traerlas en una consulta de listado la vuelve inservible.
+        /// </summary>
+        private const string IncludeListado =
+            "UsuarioSolicita,Almacen,UsuarioAprueba," +
+            "Detalles.Material.UnidadMedida,Detalles.EmpleadoDestino";
+
+        /// <summary>
+        /// Para el detalle de un documento. Las firmas no van aquí: se cargan en
+        /// una segunda consulta, porque acumular caminos de include en una sola
+        /// dispara el tiempo que EF tarda en generar el SQL — con nueve caminos la
+        /// misma consulta pasaba de milisegundos a 25 segundos.
+        /// </summary>
+        private const string IncludeCompleto =
+            "UsuarioSolicita,Almacen,UsuarioAprueba," +
+            "Detalles.Material.UnidadMedida,Detalles.EmpleadoDestino,Detalles.CompraDetalle";
+
         public RequisicionEPPService(IUnitOfWork unitOfWork, IEntregaEPPService entregaService)
         {
             _unitOfWork = unitOfWork;
@@ -21,62 +34,68 @@ namespace VH.Services.Services
 
         public async Task<IEnumerable<RequisicionEPP>> GetAllAsync()
         {
-            return await _unitOfWork.RequisicionesEPP.GetAllAsync(includeProperties: IncludeProperties);
+            return await _unitOfWork.RequisicionesEPP.GetAllAsync(includeProperties: IncludeListado);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetByUsuarioAsync(string userId)
         {
             return await _unitOfWork.RequisicionesEPP.FindAsync(
                 r => r.IdUsuarioSolicita == userId,
-                includeProperties: IncludeProperties);
+                includeProperties: IncludeListado);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetByEmpleadoAsync(int idEmpleado)
         {
+            // El empleado vive en los renglones: el documento cuenta si alguno va a él.
             return await _unitOfWork.RequisicionesEPP.FindAsync(
-                r => r.IdEmpleadoRecibe == idEmpleado,
-                includeProperties: IncludeProperties);
+                r => r.Detalles.Any(d => d.IdEmpleadoDestino == idEmpleado),
+                includeProperties: IncludeListado);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetByEstadoAsync(EstadoRequisicion estado)
         {
             return await _unitOfWork.RequisicionesEPP.FindAsync(
                 r => r.EstadoRequisicion == estado,
-                includeProperties: IncludeProperties);
+                includeProperties: IncludeListado);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetPendientesAprobacionAsync()
         {
-            return await GetByEstadoAsync(EstadoRequisicion.Pendiente);
+            return await _unitOfWork.RequisicionesEPP.FindAsync(
+                r => r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Solicitado),
+                includeProperties: IncludeListado);
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetPendientesEntregaAsync()
         {
-            return await GetByEstadoAsync(EstadoRequisicion.Aprobada);
+            return await _unitOfWork.RequisicionesEPP.FindAsync(
+                r => r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Autorizado),
+                includeProperties: IncludeListado);
         }
 
         public async Task<RequisicionEPP?> GetByIdAsync(int id)
         {
-            return await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: IncludeProperties);
+            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: IncludeCompleto);
+            if (requisicion == null) return null;
+
+            // Segunda consulta para las firmas. Al compartir el contexto, EF las
+            // engancha solo a requisicion.Entregas.
+            await _unitOfWork.RequisicionesEntregas.FindAsync(
+                e => e.IdRequisicion == id,
+                includeProperties: "Empleado,UsuarioEntrega");
+
+            return requisicion;
         }
 
         public async Task<RequisicionEPP> CreateAsync(RequisicionEPP requisicion, string userId)
         {
-            // Validar empleado
-            var empleado = await _unitOfWork.Empleados.GetByIdAsync(requisicion.IdEmpleadoRecibe);
-            if (empleado == null)
-                throw new ArgumentException($"El empleado con ID {requisicion.IdEmpleadoRecibe} no existe.");
-
-            // Validar almacén
             var almacen = await _unitOfWork.Almacenes.GetByIdAsync(requisicion.IdAlmacen);
             if (almacen == null)
                 throw new ArgumentException($"El almacén con ID {requisicion.IdAlmacen} no existe.");
 
-            // Validar que tenga detalles
             if (requisicion.Detalles == null || !requisicion.Detalles.Any())
                 throw new InvalidOperationException("La requisición debe tener al menos un material.");
 
-            // Validar materiales
             foreach (var detalle in requisicion.Detalles)
             {
                 var material = await _unitOfWork.Materiales.GetByIdAsync(detalle.IdMaterial);
@@ -85,13 +104,30 @@ namespace VH.Services.Services
 
                 if (detalle.CantidadSolicitada <= 0)
                     throw new ArgumentException("La cantidad solicitada debe ser mayor a 0.");
+
+                // El modelo ya admite cargar un renglón a la obra o a una partida,
+                // pero surtirlo exige una salida de almacén que no vaya a una
+                // persona, y eso llega con el kardex de movimientos. Aceptarlo hoy
+                // dejaría renglones autorizados que nadie puede despachar.
+                if (!detalle.IdEmpleadoDestino.HasValue)
+                {
+                    throw new ArgumentException(
+                        $"El renglón de '{material.Nombre}' necesita un trabajador que lo reciba. " +
+                        "El consumo cargado directamente a la obra estará disponible cuando " +
+                        "el almacén registre salidas sin destinatario.");
+                }
+
+                var empleado = await _unitOfWork.Empleados.GetByIdAsync(detalle.IdEmpleadoDestino.Value);
+                if (empleado == null)
+                    throw new ArgumentException($"El empleado con ID {detalle.IdEmpleadoDestino} no existe.");
+
+                detalle.EstadoRenglon = EstadoRenglonRequisicion.Solicitado;
             }
 
-            // Asignar valores
             requisicion.NumeroRequisicion = await GenerarNumeroRequisicionAsync();
             requisicion.IdUsuarioSolicita = userId;
-            requisicion.EstadoRequisicion = EstadoRequisicion.Pendiente;
             requisicion.FechaSolicitud = DateTime.Now;
+            requisicion.EstadoRequisicion = EstadoRequisicion.Pendiente;
 
             await _unitOfWork.RequisicionesEPP.AddAsync(requisicion);
             await _unitOfWork.CompleteAsync();
@@ -99,18 +135,14 @@ namespace VH.Services.Services
             return requisicion;
         }
 
-        public async Task<bool> AprobarAsync(int id, string userId, bool aprobada, string? motivoRechazo)
+        public async Task<bool> AprobarAsync(int id, string userId, bool aprobada, string? motivoRechazo,
+            List<int>? idsRenglones = null)
         {
-            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id);
+            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: "Detalles");
             if (requisicion == null)
                 return false;
 
-            if (requisicion.EstadoRequisicion != EstadoRequisicion.Pendiente)
-                throw new InvalidOperationException("Solo se pueden aprobar/rechazar requisiciones pendientes.");
-
-            // Segregación de funciones: quien solicita no puede autorizar su propia
-            // requisición. Es el control interno básico de cualquier almacén y hasta
-            // ahora nada lo impedía.
+            // Segregación de funciones: quien solicita no puede autorizar lo suyo.
             if (requisicion.IdUsuarioSolicita == userId)
                 throw new InvalidOperationException(
                     "No puede aprobar ni rechazar una requisición que usted mismo solicitó. " +
@@ -119,29 +151,47 @@ namespace VH.Services.Services
             if (!aprobada && string.IsNullOrWhiteSpace(motivoRechazo))
                 throw new ArgumentException("Debe especificar el motivo del rechazo.");
 
-            requisicion.EstadoRequisicion = aprobada ? EstadoRequisicion.Aprobada : EstadoRequisicion.Rechazada;
+            // Sin lista explícita, se resuelve todo lo que siga solicitado.
+            var objetivo = requisicion.Detalles
+                .Where(d => d.EstadoRenglon == EstadoRenglonRequisicion.Solicitado)
+                .Where(d => idsRenglones == null || idsRenglones.Count == 0
+                            || idsRenglones.Contains(d.IdRequisicionDetalle))
+                .ToList();
+
+            if (objetivo.Count == 0)
+                throw new InvalidOperationException("No hay renglones pendientes de autorizar en esta requisición.");
+
+            foreach (var detalle in objetivo)
+            {
+                detalle.EstadoRenglon = aprobada
+                    ? EstadoRenglonRequisicion.Autorizado
+                    : EstadoRenglonRequisicion.Rechazado;
+                detalle.MotivoRechazo = aprobada ? null : motivoRechazo;
+            }
+
             requisicion.IdUsuarioAprueba = userId;
             requisicion.FechaAprobacion = DateTime.Now;
             requisicion.MotivoRechazo = aprobada ? null : motivoRechazo;
+            requisicion.EstadoRequisicion = requisicion.CalcularEstado();
 
             _unitOfWork.RequisicionesEPP.Update(requisicion);
             return await _unitOfWork.CompleteAsync() > 0;
         }
 
-        public async Task<(bool Success, string? Error)> EntregarAsync(
+        public async Task<(bool Success, string? Error)> EntregarAEmpleadoAsync(
             int id,
+            int idEmpleado,
             string userId,
             string firmaDigital,
             string? fotoEvidencia,
             string? observaciones,
             List<(int IdDetalle, int IdCompraDetalle, decimal CantidadEntregada)> detalles)
         {
-            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: "Detalles");
+            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(
+                id, includeProperties: "Detalles,Entregas");
+
             if (requisicion == null)
                 return (false, "Requisición no encontrada.");
-
-            if (requisicion.EstadoRequisicion != EstadoRequisicion.Aprobada)
-                return (false, "Solo se pueden entregar requisiciones aprobadas.");
 
             if (string.IsNullOrWhiteSpace(firmaDigital))
                 return (false, "La firma digital es obligatoria.");
@@ -149,65 +199,75 @@ namespace VH.Services.Services
             if (detalles == null || detalles.Count == 0)
                 return (false, "Debe especificar al menos un material a entregar.");
 
-            // Un mismo renglón repetido en la petición se procesaría dos veces y
-            // descontaría el doble del inventario.
+            var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado);
+            if (empleado == null)
+                return (false, $"El empleado con ID {idEmpleado} no existe.");
+
+            // Una persona firma una sola vez por documento.
+            if (requisicion.Entregas.Any(e => e.IdEmpleado == idEmpleado))
+                return (false, $"{empleado.NombreCompleto} ya firmó la entrega de esta requisición.");
+
             var repetido = detalles
                 .GroupBy(d => d.IdDetalle)
                 .FirstOrDefault(g => g.Count() > 1);
             if (repetido != null)
                 return (false, $"El renglón {repetido.Key} viene repetido en la entrega.");
 
-            // Validación completa antes de tocar nada: si un renglón es inválido,
-            // no queremos haber movido inventario por los anteriores.
+            // Validación completa antes de mover nada.
             foreach (var entrega in detalles)
             {
                 var detalle = requisicion.Detalles.FirstOrDefault(d => d.IdRequisicionDetalle == entrega.IdDetalle);
                 if (detalle == null)
                     return (false, $"Detalle {entrega.IdDetalle} no encontrado.");
 
+                // Cada firma sólo puede amparar lo que recibe esa persona.
+                if (detalle.IdEmpleadoDestino != idEmpleado)
+                    return (false,
+                        $"El renglón {entrega.IdDetalle} no corresponde a {empleado.NombreCompleto}. " +
+                        "Cada empleado firma únicamente lo que recibe.");
+
+                if (detalle.EstadoRenglon != EstadoRenglonRequisicion.Autorizado)
+                    return (false,
+                        $"El renglón {entrega.IdDetalle} no está autorizado " +
+                        $"(estado actual: {detalle.EstadoRenglon}).");
+
                 if (entrega.CantidadEntregada <= 0)
                     return (false, $"La cantidad entregada del renglón {entrega.IdDetalle} debe ser mayor a 0.");
 
-                // El tope contra lo solicitado sólo existía en el HTML del formulario.
                 if (entrega.CantidadEntregada > detalle.CantidadSolicitada)
                     return (false,
                         $"No se puede entregar más de lo solicitado. " +
                         $"Solicitado: {detalle.CantidadSolicitada}, a entregar: {entrega.CantidadEntregada}.");
 
-                var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle);
-                if (compra == null)
+                var lote = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle);
+                if (lote == null)
                     return (false, $"El lote {entrega.IdCompraDetalle} no existe.");
 
-                if (compra.IdMaterial != detalle.IdMaterial)
+                if (lote.IdMaterial != detalle.IdMaterial)
                     return (false, $"El lote {entrega.IdCompraDetalle} no corresponde al material solicitado.");
 
-                // Sin esta validación se descontaba la disponibilidad del lote de un
-                // almacén y la existencia del inventario de otro: descuadre permanente.
-                if (compra.IdAlmacen != requisicion.IdAlmacen)
+                if (lote.IdAlmacen != requisicion.IdAlmacen)
                     return (false,
                         $"El lote {entrega.IdCompraDetalle} pertenece a otro almacén y no puede surtir " +
-                        $"esta requisición.");
+                        "esta requisición.");
 
-                if (compra.CantidadDisponible < entrega.CantidadEntregada)
-                    return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {compra.CantidadDisponible}");
+                if (lote.CantidadDisponible < entrega.CantidadEntregada)
+                    return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {lote.CantidadDisponible}");
             }
 
-            // A partir de aquí sí se escribe. La entrega de cada material pasa por
-            // EntregaEPPService, que es quien descuenta lote e inventario, evalúa las
-            // alertas de consumo y recalcula las estadísticas mensuales. Antes esto se
-            // escribía directo al repositorio y el motor de alertas nunca corría para
-            // el material surtido por requisición, que es el flujo formal.
             await _unitOfWork.BeginTransactionAsync();
 
             try
             {
+                // La salida de almacén pasa por EntregaEPPService, que descuenta lote
+                // e inventario, evalúa las alertas de consumo y recalcula estadísticas.
                 foreach (var entrega in detalles)
                 {
                     var detalle = requisicion.Detalles.First(d => d.IdRequisicionDetalle == entrega.IdDetalle);
 
                     var entregaEPP = new EntregaEPP
                     {
-                        IdEmpleado = requisicion.IdEmpleadoRecibe,
+                        IdEmpleado = idEmpleado,
                         IdCompraDetalle = entrega.IdCompraDetalle,
                         FechaEntrega = DateTime.Now,
                         CantidadEntregada = entrega.CantidadEntregada,
@@ -219,19 +279,29 @@ namespace VH.Services.Services
 
                     detalle.IdCompraDetalle = entrega.IdCompraDetalle;
                     detalle.CantidadEntregada = entrega.CantidadEntregada;
+                    detalle.EstadoRenglon = EstadoRenglonRequisicion.Surtido;
                 }
 
-                requisicion.EstadoRequisicion = EstadoRequisicion.Entregada;
-                requisicion.IdUsuarioEntrega = userId;
-                requisicion.FechaEntrega = DateTime.Now;
-                requisicion.FirmaDigital = firmaDigital;
-                requisicion.FotoEvidencia = fotoEvidencia;
-                requisicion.Observaciones = observaciones;
+                // La firma de esta persona, que ampara sólo lo que ella recibió.
+                var firma = new RequisicionEntrega
+                {
+                    IdRequisicion = requisicion.IdRequisicion,
+                    IdEmpleado = idEmpleado,
+                    FechaEntrega = DateTime.Now,
+                    IdUsuarioEntrega = userId,
+                    FirmaDigital = firmaDigital,
+                    FotoEvidencia = fotoEvidencia,
+                    Observaciones = observaciones
+                };
+                await _unitOfWork.RequisicionesEntregas.AddAsync(firma);
 
+                // El documento queda parcial mientras otras personas no hayan recibido.
+                requisicion.EstadoRequisicion = requisicion.CalcularEstado();
                 _unitOfWork.RequisicionesEPP.Update(requisicion);
-                await _unitOfWork.CompleteAsync();
 
+                await _unitOfWork.CompleteAsync();
                 await _unitOfWork.CommitTransactionAsync();
+
                 return (true, null);
             }
             catch (Exception ex)
@@ -243,19 +313,28 @@ namespace VH.Services.Services
 
         public async Task<bool> CancelarAsync(int id, string userId)
         {
-            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id);
+            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(id, includeProperties: "Detalles");
             if (requisicion == null)
                 return false;
-
-            if (requisicion.EstadoRequisicion != EstadoRequisicion.Pendiente)
-                throw new InvalidOperationException("Solo se pueden cancelar requisiciones pendientes.");
 
             if (requisicion.IdUsuarioSolicita != userId)
                 throw new InvalidOperationException("Solo el solicitante puede cancelar la requisición.");
 
-            requisicion.EstadoRequisicion = EstadoRequisicion.Cancelada;
-            _unitOfWork.RequisicionesEPP.Update(requisicion);
+            if (requisicion.Detalles.Any(d => d.EstaSurtido))
+                throw new InvalidOperationException(
+                    "No se puede cancelar: ya se entregó material de esta requisición. " +
+                    "Los renglones pendientes pueden cancelarse uno por uno.");
 
+            var vivos = requisicion.Detalles.Where(d => d.EstaPendiente).ToList();
+            if (vivos.Count == 0)
+                throw new InvalidOperationException("La requisición no tiene renglones que cancelar.");
+
+            foreach (var detalle in vivos)
+                detalle.EstadoRenglon = EstadoRenglonRequisicion.Cancelado;
+
+            requisicion.EstadoRequisicion = requisicion.CalcularEstado();
+
+            _unitOfWork.RequisicionesEPP.Update(requisicion);
             return await _unitOfWork.CompleteAsync() > 0;
         }
 
@@ -280,18 +359,8 @@ namespace VH.Services.Services
 
         public async Task<bool> PuedeVerRequisicionAsync(int idRequisicion, string userId)
         {
-            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(idRequisicion, includeProperties: "EmpleadoRecibe");
-            if (requisicion == null)
-                return false;
-
-            // El solicitante puede ver
-            if (requisicion.IdUsuarioSolicita == userId)
-                return true;
-
-            // Buscar si el usuario está asociado al empleado receptor
-            var empleadosUsuario = await _unitOfWork.Empleados.FindAsync(e => e.IdEmpleado == requisicion.IdEmpleadoRecibe);
-
-            return empleadosUsuario.Any();
+            var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(idRequisicion);
+            return requisicion != null && requisicion.IdUsuarioSolicita == userId;
         }
     }
 }

@@ -29,6 +29,7 @@ namespace VH.Data
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
         public DbSet<RequisicionEPP> RequisicionesEPP { get; set; }
         public DbSet<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; set; }
+        public DbSet<RequisicionEntrega> RequisicionesEntregas { get; set; }
 
         // Analytics
         public DbSet<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; set; }
@@ -57,6 +58,7 @@ namespace VH.Data
             ConfigurarEntregaEPP(modelBuilder);
             ConfigurarRequisicionEPP(modelBuilder);
             ConfigurarRequisicionEPPDetalle(modelBuilder);
+            ConfigurarRequisicionEntrega(modelBuilder);
             ConfigurarConfiguracionMaterialEPP(modelBuilder);
             ConfigurarAlertaConsumo(modelBuilder);
             ConfigurarEstadisticaEmpleadoMensual(modelBuilder);
@@ -314,25 +316,16 @@ namespace VH.Data
                 entity.Property(r => r.NumeroRequisicion).IsRequired().HasMaxLength(20);
                 entity.Property(r => r.Justificacion).HasMaxLength(500);
                 entity.Property(r => r.MotivoRechazo).HasMaxLength(500);
-                entity.Property(r => r.FirmaDigital).HasMaxLength(500000);
-                entity.Property(r => r.FotoEvidencia).HasMaxLength(300);
-                entity.Property(r => r.Observaciones).HasMaxLength(500);
                 entity.Property(r => r.EstadoRequisicion).IsRequired();
 
                 entity.HasIndex(r => r.NumeroRequisicion).IsUnique();
                 entity.HasIndex(r => r.FechaSolicitud);
                 entity.HasIndex(r => r.EstadoRequisicion);
                 entity.HasIndex(r => r.IdUsuarioSolicita);
-                entity.HasIndex(r => r.IdEmpleadoRecibe);
 
                 entity.HasOne(r => r.UsuarioSolicita)
                     .WithMany()
                     .HasForeignKey(r => r.IdUsuarioSolicita)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(r => r.EmpleadoRecibe)
-                    .WithMany()
-                    .HasForeignKey(r => r.IdEmpleadoRecibe)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(r => r.Almacen)
@@ -345,9 +338,37 @@ namespace VH.Data
                     .HasForeignKey(r => r.IdUsuarioAprueba)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(r => r.UsuarioEntrega)
+                // Las firmas mueren con el documento que las ampara.
+                entity.HasMany(r => r.Entregas)
+                    .WithOne(e => e.Requisicion)
+                    .HasForeignKey(e => e.IdRequisicion)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarRequisicionEntrega(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RequisicionEntrega>(entity =>
+            {
+                entity.HasKey(e => e.IdRequisicionEntrega);
+                entity.Property(e => e.FirmaDigital).IsRequired().HasMaxLength(500000);
+                entity.Property(e => e.FotoEvidencia).HasMaxLength(300);
+                entity.Property(e => e.Observaciones).HasMaxLength(500);
+                entity.Property(e => e.FechaEntrega).IsRequired();
+
+                // Una persona firma una sola vez por documento: todo lo que recibe
+                // de esa requisición queda amparado por esa firma.
+                entity.HasIndex(e => new { e.IdRequisicion, e.IdEmpleado }).IsUnique();
+                entity.HasIndex(e => e.FechaEntrega);
+
+                entity.HasOne(e => e.Empleado)
                     .WithMany()
-                    .HasForeignKey(r => r.IdUsuarioEntrega)
+                    .HasForeignKey(e => e.IdEmpleado)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.UsuarioEntrega)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdUsuarioEntrega)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
@@ -360,6 +381,12 @@ namespace VH.Data
                 entity.Property(d => d.CantidadSolicitada).IsRequired().HasPrecision(18, 4);
                 entity.Property(d => d.CantidadEntregada).HasPrecision(18, 4);
                 entity.Property(d => d.TallaSolicitada).HasMaxLength(20);
+                entity.Property(d => d.MotivoRechazo).HasMaxLength(500);
+                entity.Property(d => d.EstadoRenglon).IsRequired();
+
+                // La bandeja de faltantes de la fase 5 consulta por estas dos.
+                entity.HasIndex(d => d.EstadoRenglon);
+                entity.HasIndex(d => d.IdEmpleadoDestino);
 
                 entity.HasOne(d => d.Requisicion)
                     .WithMany(r => r.Detalles)
@@ -374,6 +401,21 @@ namespace VH.Data
                 entity.HasOne(d => d.CompraDetalle)
                     .WithMany()
                     .HasForeignKey(d => d.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.EmpleadoDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdEmpleadoDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.ProyectoDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdProyectoDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.ConceptoPartida)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdConceptoPartida)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
