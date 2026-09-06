@@ -39,6 +39,7 @@ namespace VH.Data.Repositories
         private IGenericRepository<OrdenCompra>? _ordenesCompra;
         private IGenericRepository<OrdenCompraDetalle>? _ordenesCompraDetalle;
         private IGenericRepository<RequisicionCobertura>? _requisicionesCobertura;
+        private IGenericRepository<MovimientoInventario>? _movimientosInventario;
 
         // Analytics
         private IGenericRepository<ConfiguracionMaterialEPP>? _configuracionesMaterialEPP;
@@ -115,6 +116,9 @@ namespace VH.Data.Repositories
 
         public IGenericRepository<RequisicionCobertura> RequisicionesCobertura =>
             _requisicionesCobertura ??= new GenericRepository<RequisicionCobertura>(_context);
+
+        public IGenericRepository<MovimientoInventario> MovimientosInventario =>
+            _movimientosInventario ??= new GenericRepository<MovimientoInventario>(_context);
 
         // --- Analytics ---
         public IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP =>

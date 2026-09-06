@@ -263,6 +263,19 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
 
             CreateMap<RequisicionEPPDetalleRequestDto, RequisicionEPPDetalle>();
+
+            // ===== KARDEX =====
+            CreateMap<MovimientoInventario, MovimientoInventarioResponseDto>()
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.Material != null ? src.Material.Nombre : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.Material != null && src.Material.UnidadMedida != null
+                        ? src.Material.UnidadMedida.Abreviatura
+                        : string.Empty))
+                .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
+                    src.Almacen != null ? src.Almacen.Nombre : string.Empty))
+                .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src =>
+                    src.Usuario != null ? src.Usuario.NombreCompleto : string.Empty));
         }
     }
 }

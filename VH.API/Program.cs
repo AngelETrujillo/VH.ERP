@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -113,6 +113,7 @@ builder.Services.AddScoped<IPermisoService, PermisoService>();
 builder.Services.AddScoped<IAlertaConsumoService, AlertaConsumoService>();
 builder.Services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
 builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
+builder.Services.AddScoped<IMovimientoInventarioService, MovimientoInventarioService>();
 
 // 10. CORS CONFIGURADO PARA RED
 builder.Services.AddCors(options =>

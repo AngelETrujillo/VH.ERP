@@ -34,7 +34,7 @@ namespace VH.Services.Interfaces
         /// crea los lotes, suma las existencias y actualiza el costo de referencia
         /// de cada material. Devuelve las alertas de stock que se hayan disparado.
         /// </summary>
-        Task<(CompraEPP Compra, List<string> Alertas)> CreateCompraAsync(CompraEPP compra);
+        Task<(CompraEPP Compra, List<string> Alertas)> CreateCompraAsync(CompraEPP compra, string? userId = null);
 
         /// <summary>
         /// Actualiza los datos del documento (fecha, folio, CFDI, IVA, notas).
@@ -48,7 +48,7 @@ namespace VH.Services.Interfaces
         /// Cancela la compra completa con sus renglones y revierte las existencias.
         /// Sólo si ningún renglón se ha consumido.
         /// </summary>
-        Task<bool> DeleteCompraAsync(int id);
+        Task<bool> DeleteCompraAsync(int id, string? userId = null);
 
         /// <summary>Precios pagados por un material, para comparar y negociar.</summary>
         Task<IEnumerable<CompraEPPDetalle>> GetHistorialPreciosAsync(int idMaterial, int? idProveedor = null);

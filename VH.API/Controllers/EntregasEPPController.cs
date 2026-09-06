@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
@@ -16,6 +17,8 @@ namespace VH.API.Controllers
     {
         private readonly IEntregaEPPService _entregaService;
         private readonly IMapper _mapper;
+
+        private string? GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         public EntregasEPPController(IEntregaEPPService entregaService, IMapper mapper)
         {
@@ -47,7 +50,7 @@ namespace VH.API.Controllers
             try
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
-                var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega);
+                var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega, GetUserId());
 
                 // La entidad recién creada no trae cargadas sus navegaciones, así que
                 // se relee para que la respuesta incluya material, proveedor y almacén.
@@ -80,7 +83,7 @@ namespace VH.API.Controllers
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
                 entrega.IdEntrega = id;
-                var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega);
+                var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega, GetUserId());
                 if (!success) return NotFound();
                 return Ok(new { alerta = alerta });
             }
@@ -94,7 +97,7 @@ namespace VH.API.Controllers
         [RequierePermisoApi("ENTREGAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _entregaService.DeleteEntregaAsync(id);
+            var result = await _entregaService.DeleteEntregaAsync(id, GetUserId());
             if (!result) return NotFound();
             return NoContent();
         }

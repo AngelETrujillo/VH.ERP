@@ -8,12 +8,15 @@ namespace VH.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAlertaConsumoService _alertaConsumoService;
         private readonly IDashboardAnalyticsService _dashboardService;
+        private readonly IMovimientoInventarioService _movimientoService;
 
-        public EntregaEPPService(IUnitOfWork unitOfWork, IAlertaConsumoService alertaConsumoService, IDashboardAnalyticsService dashboardService)
+        public EntregaEPPService(IUnitOfWork unitOfWork, IAlertaConsumoService alertaConsumoService,
+            IDashboardAnalyticsService dashboardService, IMovimientoInventarioService movimientoService)
         {
             _unitOfWork = unitOfWork;
             _alertaConsumoService = alertaConsumoService;
             _dashboardService = dashboardService;
+            _movimientoService = movimientoService;
         }
 
         private const string IncludeProperties = "Empleado.Proyecto,CompraDetalle.Material.UnidadMedida,CompraDetalle.Almacen,CompraDetalle.Compra.Proveedor";
@@ -67,7 +70,7 @@ namespace VH.Services.Services
                 includeProperties: IncludeProperties);
         }
 
-        public async Task<(EntregaEPP Entrega, string? Alerta)> CreateEntregaAsync(EntregaEPP entrega)
+        public async Task<(EntregaEPP Entrega, string? Alerta)> CreateEntregaAsync(EntregaEPP entrega, string? userId = null)
         {
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(entrega.IdEmpleado);
             if (empleado == null)
@@ -91,11 +94,21 @@ namespace VH.Services.Services
             var inventario = await GetInventarioObligatorioAsync(
                 compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-            inventario.Existencia -= entrega.CantidadEntregada;
-            inventario.FechaUltimoMovimiento = DateTime.Now;
-            _unitOfWork.Inventarios.Update(inventario);
+            var movimiento = await _movimientoService.RegistrarAsync(
+                compra.IdMaterial, compra.IdAlmacen,
+                TipoMovimientoInventario.Salida, -entrega.CantidadEntregada, userId,
+                costoUnitario: compra.PrecioUnitario,
+                idCompraDetalle: compra.IdCompraDetalle,
+                documentoTipo: "EntregaEPP",
+                observaciones: $"Entrega a empleado {empleado.NombreCompleto}");
 
             await _unitOfWork.EntregasEPP.AddAsync(entrega);
+            await _unitOfWork.CompleteAsync();
+
+            // El folio de la entrega sólo existe después de guardarla; se ata aquí
+            // para que el kardex pueda regresar al documento que lo originó.
+            movimiento.DocumentoId = entrega.IdEntrega;
+            _unitOfWork.MovimientosInventario.Update(movimiento);
             await _unitOfWork.CompleteAsync();
 
             // *** Evaluar alertas de consumo ***
@@ -150,7 +163,7 @@ namespace VH.Services.Services
             return (entrega, alerta);
         }
 
-        public async Task<(bool Success, string? Alerta)> UpdateEntregaAsync(EntregaEPP entrega)
+        public async Task<(bool Success, string? Alerta)> UpdateEntregaAsync(EntregaEPP entrega, string? userId = null)
         {
             var entregaExistente = await _unitOfWork.EntregasEPP.GetByIdAsync(entrega.IdEntrega, includeProperties: "CompraDetalle");
             if (entregaExistente == null)
@@ -172,12 +185,20 @@ namespace VH.Services.Services
                 compra.CantidadDisponible -= diferencia;
                 _unitOfWork.ComprasEPPDetalle.Update(compra);
 
-                var inventario = await GetInventarioObligatorioAsync(
+                await GetInventarioObligatorioAsync(
                     compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-                inventario.Existencia -= diferencia;
-                inventario.FechaUltimoMovimiento = DateTime.Now;
-                _unitOfWork.Inventarios.Update(inventario);
+                // Corregir la cantidad entregada es sacar un poco más o devolver un
+                // poco: cada corrección deja su propio renglón en el kardex.
+                await _movimientoService.RegistrarAsync(
+                    compra.IdMaterial, compra.IdAlmacen,
+                    diferencia > 0 ? TipoMovimientoInventario.Salida : TipoMovimientoInventario.Devolucion,
+                    -diferencia, userId,
+                    costoUnitario: compra.PrecioUnitario,
+                    idCompraDetalle: compra.IdCompraDetalle,
+                    documentoTipo: "EntregaEPP",
+                    documentoId: entregaExistente.IdEntrega,
+                    observaciones: $"Corrección de la entrega: de {entregaExistente.CantidadEntregada} a {entrega.CantidadEntregada}.");
             }
 
             entregaExistente.FechaEntrega = entrega.FechaEntrega;
@@ -232,7 +253,7 @@ namespace VH.Services.Services
             return (result, alerta);
         }
 
-        public async Task<bool> DeleteEntregaAsync(int id)
+        public async Task<bool> DeleteEntregaAsync(int id, string? userId = null)
         {
             var entrega = await _unitOfWork.EntregasEPP.GetByIdAsync(id);
             if (entrega == null)
@@ -244,12 +265,17 @@ namespace VH.Services.Services
                 compra.CantidadDisponible += entrega.CantidadEntregada;
                 _unitOfWork.ComprasEPPDetalle.Update(compra);
 
-                var inventario = await GetInventarioObligatorioAsync(
+                await GetInventarioObligatorioAsync(
                     compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
-                inventario.Existencia += entrega.CantidadEntregada;
-                inventario.FechaUltimoMovimiento = DateTime.Now;
-                _unitOfWork.Inventarios.Update(inventario);
+                await _movimientoService.RegistrarAsync(
+                    compra.IdMaterial, compra.IdAlmacen,
+                    TipoMovimientoInventario.Devolucion, entrega.CantidadEntregada, userId,
+                    costoUnitario: compra.PrecioUnitario,
+                    idCompraDetalle: compra.IdCompraDetalle,
+                    documentoTipo: "EntregaEPP",
+                    documentoId: entrega.IdEntrega,
+                    observaciones: "La entrega se eliminó: el material regresa al almacén.");
             }
 
             // Guardar datos antes de eliminar

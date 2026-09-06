@@ -78,18 +78,21 @@ namespace VH.Services.Interfaces
         /// disponible no alcanza, sin tocar nada: el renglón queda por comprar.
         /// No confirma los cambios; el llamador decide cuándo persistir.
         /// </summary>
-        Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad);
+        Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
 
         /// <summary>
         /// Suelta una reserva sin mover la existencia: el renglón se canceló o se
         /// rechazó y el material vuelve a estar disponible para otros.
         /// </summary>
-        Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad);
+        Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
 
         /// <summary>
         /// Consume una reserva al surtirla. Sólo baja el comprometido: la salida
         /// de la existencia la hace el servicio de entregas.
         /// </summary>
-        Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad);
+        Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
     }
 }

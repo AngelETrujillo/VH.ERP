@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
@@ -16,6 +17,8 @@ namespace VH.API.Controllers
     {
         private readonly ICompraEPPService _compraService;
         private readonly IMapper _mapper;
+
+        private string? GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         public ComprasEPPController(ICompraEPPService compraService, IMapper mapper)
         {
@@ -73,7 +76,7 @@ namespace VH.API.Controllers
             try
             {
                 var compra = _mapper.Map<CompraEPP>(dto);
-                var (created, alertas) = await _compraService.CreateCompraAsync(compra);
+                var (created, alertas) = await _compraService.CreateCompraAsync(compra, GetUserId());
                 var response = _mapper.Map<CompraEPPResponseDto>(created);
 
                 return CreatedAtAction(nameof(GetById), new { id = response.IdCompra }, new
@@ -122,7 +125,7 @@ namespace VH.API.Controllers
         {
             try
             {
-                var result = await _compraService.DeleteCompraAsync(id);
+                var result = await _compraService.DeleteCompraAsync(id, GetUserId());
                 if (!result) return NotFound();
                 return NoContent();
             }

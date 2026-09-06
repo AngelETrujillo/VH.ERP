@@ -31,6 +31,7 @@ namespace VH.Services.Interfaces
         IGenericRepository<OrdenCompra> OrdenesCompra { get; }
         IGenericRepository<OrdenCompraDetalle> OrdenesCompraDetalle { get; }
         IGenericRepository<RequisicionCobertura> RequisicionesCobertura { get; }
+        IGenericRepository<MovimientoInventario> MovimientosInventario { get; }
 
         // ===== REPOSITORIOS DE ANALYTICS =====
         IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }

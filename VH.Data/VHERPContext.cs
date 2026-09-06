@@ -33,6 +33,7 @@ namespace VH.Data
         public DbSet<OrdenCompra> OrdenesCompra { get; set; }
         public DbSet<OrdenCompraDetalle> OrdenesCompraDetalle { get; set; }
         public DbSet<RequisicionCobertura> RequisicionesCobertura { get; set; }
+        public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
 
         // Analytics
         public DbSet<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; set; }
@@ -65,6 +66,7 @@ namespace VH.Data
             ConfigurarOrdenCompra(modelBuilder);
             ConfigurarOrdenCompraDetalle(modelBuilder);
             ConfigurarRequisicionCobertura(modelBuilder);
+            ConfigurarMovimientoInventario(modelBuilder);
             ConfigurarConfiguracionMaterialEPP(modelBuilder);
             ConfigurarAlertaConsumo(modelBuilder);
             ConfigurarEstadisticaEmpleadoMensual(modelBuilder);
@@ -352,6 +354,47 @@ namespace VH.Data
                     .WithOne(e => e.Requisicion)
                     .HasForeignKey(e => e.IdRequisicion)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarMovimientoInventario(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<MovimientoInventario>(entity =>
+            {
+                entity.HasKey(m => m.IdMovimiento);
+                entity.Property(m => m.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(m => m.SaldoResultante).HasPrecision(18, 4);
+                entity.Property(m => m.CostoUnitario).HasPrecision(18, 2);
+                entity.Property(m => m.DocumentoTipo).HasMaxLength(50);
+                entity.Property(m => m.DocumentoFolio).HasMaxLength(50);
+                entity.Property(m => m.Observaciones).HasMaxLength(500);
+                entity.Property(m => m.Tipo).IsRequired();
+                entity.Property(m => m.Fecha).IsRequired();
+
+                // El kardex se lee siempre por material y almacén en orden de fecha.
+                entity.HasIndex(m => new { m.IdMaterial, m.IdAlmacen, m.Fecha });
+                entity.HasIndex(m => m.Fecha);
+                entity.HasIndex(m => new { m.DocumentoTipo, m.DocumentoId });
+
+                entity.HasOne(m => m.Material)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Almacen)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.CompraDetalle)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Usuario)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdUsuario)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 

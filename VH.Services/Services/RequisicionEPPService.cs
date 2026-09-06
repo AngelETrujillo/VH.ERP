@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -187,7 +187,8 @@ namespace VH.Services.Services
                     detalle.MotivoRechazo = null;
 
                     var reservado = await _inventarioService.ReservarAsync(
-                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada,
+                        userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
 
                     detalle.EstadoRenglon = reservado
                         ? EstadoRenglonRequisicion.Reservado
@@ -324,10 +325,11 @@ namespace VH.Services.Services
                     if (detalle.TieneReserva)
                     {
                         await _inventarioService.ConsumirReservaAsync(
-                            detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+                            detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada,
+                            userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
                     }
 
-                    await _entregaService.CreateEntregaAsync(entregaEPP);
+                    await _entregaService.CreateEntregaAsync(entregaEPP, userId);
 
                     detalle.IdCompraDetalle = entrega.IdCompraDetalle;
                     detalle.CantidadEntregada = entrega.CantidadEntregada;
@@ -387,7 +389,8 @@ namespace VH.Services.Services
                 if (detalle.TieneReserva)
                 {
                     await _inventarioService.LiberarReservaAsync(
-                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada,
+                        userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
                 }
 
                 detalle.EstadoRenglon = EstadoRenglonRequisicion.Cancelado;

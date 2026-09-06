@@ -6,10 +6,12 @@ namespace VH.Services.Services
     public class CompraEPPService : ICompraEPPService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMovimientoInventarioService _movimientoService;
 
-        public CompraEPPService(IUnitOfWork unitOfWork)
+        public CompraEPPService(IUnitOfWork unitOfWork, IMovimientoInventarioService movimientoService)
         {
             _unitOfWork = unitOfWork;
+            _movimientoService = movimientoService;
         }
 
         private const string IncludeCabecera =
@@ -64,7 +66,7 @@ namespace VH.Services.Services
                 .ToList();
         }
 
-        public async Task<(CompraEPP Compra, List<string> Alertas)> CreateCompraAsync(CompraEPP compra)
+        public async Task<(CompraEPP Compra, List<string> Alertas)> CreateCompraAsync(CompraEPP compra, string? userId = null)
         {
             var proveedor = await _unitOfWork.Proveedores.GetByIdAsync(compra.IdProveedor);
             if (proveedor == null)
@@ -119,14 +121,22 @@ namespace VH.Services.Services
                         _unitOfWork.Materiales.Update(material);
                     }
 
-                    var (inventario, esNuevo) = await GetOrCreateInventarioAsync(detalle.IdMaterial, detalle.IdAlmacen);
-                    inventario.Existencia += detalle.Cantidad;
-                    inventario.FechaUltimoMovimiento = DateTime.Now;
+                    // La entrada al almacén pasa por el kardex: él suma la existencia
+                    // y deja el renglón que la explica.
+                    var movimiento = await _movimientoService.RegistrarAsync(
+                        detalle.IdMaterial, detalle.IdAlmacen,
+                        TipoMovimientoInventario.Entrada, detalle.Cantidad, userId,
+                        costoUnitario: detalle.PrecioUnitario,
+                        idCompraDetalle: detalle.IdCompraDetalle,
+                        documentoTipo: "CompraEPP",
+                        documentoId: compra.IdCompra,
+                        documentoFolio: compra.NumeroDocumento,
+                        observaciones: $"Compra a {proveedor.Nombre}");
 
-                    if (!esNuevo)
-                        _unitOfWork.Inventarios.Update(inventario);
+                    var inventario = await BuscarInventarioAsync(detalle.IdMaterial, detalle.IdAlmacen);
 
-                    if (inventario.StockMaximo > 0 && inventario.Existencia > inventario.StockMaximo)
+                    if (inventario != null && inventario.StockMaximo > 0 &&
+                        inventario.Existencia > inventario.StockMaximo)
                     {
                         alertas.Add(
                             $"El stock de '{material?.Nombre ?? "material"}' en " +
@@ -170,7 +180,7 @@ namespace VH.Services.Services
             return await _unitOfWork.CompleteAsync() > 0;
         }
 
-        public async Task<bool> DeleteCompraAsync(int id)
+        public async Task<bool> DeleteCompraAsync(int id, string? userId = null)
         {
             var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(id, includeProperties: "Detalles.Material");
             if (compra == null)
@@ -188,17 +198,33 @@ namespace VH.Services.Services
             {
                 foreach (var detalle in compra.Detalles)
                 {
-                    var inventarios = await _unitOfWork.Inventarios.FindAsync(
-                        i => i.IdMaterial == detalle.IdMaterial && i.IdAlmacen == detalle.IdAlmacen);
-                    var inventario = inventarios.FirstOrDefault();
-
-                    if (inventario != null)
-                    {
-                        inventario.Existencia -= detalle.Cantidad;
-                        inventario.FechaUltimoMovimiento = DateTime.Now;
-                        _unitOfWork.Inventarios.Update(inventario);
-                    }
+                    // La cancelación revierte la entrada, y el kardex conserva ambos
+                    // renglones: el que sumó y el que devolvió.
+                    await _movimientoService.RegistrarAsync(
+                        detalle.IdMaterial, detalle.IdAlmacen,
+                        TipoMovimientoInventario.CancelacionCompra, -detalle.Cantidad, userId,
+                        costoUnitario: detalle.PrecioUnitario,
+                        documentoTipo: "CompraEPP",
+                        documentoId: compra.IdCompra,
+                        documentoFolio: compra.NumeroDocumento,
+                        observaciones: "Compra cancelada: se revierte la entrada.");
                 }
+
+                // El kardex sobrevive a la cancelación: los renglones que apuntaban
+                // a estos lotes sueltan la referencia y conservan el documento, de
+                // modo que la entrada y su reverso siguen contando la historia.
+                var idsLote = compra.Detalles.Select(d => d.IdCompraDetalle).ToList();
+
+                var movimientosDelLote = await _unitOfWork.MovimientosInventario.FindAsync(
+                    m => m.IdCompraDetalle != null && idsLote.Contains(m.IdCompraDetalle.Value));
+
+                foreach (var movimiento in movimientosDelLote)
+                {
+                    movimiento.IdCompraDetalle = null;
+                    _unitOfWork.MovimientosInventario.Update(movimiento);
+                }
+
+                await _unitOfWork.CompleteAsync();
 
                 // Los renglones caen con la cabecera por la relación en cascada.
                 _unitOfWork.ComprasEPP.Remove(compra);
@@ -224,29 +250,12 @@ namespace VH.Services.Services
             return detalles.OrderByDescending(d => d.Compra?.FechaCompra).ToList();
         }
 
-        private async Task<(Inventario Inventario, bool EsNuevo)> GetOrCreateInventarioAsync(int idMaterial, int idAlmacen)
+        private async Task<Inventario?> BuscarInventarioAsync(int idMaterial, int idAlmacen)
         {
             var inventarios = await _unitOfWork.Inventarios.FindAsync(
                 i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen);
 
-            var inventario = inventarios.FirstOrDefault();
-
-            if (inventario != null)
-                return (inventario, false);
-
-            inventario = new Inventario
-            {
-                IdMaterial = idMaterial,
-                IdAlmacen = idAlmacen,
-                Existencia = 0,
-                StockMinimo = 0,
-                StockMaximo = 0,
-                UbicacionPasillo = string.Empty,
-                FechaUltimoMovimiento = DateTime.Now
-            };
-
-            await _unitOfWork.Inventarios.AddAsync(inventario);
-            return (inventario, true);
+            return inventarios.FirstOrDefault();
         }
     }
 }

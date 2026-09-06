@@ -6,10 +6,12 @@ namespace VH.Services.Services
     public class InventarioService : IInventarioService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMovimientoInventarioService _movimientoService;
 
-        public InventarioService(IUnitOfWork unitOfWork)
+        public InventarioService(IUnitOfWork unitOfWork, IMovimientoInventarioService movimientoService)
         {
             _unitOfWork = unitOfWork;
+            _movimientoService = movimientoService;
         }
 
         private const string IncludeProperties = "Almacen.Proyecto,Material.UnidadMedida";
@@ -142,7 +144,8 @@ namespace VH.Services.Services
             return inventario?.Disponible ?? 0;
         }
 
-        public async Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad)
+        public async Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
         {
             if (cantidad <= 0) return false;
 
@@ -156,10 +159,42 @@ namespace VH.Services.Services
 
             inventario.Comprometido += cantidad;
             _unitOfWork.Inventarios.Update(inventario);
+
+            // El apartado no mueve la existencia, pero sí explica por qué parte de
+            // ella dejó de estar disponible: el kardex lo registra igual.
+            await _movimientoService.RegistrarAsync(
+                idMaterial, idAlmacen, TipoMovimientoInventario.Reserva, cantidad, userId,
+                documentoTipo: "RequisicionEPP",
+                documentoId: idRequisicion,
+                documentoFolio: folioRequisicion,
+                observaciones: $"Apartado para requisición. Comprometido: {inventario.Comprometido}");
+
             return true;
         }
 
-        public async Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad)
+        public async Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
+        {
+            await SoltarComprometidoAsync(
+                idMaterial, idAlmacen, cantidad, TipoMovimientoInventario.LiberacionReserva,
+                "Apartado liberado: el renglón se canceló o se rechazó.",
+                userId, idRequisicion, folioRequisicion);
+        }
+
+        public async Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
+        {
+            // Consumir y liberar hacen lo mismo sobre el comprometido, pero en el
+            // kardex se distinguen: uno terminó en entrega y el otro no.
+            await SoltarComprometidoAsync(
+                idMaterial, idAlmacen, cantidad, TipoMovimientoInventario.LiberacionReserva,
+                "Apartado consumido al surtir la requisición.",
+                userId, idRequisicion, folioRequisicion);
+        }
+
+        private async Task SoltarComprometidoAsync(
+            int idMaterial, int idAlmacen, decimal cantidad, TipoMovimientoInventario tipo,
+            string observaciones, string? userId, int? idRequisicion, string? folioRequisicion)
         {
             if (cantidad <= 0) return;
 
@@ -168,15 +203,18 @@ namespace VH.Services.Services
 
             // Nunca por debajo de cero: un comprometido negativo prometería
             // más existencia de la que hay.
-            inventario.Comprometido = Math.Max(0, inventario.Comprometido - cantidad);
+            var soltado = Math.Min(cantidad, inventario.Comprometido);
+            inventario.Comprometido -= soltado;
             _unitOfWork.Inventarios.Update(inventario);
-        }
 
-        public Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad)
-        {
-            // Consumir y liberar hacen lo mismo sobre el comprometido; se separan
-            // porque en el kardex serán dos movimientos distintos.
-            return LiberarReservaAsync(idMaterial, idAlmacen, cantidad);
+            if (soltado <= 0) return;
+
+            await _movimientoService.RegistrarAsync(
+                idMaterial, idAlmacen, tipo, -soltado, userId,
+                documentoTipo: "RequisicionEPP",
+                documentoId: idRequisicion,
+                documentoFolio: folioRequisicion,
+                observaciones: $"{observaciones} Comprometido: {inventario.Comprometido}");
         }
 
         private async Task<Inventario?> BuscarAsync(int idMaterial, int idAlmacen)
