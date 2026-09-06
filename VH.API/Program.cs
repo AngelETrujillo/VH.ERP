@@ -112,6 +112,7 @@ builder.Services.AddScoped<ILogActividadService, LogActividadService>();
 builder.Services.AddScoped<IPermisoService, PermisoService>();
 builder.Services.AddScoped<IAlertaConsumoService, AlertaConsumoService>();
 builder.Services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
+builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 
 // 10. CORS CONFIGURADO PARA RED
 builder.Services.AddCors(options =>

@@ -28,6 +28,9 @@ namespace VH.Services.Interfaces
         IGenericRepository<RequisicionEPP> RequisicionesEPP { get; }
         IGenericRepository<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; }
         IGenericRepository<RequisicionEntrega> RequisicionesEntregas { get; }
+        IGenericRepository<OrdenCompra> OrdenesCompra { get; }
+        IGenericRepository<OrdenCompraDetalle> OrdenesCompraDetalle { get; }
+        IGenericRepository<RequisicionCobertura> RequisicionesCobertura { get; }
 
         // ===== REPOSITORIOS DE ANALYTICS =====
         IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }

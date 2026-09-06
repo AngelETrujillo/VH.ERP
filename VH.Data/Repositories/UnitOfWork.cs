@@ -36,6 +36,9 @@ namespace VH.Data.Repositories
         private IGenericRepository<RequisicionEPP>? _requisicionesEPP;
         private IGenericRepository<RequisicionEPPDetalle>? _requisicionesEPPDetalle;
         private IGenericRepository<RequisicionEntrega>? _requisicionesEntregas;
+        private IGenericRepository<OrdenCompra>? _ordenesCompra;
+        private IGenericRepository<OrdenCompraDetalle>? _ordenesCompraDetalle;
+        private IGenericRepository<RequisicionCobertura>? _requisicionesCobertura;
 
         // Analytics
         private IGenericRepository<ConfiguracionMaterialEPP>? _configuracionesMaterialEPP;
@@ -103,6 +106,15 @@ namespace VH.Data.Repositories
 
         public IGenericRepository<RequisicionEntrega> RequisicionesEntregas =>
             _requisicionesEntregas ??= new GenericRepository<RequisicionEntrega>(_context);
+
+        public IGenericRepository<OrdenCompra> OrdenesCompra =>
+            _ordenesCompra ??= new GenericRepository<OrdenCompra>(_context);
+
+        public IGenericRepository<OrdenCompraDetalle> OrdenesCompraDetalle =>
+            _ordenesCompraDetalle ??= new GenericRepository<OrdenCompraDetalle>(_context);
+
+        public IGenericRepository<RequisicionCobertura> RequisicionesCobertura =>
+            _requisicionesCobertura ??= new GenericRepository<RequisicionCobertura>(_context);
 
         // --- Analytics ---
         public IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP =>

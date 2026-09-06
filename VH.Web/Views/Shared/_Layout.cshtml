@@ -346,6 +346,7 @@
         var puedeVerMateriales = PermisoHelper.PuedeVer(session, "MATERIALES_EPP", esSuperAdmin);
         var puedeVerRequisiciones = PermisoHelper.PuedeVer(session, "REQUISICIONES_EPP", esSuperAdmin);
         var puedeVerCompras = PermisoHelper.PuedeVer(session, "COMPRAS_EPP", esSuperAdmin);
+        var puedeVerOrdenesCompra = PermisoHelper.PuedeVer(session, "ORDENES_COMPRA", esSuperAdmin);
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
         var puedeVerDashboardAnalytics = PermisoHelper.PuedeVer(session, "DASHBOARD_ANALYTICS", esSuperAdmin);
@@ -493,6 +494,15 @@
                         <a asp-controller="RequisicionesEPP" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "RequisicionesEPP" ? "active" : "")">
                             <i class="bi bi-file-earmark-text"></i>
                             <span class="menu-text">Requisiciones EPP</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerOrdenesCompra)
+                {
+                    <li>
+                        <a asp-controller="OrdenesCompra" asp-action="Faltantes" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "OrdenesCompra" ? "active" : "")">
+                            <i class="bi bi-clipboard-plus"></i>
+                            <span class="menu-text">Órdenes de Compra</span>
                         </a>
                     </li>
                 }

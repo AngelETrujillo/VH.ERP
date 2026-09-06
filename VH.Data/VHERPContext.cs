@@ -30,6 +30,9 @@ namespace VH.Data
         public DbSet<RequisicionEPP> RequisicionesEPP { get; set; }
         public DbSet<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; set; }
         public DbSet<RequisicionEntrega> RequisicionesEntregas { get; set; }
+        public DbSet<OrdenCompra> OrdenesCompra { get; set; }
+        public DbSet<OrdenCompraDetalle> OrdenesCompraDetalle { get; set; }
+        public DbSet<RequisicionCobertura> RequisicionesCobertura { get; set; }
 
         // Analytics
         public DbSet<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; set; }
@@ -59,6 +62,9 @@ namespace VH.Data
             ConfigurarRequisicionEPP(modelBuilder);
             ConfigurarRequisicionEPPDetalle(modelBuilder);
             ConfigurarRequisicionEntrega(modelBuilder);
+            ConfigurarOrdenCompra(modelBuilder);
+            ConfigurarOrdenCompraDetalle(modelBuilder);
+            ConfigurarRequisicionCobertura(modelBuilder);
             ConfigurarConfiguracionMaterialEPP(modelBuilder);
             ConfigurarAlertaConsumo(modelBuilder);
             ConfigurarEstadisticaEmpleadoMensual(modelBuilder);
@@ -345,6 +351,87 @@ namespace VH.Data
                 entity.HasMany(r => r.Entregas)
                     .WithOne(e => e.Requisicion)
                     .HasForeignKey(e => e.IdRequisicion)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarOrdenCompra(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrdenCompra>(entity =>
+            {
+                entity.HasKey(o => o.IdOrdenCompra);
+                entity.Property(o => o.Folio).IsRequired().HasMaxLength(20);
+                entity.Property(o => o.Moneda).HasMaxLength(3);
+                entity.Property(o => o.Observaciones).HasMaxLength(500);
+                entity.Property(o => o.MotivoCancelacion).HasMaxLength(500);
+                entity.Property(o => o.Estado).IsRequired();
+
+                entity.HasIndex(o => o.Folio).IsUnique();
+                entity.HasIndex(o => o.FechaEmision);
+                entity.HasIndex(o => o.Estado);
+
+                entity.HasOne(o => o.Proveedor)
+                    .WithMany()
+                    .HasForeignKey(o => o.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(o => o.UsuarioEmite)
+                    .WithMany()
+                    .HasForeignKey(o => o.IdUsuarioEmite)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(o => o.Detalles)
+                    .WithOne(d => d.OrdenCompra)
+                    .HasForeignKey(d => d.IdOrdenCompra)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarOrdenCompraDetalle(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrdenCompraDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdOrdenCompraDetalle);
+                entity.Property(d => d.CantidadPedida).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.CantidadRecibida).HasPrecision(18, 4);
+                entity.Property(d => d.PrecioUnitarioPactado).IsRequired().HasPrecision(18, 2);
+                entity.Property(d => d.Observaciones).HasMaxLength(500);
+
+                // El cálculo de lo que viene en camino consulta por este par.
+                entity.HasIndex(d => new { d.IdMaterial, d.IdAlmacenDestino });
+
+                entity.HasOne(d => d.Material)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.AlmacenDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdAlmacenDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
+
+        private void ConfigurarRequisicionCobertura(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RequisicionCobertura>(entity =>
+            {
+                entity.HasKey(c => c.IdRequisicionCobertura);
+                entity.Property(c => c.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(c => c.Origen).IsRequired();
+
+                entity.HasIndex(c => c.IdRequisicionDetalle);
+
+                entity.HasOne(c => c.RequisicionDetalle)
+                    .WithMany(d => d.Coberturas)
+                    .HasForeignKey(c => c.IdRequisicionDetalle)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Cancelar la orden suelta sus coberturas y los renglones vuelven
+                // a la bandeja de faltantes.
+                entity.HasOne(c => c.OrdenCompraDetalle)
+                    .WithMany(d => d.Coberturas)
+                    .HasForeignKey(c => c.IdOrdenCompraDetalle)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

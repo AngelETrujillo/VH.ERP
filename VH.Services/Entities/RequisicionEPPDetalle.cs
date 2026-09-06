@@ -101,6 +101,13 @@ namespace VH.Services.Entities
         /// <summary>Espera una compra: es lo que alimenta la bandeja de faltantes.</summary>
         [NotMapped]
         public bool EsperaCompra => EstadoRenglon == EstadoRenglonRequisicion.PorComprar;
+
+        /// <summary>Ya cubierto por una orden de compra: no vuelve a la bandeja.</summary>
+        [NotMapped]
+        public bool CubiertoPorCompra => EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra;
+
+        /// <summary>De dónde saldrá lo que pide: existencia apartada u orden de compra.</summary>
+        public virtual ICollection<RequisicionCobertura> Coberturas { get; set; } = new List<RequisicionCobertura>();
     }
 
     /// <summary>
@@ -126,6 +133,15 @@ namespace VH.Services.Entities
         Reservado = 5,
 
         /// <summary>Sin existencia en su almacén: entra a la bandeja de faltantes.</summary>
-        PorComprar = 6
+        PorComprar = 6,
+
+        /// <summary>
+        /// Ya incluido en una orden de compra. Sale de la bandeja de faltantes, que
+        /// es lo que impide pedirlo dos veces.
+        /// </summary>
+        EnOrdenCompra = 7,
+
+        /// <summary>Llegó el material de la orden; listo para surtirse y firmarse.</summary>
+        Recibido = 8
     }
 }

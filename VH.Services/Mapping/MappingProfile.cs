@@ -108,6 +108,33 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
                     src.Almacen != null ? src.Almacen.Nombre : string.Empty));
 
+            // ===== ÓRDENES DE COMPRA =====
+            CreateMap<OrdenCompra, OrdenCompraResponseDto>()
+                .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
+                    src.Proveedor != null ? src.Proveedor.Nombre : string.Empty))
+                .ForMember(dest => dest.NombreUsuarioEmite, opt => opt.MapFrom(src =>
+                    src.UsuarioEmite != null ? src.UsuarioEmite.NombreCompleto : string.Empty));
+
+            CreateMap<OrdenCompraDetalle, OrdenCompraDetalleResponseDto>()
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.Material != null ? src.Material.Nombre : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.Material != null && src.Material.UnidadMedida != null
+                        ? src.Material.UnidadMedida.Abreviatura
+                        : string.Empty))
+                .ForMember(dest => dest.NombreAlmacenDestino, opt => opt.MapFrom(src =>
+                    src.AlmacenDestino != null ? src.AlmacenDestino.Nombre : string.Empty));
+
+            CreateMap<RequisicionCobertura, CoberturaResponseDto>()
+                .ForMember(dest => dest.NumeroRequisicion, opt => opt.MapFrom(src =>
+                    src.RequisicionDetalle != null && src.RequisicionDetalle.Requisicion != null
+                        ? src.RequisicionDetalle.Requisicion.NumeroRequisicion
+                        : string.Empty))
+                .ForMember(dest => dest.NombreEmpleado, opt => opt.MapFrom(src =>
+                    src.RequisicionDetalle != null && src.RequisicionDetalle.EmpleadoDestino != null
+                        ? src.RequisicionDetalle.EmpleadoDestino.NombreCompleto
+                        : string.Empty));
+
             // ===== INVENTARIOS =====
             CreateMap<InventarioRequestDto, Inventario>()
                 .ForMember(dest => dest.Existencia, opt => opt.Ignore()) // Se calcula automáticamente

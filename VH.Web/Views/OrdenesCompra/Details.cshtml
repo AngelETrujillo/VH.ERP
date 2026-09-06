@@ -1,0 +1,171 @@
+@model VH.Services.DTOs.OrdenCompraResponseDto
+@using VH.Web.Extensions
+@{
+    ViewData["Title"] = $"Orden {Model.Folio}";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="flex-grow-1">
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-clipboard-check text-primary me-2"></i>@Model.Folio
+            </h2>
+            <p class="text-muted mb-0">@Model.NombreProveedor · @Model.FechaEmision.ToString("dd/MM/yyyy")</p>
+        </div>
+        <span class="badge bg-@Model.EstadoClase fs-6 px-3 py-2">@Model.EstadoTexto</span>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-list-ul me-2"></i>Materiales pedidos
+                        <span class="badge bg-secondary ms-2">@Model.TotalRenglones</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @foreach (var d in Model.Detalles)
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">@d.NombreMaterial</h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-box-seam me-1"></i>@d.NombreAlmacenDestino
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="fw-bold">@d.CantidadPedida.FormatoCantidad() @d.UnidadMedida</span>
+                                    <br />
+                                    <small class="text-muted">@d.PrecioUnitarioPactado.ToString("C2") c/u · @d.Importe.ToString("C2")</small>
+                                </div>
+                            </div>
+
+                            @if (d.CantidadRecibida > 0)
+                            {
+                                <div class="progress mb-2" style="height:6px;">
+                                    <div class="progress-bar bg-success"
+                                         style="width:@(Math.Min(100, (double)(d.CantidadRecibida / d.CantidadPedida * 100)))%"></div>
+                                </div>
+                                <small class="text-success">Recibido: @d.CantidadRecibida.FormatoCantidad() de @d.CantidadPedida.FormatoCantidad()</small>
+                            }
+
+                            @if (d.Coberturas.Any())
+                            {
+                                <div class="bg-light rounded p-2 mt-2">
+                                    <small class="text-muted d-block mb-1 fw-semibold">
+                                        <i class="bi bi-people me-1"></i>Cubre a:
+                                    </small>
+                                    @foreach (var c in d.Coberturas)
+                                    {
+                                        <div class="small">
+                                            <i class="bi bi-arrow-return-right text-muted me-1"></i>
+                                            <span class="fw-semibold">@c.NombreEmpleado</span>
+                                            <span class="text-muted">· @c.NumeroRequisicion · @c.Cantidad.FormatoCantidad()</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-file-earmark-text me-2"></i>Documento</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Proveedor</dt>
+                        <dd class="col-7">@Model.NombreProveedor</dd>
+
+                        <dt class="col-5 text-muted fw-normal">Emitida</dt>
+                        <dd class="col-7">@Model.FechaEmision.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        <dt class="col-5 text-muted fw-normal">Por</dt>
+                        <dd class="col-7">@Model.NombreUsuarioEmite</dd>
+
+                        <dt class="col-5 text-muted fw-normal">Entrega est.</dt>
+                        <dd class="col-7">@(Model.FechaEntregaEstimada?.ToString("dd/MM/yyyy") ?? "—")</dd>
+
+                        <dt class="col-5 text-muted fw-normal">Destinos</dt>
+                        <dd class="col-7">@Model.TotalDestinos almacén(es)</dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Observaciones))
+                        {
+                            <dt class="col-5 text-muted fw-normal">Notas</dt>
+                            <dd class="col-7">@Model.Observaciones</dd>
+                        }
+                    </dl>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold fs-5">Total</span>
+                        <span class="fw-bold fs-5 text-success">@Model.Total.ToString("C2")</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Estado == VH.Services.Entities.EstadoOrdenCompra.Cancelada)
+            {
+                <div class="alert alert-secondary">
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Orden cancelada.</strong>
+                    @if (!string.IsNullOrEmpty(Model.MotivoCancelacion))
+                    {
+                        <br />
+                        <span class="small">@Model.MotivoCancelacion</span>
+                    }
+                </div>
+            }
+            else if (Model.PuedeCancelarse)
+            {
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <form asp-action="Cancelar" asp-route-id="@Model.IdOrdenCompra" method="post">
+                            @Html.AntiForgeryToken()
+                            <label class="form-label fw-semibold small">Cancelar la orden</label>
+                            <input name="motivo" class="form-control form-control-sm mb-2"
+                                   placeholder="Motivo de la cancelación" required maxlength="500" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar orden
+                            </button>
+                            <small class="text-muted d-block mt-2">
+                                Los materiales volverán a la bandeja de faltantes.
+                            </small>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    No se puede cancelar: ya se recibió material de esta orden.
+                </div>
+            }
+        </div>
+    </div>
+</div>

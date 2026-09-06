@@ -8,7 +8,7 @@ namespace VH.Data.Seeders
         public static async Task SeedAsync(RoleManager<Rol> roleManager, UserManager<Usuario> userManager)
         {
             // Crear roles base
-            string[] roles = { "SuperAdmin", "Administrador", "Almacenista", "Consulta" };
+            string[] roles = { "SuperAdmin", "Administrador", "Almacenista", "Comprador", "Consulta" };
 
             foreach (var roleName in roles)
             {
@@ -22,6 +22,7 @@ namespace VH.Data.Seeders
                             "SuperAdmin" => "Acceso total al sistema",
                             "Administrador" => "Gestión de catálogos y operaciones",
                             "Almacenista" => "Módulo EPP: compras, entregas, inventarios",
+                            "Comprador" => "Consolida faltantes y emite órdenes de compra",
                             "Consulta" => "Solo lectura",
                             _ => roleName
                         },
