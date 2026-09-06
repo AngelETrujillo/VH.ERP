@@ -177,7 +177,7 @@ namespace VH.Services.DTOs
         /// <summary>Empleados con renglones autorizados que aún no han firmado.</summary>
         public List<int> EmpleadosPorSurtir => Detalles
             .Where(d => d.IdEmpleadoDestino.HasValue && d.EstaPendiente
-                        && d.EstadoRenglon == EstadoRenglonRequisicion.Autorizado)
+                        && d.EstadoRenglon == EstadoRenglonRequisicion.Reservado)
             .Select(d => d.IdEmpleadoDestino!.Value)
             .Distinct()
             .ToList();

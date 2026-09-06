@@ -118,7 +118,11 @@ namespace VH.Services.Entities
             if (Detalles.Any(d => d.EstaSurtido))
                 return EstadoRequisicion.Parcial;
 
-            if (Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Autorizado))
+            // Autorizado, reservado o esperando compra: el documento está aprobado
+            // y lo que falta es que el almacén lo resuelva.
+            if (Detalles.Any(d => d.EstadoRenglon is EstadoRenglonRequisicion.Autorizado
+                                  or EstadoRenglonRequisicion.Reservado
+                                  or EstadoRenglonRequisicion.PorComprar))
                 return EstadoRequisicion.Aprobada;
 
             return EstadoRequisicion.Pendiente;

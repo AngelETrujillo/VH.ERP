@@ -93,19 +93,39 @@ namespace VH.Services.Entities
             EstadoRenglon != EstadoRenglonRequisicion.Rechazado &&
             EstadoRenglon != EstadoRenglonRequisicion.Cancelado &&
             EstadoRenglon != EstadoRenglonRequisicion.Surtido;
+
+        /// <summary>Tiene material apartado en el almacén a su nombre.</summary>
+        [NotMapped]
+        public bool TieneReserva => EstadoRenglon == EstadoRenglonRequisicion.Reservado;
+
+        /// <summary>Espera una compra: es lo que alimenta la bandeja de faltantes.</summary>
+        [NotMapped]
+        public bool EsperaCompra => EstadoRenglon == EstadoRenglonRequisicion.PorComprar;
     }
 
     /// <summary>
-    /// Ciclo de vida de un renglón. Los estados intermedios entre Autorizado y
-    /// Surtido (reserva, compra, recepción) llegan con las fases siguientes; por
-    /// ahora un renglón autorizado se surte directo del almacén.
+    /// Ciclo de vida de un renglón.
+    ///
+    /// Al autorizarse, el renglón se resuelve enseguida contra la existencia de
+    /// su almacén: si alcanza queda <see cref="Reservado"/> con el material
+    /// apartado a su nombre; si no, queda <see cref="PorComprar"/> a la espera de
+    /// una orden de compra. Sólo se surte lo reservado.
     /// </summary>
     public enum EstadoRenglonRequisicion
     {
         Solicitado = 0,
+
+        /// <summary>Autorizado pero aún sin resolver contra la existencia.</summary>
         Autorizado = 1,
+
         Rechazado = 2,
         Surtido = 3,
-        Cancelado = 4
+        Cancelado = 4,
+
+        /// <summary>Hay existencia y está apartada para esta persona.</summary>
+        Reservado = 5,
+
+        /// <summary>Sin existencia en su almacén: entra a la bandeja de faltantes.</summary>
+        PorComprar = 6
     }
 }

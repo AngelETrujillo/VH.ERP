@@ -44,6 +44,13 @@ namespace VH.Services.Entities
         /// <summary>Caducidad impresa del lote, cuando el material la controla.</summary>
         public DateTime? FechaCaducidad { get; set; }
 
+        /// <summary>
+        /// Control de concurrencia: dos almacenistas despachando del mismo lote a
+        /// la vez lo sobrevenderían sin esto.
+        /// </summary>
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
+
         // ===== PROPIEDADES DE NAVEGACIÓN =====
 
         [ForeignKey("IdCompra")]

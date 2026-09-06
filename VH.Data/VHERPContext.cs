@@ -258,6 +258,7 @@ namespace VH.Data
                 entity.Property(d => d.CantidadDisponible).IsRequired().HasPrecision(18, 4);
                 entity.Property(d => d.PrecioUnitario).IsRequired().HasPrecision(18, 2);
                 entity.Property(d => d.Talla).HasMaxLength(20);
+                entity.Property(d => d.RowVersion).IsRowVersion();
 
                 // La búsqueda de lotes disponibles al surtir va siempre por este par.
                 entity.HasIndex(d => new { d.IdMaterial, d.IdAlmacen });
@@ -281,9 +282,11 @@ namespace VH.Data
             {
                 entity.HasKey(i => i.IdInventario);
                 entity.Property(i => i.Existencia).HasPrecision(18, 4);
+                entity.Property(i => i.Comprometido).HasPrecision(18, 4);
                 entity.Property(i => i.StockMinimo).HasPrecision(18, 4);
                 entity.Property(i => i.StockMaximo).HasPrecision(18, 4);
                 entity.Property(i => i.UbicacionPasillo).HasMaxLength(100);
+                entity.Property(i => i.RowVersion).IsRowVersion();
 
                 entity.HasIndex(i => new { i.IdAlmacen, i.IdMaterial }).IsUnique();
             });

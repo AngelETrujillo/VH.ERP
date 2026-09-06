@@ -133,5 +133,57 @@ namespace VH.Services.Services
 
             return compras.Sum(d => d.CantidadDisponible);
         }
+
+        // ===== RESERVA DE EXISTENCIA =====
+
+        public async Task<decimal> GetDisponibleAsync(int idMaterial, int idAlmacen)
+        {
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+            return inventario?.Disponible ?? 0;
+        }
+
+        public async Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad)
+        {
+            if (cantidad <= 0) return false;
+
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+
+            // Sin registro de inventario no hay nada que apartar: el material
+            // nunca ha entrado a ese almacén.
+            if (inventario == null) return false;
+
+            if (inventario.Disponible < cantidad) return false;
+
+            inventario.Comprometido += cantidad;
+            _unitOfWork.Inventarios.Update(inventario);
+            return true;
+        }
+
+        public async Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad)
+        {
+            if (cantidad <= 0) return;
+
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+            if (inventario == null) return;
+
+            // Nunca por debajo de cero: un comprometido negativo prometería
+            // más existencia de la que hay.
+            inventario.Comprometido = Math.Max(0, inventario.Comprometido - cantidad);
+            _unitOfWork.Inventarios.Update(inventario);
+        }
+
+        public Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad)
+        {
+            // Consumir y liberar hacen lo mismo sobre el comprometido; se separan
+            // porque en el kardex serán dos movimientos distintos.
+            return LiberarReservaAsync(idMaterial, idAlmacen, cantidad);
+        }
+
+        private async Task<Inventario?> BuscarAsync(int idMaterial, int idAlmacen)
+        {
+            var inventarios = await _unitOfWork.Inventarios.FindAsync(
+                i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen);
+            return inventarios.FirstOrDefault();
+        }
     }
 }

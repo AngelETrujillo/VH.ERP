@@ -64,5 +64,32 @@ namespace VH.Services.Interfaces
         /// Usado para sincronización o corrección de datos.
         /// </summary>
         Task<decimal> RecalcularExistenciaAsync(int idMaterial, int idAlmacen);
+
+        // ===== RESERVA DE EXISTENCIA =====
+
+        /// <summary>
+        /// Lo que todavía puede prometerse de un material en un almacén:
+        /// existencia menos lo ya apartado. Cero si no hay registro de inventario.
+        /// </summary>
+        Task<decimal> GetDisponibleAsync(int idMaterial, int idAlmacen);
+
+        /// <summary>
+        /// Aparta cantidad para un renglón autorizado. Devuelve false si el
+        /// disponible no alcanza, sin tocar nada: el renglón queda por comprar.
+        /// No confirma los cambios; el llamador decide cuándo persistir.
+        /// </summary>
+        Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad);
+
+        /// <summary>
+        /// Suelta una reserva sin mover la existencia: el renglón se canceló o se
+        /// rechazó y el material vuelve a estar disponible para otros.
+        /// </summary>
+        Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad);
+
+        /// <summary>
+        /// Consume una reserva al surtirla. Sólo baja el comprometido: la salida
+        /// de la existencia la hace el servicio de entregas.
+        /// </summary>
+        Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad);
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -7,6 +8,7 @@ namespace VH.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEntregaEPPService _entregaService;
+        private readonly IInventarioService _inventarioService;
 
         /// <summary>
         /// Para listados. Deliberadamente sin Entregas: cada firma es un PNG de
@@ -26,10 +28,14 @@ namespace VH.Services.Services
             "UsuarioSolicita,Almacen,UsuarioAprueba," +
             "Detalles.Material.UnidadMedida,Detalles.EmpleadoDestino,Detalles.CompraDetalle";
 
-        public RequisicionEPPService(IUnitOfWork unitOfWork, IEntregaEPPService entregaService)
+        public RequisicionEPPService(
+            IUnitOfWork unitOfWork,
+            IEntregaEPPService entregaService,
+            IInventarioService inventarioService)
         {
             _unitOfWork = unitOfWork;
             _entregaService = entregaService;
+            _inventarioService = inventarioService;
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetAllAsync()
@@ -69,7 +75,7 @@ namespace VH.Services.Services
         public async Task<IEnumerable<RequisicionEPP>> GetPendientesEntregaAsync()
         {
             return await _unitOfWork.RequisicionesEPP.FindAsync(
-                r => r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Autorizado),
+                r => r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Reservado),
                 includeProperties: IncludeListado);
         }
 
@@ -161,12 +167,32 @@ namespace VH.Services.Services
             if (objetivo.Count == 0)
                 throw new InvalidOperationException("No hay renglones pendientes de autorizar en esta requisición.");
 
-            foreach (var detalle in objetivo)
+            if (!aprobada)
             {
-                detalle.EstadoRenglon = aprobada
-                    ? EstadoRenglonRequisicion.Autorizado
-                    : EstadoRenglonRequisicion.Rechazado;
-                detalle.MotivoRechazo = aprobada ? null : motivoRechazo;
+                foreach (var detalle in objetivo)
+                {
+                    detalle.EstadoRenglon = EstadoRenglonRequisicion.Rechazado;
+                    detalle.MotivoRechazo = motivoRechazo;
+                }
+            }
+            else
+            {
+                // Autorizar resuelve enseguida cada renglón contra la existencia de
+                // su almacén. El reparto va del más antiguo al más nuevo: cuando el
+                // stock no alcanza para todos, se lo lleva quien pidió primero, que
+                // es un criterio justo y explicable al que se queda esperando.
+                foreach (var detalle in objetivo.OrderBy(d => d.IdRequisicionDetalle))
+                {
+                    detalle.EstadoRenglon = EstadoRenglonRequisicion.Autorizado;
+                    detalle.MotivoRechazo = null;
+
+                    var reservado = await _inventarioService.ReservarAsync(
+                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+
+                    detalle.EstadoRenglon = reservado
+                        ? EstadoRenglonRequisicion.Reservado
+                        : EstadoRenglonRequisicion.PorComprar;
+                }
             }
 
             requisicion.IdUsuarioAprueba = userId;
@@ -175,7 +201,18 @@ namespace VH.Services.Services
             requisicion.EstadoRequisicion = requisicion.CalcularEstado();
 
             _unitOfWork.RequisicionesEPP.Update(requisicion);
-            return await _unitOfWork.CompleteAsync() > 0;
+
+            try
+            {
+                return await _unitOfWork.CompleteAsync() > 0;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new InvalidOperationException(
+                    "Otra persona movió la existencia de alguno de estos materiales " +
+                    "mientras autorizaba. Vuelva a intentarlo para repartir sobre el " +
+                    "stock actual.");
+            }
         }
 
         public async Task<(bool Success, string? Error)> EntregarAEmpleadoAsync(
@@ -226,10 +263,17 @@ namespace VH.Services.Services
                         $"El renglón {entrega.IdDetalle} no corresponde a {empleado.NombreCompleto}. " +
                         "Cada empleado firma únicamente lo que recibe.");
 
-                if (detalle.EstadoRenglon != EstadoRenglonRequisicion.Autorizado)
-                    return (false,
-                        $"El renglón {entrega.IdDetalle} no está autorizado " +
-                        $"(estado actual: {detalle.EstadoRenglon}).");
+                // Sólo se surte lo que tiene material apartado. Un renglón por
+                // comprar espera a que llegue la orden de compra.
+                if (detalle.EstadoRenglon != EstadoRenglonRequisicion.Reservado &&
+                    detalle.EstadoRenglon != EstadoRenglonRequisicion.Autorizado)
+                {
+                    var motivo = detalle.EstadoRenglon == EstadoRenglonRequisicion.PorComprar
+                        ? "está pendiente de compra: no hay existencia apartada para surtirlo"
+                        : $"no está listo para entregarse (estado actual: {detalle.EstadoRenglon})";
+
+                    return (false, $"El renglón {entrega.IdDetalle} {motivo}.");
+                }
 
                 if (entrega.CantidadEntregada <= 0)
                     return (false, $"La cantidad entregada del renglón {entrega.IdDetalle} debe ser mayor a 0.");
@@ -274,6 +318,14 @@ namespace VH.Services.Services
                         TallaEntregada = detalle.TallaSolicitada ?? string.Empty,
                         Observaciones = $"Requisición: {requisicion.NumeroRequisicion}"
                     };
+
+                    // La reserva se consume: el material sale del anaquel, así que
+                    // deja de estar apartado y de contar en el comprometido.
+                    if (detalle.TieneReserva)
+                    {
+                        await _inventarioService.ConsumirReservaAsync(
+                            detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+                    }
 
                     await _entregaService.CreateEntregaAsync(entregaEPP);
 
@@ -330,7 +382,16 @@ namespace VH.Services.Services
                 throw new InvalidOperationException("La requisición no tiene renglones que cancelar.");
 
             foreach (var detalle in vivos)
+            {
+                // Lo apartado vuelve a estar disponible para quien venga detrás.
+                if (detalle.TieneReserva)
+                {
+                    await _inventarioService.LiberarReservaAsync(
+                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada);
+                }
+
                 detalle.EstadoRenglon = EstadoRenglonRequisicion.Cancelado;
+            }
 
             requisicion.EstadoRequisicion = requisicion.CalcularEstado();
 
