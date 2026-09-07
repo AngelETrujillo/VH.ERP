@@ -349,6 +349,7 @@
         var puedeVerOrdenesCompra = PermisoHelper.PuedeVer(session, "ORDENES_COMPRA", esSuperAdmin);
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
+        var puedeVerRecepciones = PermisoHelper.PuedeVer(session, "RECEPCIONES", esSuperAdmin);
         var puedeVerKardex = PermisoHelper.PuedeVer(session, "KARDEX", esSuperAdmin);
         var puedeVerDashboardAnalytics = PermisoHelper.PuedeVer(session, "DASHBOARD_ANALYTICS", esSuperAdmin);
         var puedeVerAlertasConsumo = PermisoHelper.PuedeVer(session, "ALERTAS_CONSUMO", esSuperAdmin);
@@ -359,7 +360,7 @@
         var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
         var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores || puedeVerPuestos;
         var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
-        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios || puedeVerKardex;
+        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios || puedeVerRecepciones || puedeVerKardex;
         var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
     }
 
@@ -531,6 +532,15 @@
                         <a asp-controller="Inventarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventarios" ? "active" : "")">
                             <i class="bi bi-boxes"></i>
                             <span class="menu-text">Control Inventario</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerRecepciones)
+                {
+                    <li>
+                        <a asp-controller="Recepciones" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Recepciones" ? "active" : "")">
+                            <i class="bi bi-truck"></i>
+                            <span class="menu-text">Recepción de Material</span>
                         </a>
                     </li>
                 }

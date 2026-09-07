@@ -216,7 +216,7 @@ namespace VH.Services.Services
 
             var almacenOrigen = await _unitOfWork.Almacenes.GetByIdAsync(idAlmacenOrigen);
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -231,13 +231,13 @@ namespace VH.Services.Services
                     observaciones: $"Desde {almacenOrigen?.Nombre ?? "otro almacén"}. {motivo}");
 
                 await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
 
                 return (salida, entrada);
             }
             catch
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }

@@ -32,6 +32,8 @@ namespace VH.Services.Interfaces
         IGenericRepository<OrdenCompraDetalle> OrdenesCompraDetalle { get; }
         IGenericRepository<RequisicionCobertura> RequisicionesCobertura { get; }
         IGenericRepository<MovimientoInventario> MovimientosInventario { get; }
+        IGenericRepository<RecepcionCompra> RecepcionesCompra { get; }
+        IGenericRepository<RecepcionCompraDetalle> RecepcionesCompraDetalle { get; }
 
         // ===== REPOSITORIOS DE ANALYTICS =====
         IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }
@@ -53,10 +55,15 @@ namespace VH.Services.Interfaces
         // los cambios deben confirmarse o deshacerse juntos.
 
         /// <summary>
-        /// Abre una transacción explícita. Si ya hay una abierta en este
-        /// UnitOfWork, no hace nada: la operación externa es la que manda.
+        /// Abre una transacción explícita y devuelve si esta llamada fue la que la
+        /// abrió. Si ya había una, devuelve false: la operación externa es la
+        /// dueña y sólo ella debe confirmar o deshacer.
+        ///
+        /// Sin ese dato, un servicio llamado desde dentro de otro confirmaba la
+        /// transacción ajena al terminar su parte, y lo que el llamador escribiera
+        /// después quedaba fuera del "todo o nada".
         /// </summary>
-        Task BeginTransactionAsync();
+        Task<bool> BeginTransactionAsync();
 
         /// <summary>
         /// Confirma la transacción abierta. Sin transacción abierta, no hace nada.

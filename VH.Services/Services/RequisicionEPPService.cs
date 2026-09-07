@@ -264,14 +264,22 @@ namespace VH.Services.Services
                         $"El renglón {entrega.IdDetalle} no corresponde a {empleado.NombreCompleto}. " +
                         "Cada empleado firma únicamente lo que recibe.");
 
-                // Sólo se surte lo que tiene material apartado. Un renglón por
-                // comprar espera a que llegue la orden de compra.
+                // Sólo se surte lo que tiene material apartado: lo que estaba en el
+                // almacén al autorizar, o lo que llegó después contra la orden de
+                // compra. Un renglón por comprar sigue esperando su pedido, y uno
+                // pedido espera a que el proveedor entregue.
                 if (detalle.EstadoRenglon != EstadoRenglonRequisicion.Reservado &&
+                    detalle.EstadoRenglon != EstadoRenglonRequisicion.Recibido &&
                     detalle.EstadoRenglon != EstadoRenglonRequisicion.Autorizado)
                 {
-                    var motivo = detalle.EstadoRenglon == EstadoRenglonRequisicion.PorComprar
-                        ? "está pendiente de compra: no hay existencia apartada para surtirlo"
-                        : $"no está listo para entregarse (estado actual: {detalle.EstadoRenglon})";
+                    var motivo = detalle.EstadoRenglon switch
+                    {
+                        EstadoRenglonRequisicion.PorComprar =>
+                            "está pendiente de compra: no hay existencia apartada para surtirlo",
+                        EstadoRenglonRequisicion.EnOrdenCompra =>
+                            "está pedido al proveedor y todavía no se recibe",
+                        _ => $"no está listo para entregarse (estado actual: {detalle.EstadoRenglon})"
+                    };
 
                     return (false, $"El renglón {entrega.IdDetalle} {motivo}.");
                 }
@@ -300,7 +308,7 @@ namespace VH.Services.Services
                     return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {lote.CantidadDisponible}");
             }
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -354,13 +362,13 @@ namespace VH.Services.Services
                 _unitOfWork.RequisicionesEPP.Update(requisicion);
 
                 await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
 
                 return (true, null);
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 return (false, ex.Message);
             }
         }

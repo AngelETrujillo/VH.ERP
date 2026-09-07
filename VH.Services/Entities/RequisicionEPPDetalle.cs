@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VH.Services.Entities
@@ -94,9 +94,14 @@ namespace VH.Services.Entities
             EstadoRenglon != EstadoRenglonRequisicion.Cancelado &&
             EstadoRenglon != EstadoRenglonRequisicion.Surtido;
 
-        /// <summary>Tiene material apartado en el almacén a su nombre.</summary>
+        /// <summary>
+        /// Tiene material apartado en el almacén a su nombre, venga de la
+        /// existencia que había o de una orden de compra ya recibida.
+        /// </summary>
         [NotMapped]
-        public bool TieneReserva => EstadoRenglon == EstadoRenglonRequisicion.Reservado;
+        public bool TieneReserva =>
+            EstadoRenglon == EstadoRenglonRequisicion.Reservado ||
+            EstadoRenglon == EstadoRenglonRequisicion.Recibido;
 
         /// <summary>Espera una compra: es lo que alimenta la bandeja de faltantes.</summary>
         [NotMapped]
@@ -105,6 +110,13 @@ namespace VH.Services.Entities
         /// <summary>Ya cubierto por una orden de compra: no vuelve a la bandeja.</summary>
         [NotMapped]
         public bool CubiertoPorCompra => EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra;
+
+        /// <summary>
+        /// Su material ya llegó de la orden de compra y está apartado: sólo falta
+        /// entregarlo y que lo firmen.
+        /// </summary>
+        [NotMapped]
+        public bool ListoPorRecepcion => EstadoRenglon == EstadoRenglonRequisicion.Recibido;
 
         /// <summary>De dónde saldrá lo que pide: existencia apartada u orden de compra.</summary>
         public virtual ICollection<RequisicionCobertura> Coberturas { get; set; } = new List<RequisicionCobertura>();
@@ -141,7 +153,10 @@ namespace VH.Services.Entities
         /// </summary>
         EnOrdenCompra = 7,
 
-        /// <summary>Llegó el material de la orden; listo para surtirse y firmarse.</summary>
+        /// <summary>
+        /// Llegó el material de la orden y quedó apartado a su nombre: listo para
+        /// surtirse y firmarse, igual que un renglón reservado.
+        /// </summary>
         Recibido = 8
     }
 }

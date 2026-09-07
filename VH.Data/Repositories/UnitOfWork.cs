@@ -40,6 +40,8 @@ namespace VH.Data.Repositories
         private IGenericRepository<OrdenCompraDetalle>? _ordenesCompraDetalle;
         private IGenericRepository<RequisicionCobertura>? _requisicionesCobertura;
         private IGenericRepository<MovimientoInventario>? _movimientosInventario;
+        private IGenericRepository<RecepcionCompra>? _recepcionesCompra;
+        private IGenericRepository<RecepcionCompraDetalle>? _recepcionesCompraDetalle;
 
         // Analytics
         private IGenericRepository<ConfiguracionMaterialEPP>? _configuracionesMaterialEPP;
@@ -120,6 +122,12 @@ namespace VH.Data.Repositories
         public IGenericRepository<MovimientoInventario> MovimientosInventario =>
             _movimientosInventario ??= new GenericRepository<MovimientoInventario>(_context);
 
+        public IGenericRepository<RecepcionCompra> RecepcionesCompra =>
+            _recepcionesCompra ??= new GenericRepository<RecepcionCompra>(_context);
+
+        public IGenericRepository<RecepcionCompraDetalle> RecepcionesCompraDetalle =>
+            _recepcionesCompraDetalle ??= new GenericRepository<RecepcionCompraDetalle>(_context);
+
         // --- Analytics ---
         public IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP =>
             _configuracionesMaterialEPP ??= new GenericRepository<ConfiguracionMaterialEPP>(_context);
@@ -150,13 +158,16 @@ namespace VH.Data.Repositories
         }
 
         // ===== TRANSACCIONES EXPLÍCITAS =====
-        public async Task BeginTransactionAsync()
+        public async Task<bool> BeginTransactionAsync()
         {
             // Anidar transacciones no aporta nada aquí: la operación que la abrió
-            // primero es la dueña del commit y del rollback.
-            if (_transaction != null) return;
+            // primero es la dueña del commit y del rollback. Devolver quién la
+            // abrió es lo que permite a un servicio llamado desde dentro de otro
+            // hacer su parte sin cerrar la transacción del que lo llamó.
+            if (_transaction != null) return false;
 
             _transaction = await _context.Database.BeginTransactionAsync();
+            return true;
         }
 
         public async Task CommitTransactionAsync()

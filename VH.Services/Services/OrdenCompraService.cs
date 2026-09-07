@@ -164,7 +164,7 @@ namespace VH.Services.Services
                     throw new ArgumentException($"El almacén con ID {linea.IdAlmacenDestino} no existe.");
             }
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -235,13 +235,13 @@ namespace VH.Services.Services
                 }
 
                 await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
 
                 return orden;
             }
             catch
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }
@@ -261,7 +261,7 @@ namespace VH.Services.Services
             if (string.IsNullOrWhiteSpace(motivo))
                 throw new ArgumentException("Debe indicar el motivo de la cancelación.");
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -291,13 +291,13 @@ namespace VH.Services.Services
                 _unitOfWork.OrdenesCompra.Update(orden);
 
                 var result = await _unitOfWork.CompleteAsync() > 0;
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
 
                 return result;
             }
             catch
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }

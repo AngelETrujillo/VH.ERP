@@ -264,6 +264,33 @@ namespace VH.Services.Mapping
 
             CreateMap<RequisicionEPPDetalleRequestDto, RequisicionEPPDetalle>();
 
+            // ===== RECEPCIÓN DE MATERIAL =====
+            CreateMap<RecepcionCompra, RecepcionCompraResponseDto>()
+                .ForMember(dest => dest.FolioOrdenCompra, opt => opt.MapFrom(src =>
+                    src.OrdenCompra != null ? src.OrdenCompra.Folio : string.Empty))
+                .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src =>
+                    src.OrdenCompra != null && src.OrdenCompra.Proveedor != null
+                        ? src.OrdenCompra.Proveedor.Nombre
+                        : string.Empty))
+                .ForMember(dest => dest.NombreAlmacen, opt => opt.MapFrom(src =>
+                    src.Almacen != null ? src.Almacen.Nombre : string.Empty))
+                .ForMember(dest => dest.NombreProyecto, opt => opt.MapFrom(src =>
+                    src.Almacen != null && src.Almacen.Proyecto != null
+                        ? src.Almacen.Proyecto.Nombre
+                        : string.Empty))
+                .ForMember(dest => dest.NombreUsuarioRecibe, opt => opt.MapFrom(src =>
+                    src.UsuarioRecibe != null ? src.UsuarioRecibe.NombreCompleto : string.Empty));
+
+            CreateMap<RecepcionCompraDetalle, RecepcionCompraDetalleResponseDto>()
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.Material != null ? src.Material.Nombre : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.Material != null && src.Material.UnidadMedida != null
+                        ? src.Material.UnidadMedida.Abreviatura
+                        : string.Empty))
+                .ForMember(dest => dest.PrecioUnitarioPactado, opt => opt.MapFrom(src =>
+                    src.OrdenCompraDetalle != null ? src.OrdenCompraDetalle.PrecioUnitarioPactado : 0));
+
             // ===== KARDEX =====
             CreateMap<MovimientoInventario, MovimientoInventarioResponseDto>()
                 .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>

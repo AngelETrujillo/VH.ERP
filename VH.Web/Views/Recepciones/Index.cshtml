@@ -1,0 +1,186 @@
+@model IEnumerable<VH.Services.DTOs.OrdenPorRecibirDto>
+@{
+    ViewData["Title"] = "Recepción de Material";
+    var lista = Model?.ToList() ?? new List<VH.Services.DTOs.OrdenPorRecibirDto>();
+    var almacenes = ViewBag.Almacenes as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+    int? filtroAlmacen = ViewBag.FiltroAlmacen;
+
+    var retrasadas = lista.Count(o => o.DiasRetraso > 0);
+    var personas = lista.Sum(o => o.PersonasEsperando);
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-truck text-primary me-2"></i>Recepción de Material
+            </h2>
+            <p class="text-muted mb-0">Lo que viene en camino a cada bodega, esperando que alguien lo cuente</p>
+        </div>
+        <a asp-action="Historial" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-clock-history me-2"></i>Recepciones anteriores
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Entregas esperadas</div>
+                    <div class="fs-3 fw-bold">@lista.Count</div>
+                    <div class="small text-muted">Orden y bodega por separado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Con retraso</div>
+                    <div class="fs-3 fw-bold @(retrasadas > 0 ? "text-danger" : "")">@retrasadas</div>
+                    <div class="small text-muted">Pasó la fecha prometida</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Renglones esperando</div>
+                    <div class="fs-3 fw-bold">@personas</div>
+                    <div class="small text-muted">Requisiciones pendientes de surtir</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <label class="form-label small text-muted fw-semibold text-uppercase">Filtrar por almacén</label>
+                    <form method="get" class="d-flex gap-2">
+                        <select name="idAlmacen" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos los almacenes</option>
+                            @foreach (var a in almacenes)
+                            {
+                                <option value="@a.Value" selected="@(a.Value == filtroAlmacen?.ToString())">@a.Text</option>
+                            }
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!lista.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle text-success" style="font-size:3rem;"></i>
+                <h5 class="mt-3">No hay material en camino</h5>
+                <p class="text-muted mb-0">
+                    Todas las órdenes emitidas ya se recibieron completas.
+                </p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Por recibir</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Orden</th>
+                                <th>Proveedor</th>
+                                <th>Destino</th>
+                                <th>Materiales</th>
+                                <th class="text-center">Piezas</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-center">Espera</th>
+                                <th class="text-center" style="width:120px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in lista)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-semibold">@o.Folio</div>
+                                        <small class="text-muted">@o.FechaEmision.ToString("dd/MM/yyyy")</small>
+                                        @if (o.Parcial)
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning ms-1">Parcial</span>
+                                        }
+                                    </td>
+                                    <td>@o.NombreProveedor</td>
+                                    <td>
+                                        <div>@o.NombreAlmacen</div>
+                                        <small class="text-muted">@o.NombreProyecto</small>
+                                    </td>
+                                    <td><small>@o.ResumenMateriales</small></td>
+                                    <td class="text-center fw-semibold">@o.PiezasPendientes.ToString("0.##")</td>
+                                    <td class="text-end">@o.ImportePendiente.ToString("C")</td>
+                                    <td class="text-center">
+                                        @if (o.DiasRetraso > 0)
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                <i class="bi bi-clock me-1"></i>@o.DiasRetraso d de retraso
+                                            </span>
+                                        }
+                                        else if (o.FechaEntregaEstimada.HasValue)
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary">
+                                                Llega @o.FechaEntregaEstimada.Value.ToString("dd/MM")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Sin fecha</span>
+                                        }
+                                        @if (o.PersonasEsperando > 0)
+                                        {
+                                            <div class="small text-muted mt-1">
+                                                @o.PersonasEsperando renglón(es) esperando
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Recibir"
+                                           asp-route-idOrdenCompra="@o.IdOrdenCompra"
+                                           asp-route-idAlmacen="@o.IdAlmacen"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-box-arrow-in-down me-1"></i>Recibir
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

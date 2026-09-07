@@ -95,7 +95,7 @@ namespace VH.Services.Services
 
             var alertas = new List<string>();
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -146,11 +146,11 @@ namespace VH.Services.Services
                 }
 
                 await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
             }
             catch
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
 
@@ -192,7 +192,7 @@ namespace VH.Services.Services
                     "No se puede cancelar la compra: ya se entregó material del lote de " +
                     $"'{consumido.Material?.Nombre ?? $"material {consumido.IdMaterial}"}'.");
 
-            await _unitOfWork.BeginTransactionAsync();
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -230,12 +230,12 @@ namespace VH.Services.Services
                 _unitOfWork.ComprasEPP.Remove(compra);
                 var result = await _unitOfWork.CompleteAsync() > 0;
 
-                await _unitOfWork.CommitTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
                 return result;
             }
             catch
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }

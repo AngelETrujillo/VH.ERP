@@ -36,7 +36,8 @@ namespace VH.Data.Seeders
                 new Modulo { Codigo = "ENTREGAS_EPP", Nombre = "Entregas EPP", Icono = "bi-clipboard-check", ControllerName = "EntregasEPP", Orden = 41 },
                 new Modulo { Codigo = "INVENTARIOS", Nombre = "Control Inventario", Icono = "bi-boxes", ControllerName = "Inventarios", Orden = 42 },
                 new Modulo { Codigo = "ORDENES_COMPRA", Nombre = "Órdenes de Compra", Icono = "bi-clipboard-plus", ControllerName = "OrdenesCompra", Orden = 43 },
-                new Modulo { Codigo = "KARDEX", Nombre = "Kardex de Almacén", Icono = "bi-journals", ControllerName = "Kardex", Orden = 44 },
+                new Modulo { Codigo = "RECEPCIONES", Nombre = "Recepción de Material", Icono = "bi-truck", ControllerName = "Recepciones", Orden = 44 },
+                new Modulo { Codigo = "KARDEX", Nombre = "Kardex de Almacén", Icono = "bi-journals", ControllerName = "Kardex", Orden = 45 },
 
                 // Analytics
                 new Modulo { Codigo = "DASHBOARD_ANALYTICS", Nombre = "Dashboard Analytics", Icono = "bi-graph-up", ControllerName = "DashboardAnalytics", Orden = 43 },

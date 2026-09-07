@@ -1,0 +1,108 @@
+@model IEnumerable<VH.Services.DTOs.RecepcionCompraResponseDto>
+@{
+    ViewData["Title"] = "Recepciones";
+    var lista = Model?.OrderByDescending(r => r.FechaRecepcion).ToList()
+                ?? new List<VH.Services.DTOs.RecepcionCompraResponseDto>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-clock-history text-primary me-2"></i>Recepciones
+            </h2>
+            <p class="text-muted mb-0">Todo lo que ha entrado al almacén contra una orden de compra</p>
+        </div>
+        <a asp-action="Index" class="btn btn-primary shadow-sm">
+            <i class="bi bi-truck me-2"></i>Ver lo que viene en camino
+        </a>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">Historial</h6>
+            <span class="badge bg-secondary">@lista.Count recepciones</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Folio</th>
+                            <th>Orden</th>
+                            <th>Proveedor</th>
+                            <th>Almacén</th>
+                            <th>Materiales</th>
+                            <th class="text-center">Aceptado</th>
+                            <th class="text-end">Importe</th>
+                            <th class="text-center" style="width:100px;">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (lista.Any())
+                        {
+                            @foreach (var r in lista)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-semibold">@r.Folio</div>
+                                        <small class="text-muted">@r.FechaRecepcion.ToString("dd/MM/yyyy")</small>
+                                    </td>
+                                    <td>@r.FolioOrdenCompra</td>
+                                    <td>@r.NombreProveedor</td>
+                                    <td>
+                                        <div>@r.NombreAlmacen</div>
+                                        <small class="text-muted">@r.NombreProyecto</small>
+                                    </td>
+                                    <td><small>@r.ResumenMateriales</small></td>
+                                    <td class="text-center">
+                                        <span class="fw-semibold">@r.TotalAceptado.ToString("0.##")</span>
+                                        @if (r.HuboRechazo)
+                                        {
+                                            <div>
+                                                <span class="badge bg-danger-subtle text-danger">
+                                                    @r.TotalRechazado.ToString("0.##") rechazado
+                                                </span>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @r.Importe.ToString("C")
+                                        @if (r.HuboDiferenciaPrecio)
+                                        {
+                                            <div>
+                                                <span class="badge bg-warning-subtle text-warning">Precio distinto</span>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Details" asp-route-id="@r.IdRecepcion"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    Todavía no se ha recibido material contra ninguna orden.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
