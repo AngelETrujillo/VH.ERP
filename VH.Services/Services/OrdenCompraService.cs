@@ -143,7 +143,8 @@ namespace VH.Services.Services
             return orden;
         }
 
-        public async Task<OrdenCompra> GenerarAsync(GenerarOrdenCompraRequestDto dto, string userId)
+        public async Task<(OrdenCompra Orden, List<string> Avisos)> GenerarAsync(
+            GenerarOrdenCompraRequestDto dto, string userId)
         {
             var proveedor = await _unitOfWork.Proveedores.GetByIdAsync(dto.IdProveedor);
             if (proveedor == null)
@@ -164,6 +165,7 @@ namespace VH.Services.Services
                     throw new ArgumentException($"El almacén con ID {linea.IdAlmacenDestino} no existe.");
             }
 
+            var avisos = new List<string>();
             var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
 
             try
@@ -199,13 +201,14 @@ namespace VH.Services.Services
                 foreach (var detalleOrden in orden.Detalles)
                 {
                     var porCubrir = detalleOrden.CantidadPedida;
+                    var material = await _unitOfWork.Materiales.GetByIdAsync(detalleOrden.IdMaterial);
 
                     // Del más antiguo al más nuevo: si lo pedido no alcanza para
                     // todos los que esperan, se cubre a quien lleva más tiempo.
                     var candidatos = (await _unitOfWork.RequisicionesEPPDetalle.FindAsync(
                             d => d.EstadoRenglon == EstadoRenglonRequisicion.PorComprar
                                  && d.IdMaterial == detalleOrden.IdMaterial,
-                            includeProperties: "Requisicion"))
+                            includeProperties: "Requisicion,EmpleadoDestino"))
                         .Where(d => d.Requisicion != null
                                     && d.Requisicion.IdAlmacen == detalleOrden.IdAlmacenDestino)
                         .OrderBy(d => d.Requisicion!.FechaSolicitud)
@@ -217,6 +220,39 @@ namespace VH.Services.Services
                         if (porCubrir <= 0) break;
 
                         var cubre = Math.Min(porCubrir, renglon.CantidadSolicitada);
+
+                        if (cubre < renglon.CantidadSolicitada)
+                        {
+                            // La orden no alcanza para todo lo que pide este renglón.
+                            //
+                            // Marcarlo entero como pedido haría desaparecer de la
+                            // bandeja la parte que nadie compró: el material dejaría
+                            // de pedirse en silencio y el obrero se quedaría
+                            // esperando algo que ya no está en ninguna lista. Se
+                            // parte en dos, y lo que esta orden no cubre sigue
+                            // apareciendo como faltante.
+                            var resto = new RequisicionEPPDetalle
+                            {
+                                IdRequisicion = renglon.IdRequisicion,
+                                IdMaterial = renglon.IdMaterial,
+                                CantidadSolicitada = renglon.CantidadSolicitada - cubre,
+                                TallaSolicitada = renglon.TallaSolicitada,
+                                IdEmpleadoDestino = renglon.IdEmpleadoDestino,
+                                IdProyectoDestino = renglon.IdProyectoDestino,
+                                IdConceptoPartida = renglon.IdConceptoPartida,
+                                EstadoRenglon = EstadoRenglonRequisicion.PorComprar
+                            };
+
+                            await _unitOfWork.RequisicionesEPPDetalle.AddAsync(resto);
+
+                            avisos.Add(
+                                $"'{material?.Nombre ?? $"material {detalleOrden.IdMaterial}"}' de " +
+                                $"{DescribirDestino(renglon)} se pidió a medias: " +
+                                $"{cubre:0.##} de {renglon.CantidadSolicitada:0.##} entran en esta orden. " +
+                                $"Los {resto.CantidadSolicitada:0.##} restantes siguen en la bandeja de faltantes.");
+
+                            renglon.CantidadSolicitada = cubre;
+                        }
 
                         await _unitOfWork.RequisicionesCobertura.AddAsync(new RequisicionCobertura
                         {
@@ -232,12 +268,20 @@ namespace VH.Services.Services
 
                         porCubrir -= cubre;
                     }
+
+                    if (porCubrir > 0)
+                    {
+                        avisos.Add(
+                            $"Sobran {porCubrir:0.##} de " +
+                            $"'{material?.Nombre ?? $"material {detalleOrden.IdMaterial}"}' " +
+                            "que nadie está esperando: entrarán al almacén como existencia libre.");
+                    }
                 }
 
                 await _unitOfWork.CompleteAsync();
                 if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
 
-                return orden;
+                return (orden, avisos);
             }
             catch
             {
@@ -319,6 +363,15 @@ namespace VH.Services.Services
             }
 
             return $"{prefijo}{(ultimo + 1):D4}";
+        }
+
+        /// <summary>A quién va dirigido un renglón, para poder nombrarlo en un aviso.</summary>
+        private static string DescribirDestino(RequisicionEPPDetalle renglon)
+        {
+            if (renglon.EmpleadoDestino != null)
+                return renglon.EmpleadoDestino.NombreCompleto;
+
+            return renglon.Requisicion?.NumeroRequisicion ?? $"el renglón {renglon.IdRequisicionDetalle}";
         }
 
         /// <summary>Último renglón de compra de un material, para sugerir precio y proveedor.</summary>

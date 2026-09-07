@@ -58,6 +58,13 @@ namespace VH.Services.Entities
 
         public decimal? CantidadEntregada { get; set; }
 
+        /// <summary>
+        /// Firma que amparó este renglón. Con material que llega en partes, una
+        /// persona firma más de una vez el mismo documento, y sin esto no habría
+        /// forma de saber qué cubrió cada firma.
+        /// </summary>
+        public int? IdRequisicionEntrega { get; set; }
+
         // ===== NAVEGACIÓN =====
 
         [ForeignKey("IdRequisicion")]
@@ -68,6 +75,9 @@ namespace VH.Services.Entities
 
         [ForeignKey("IdCompraDetalle")]
         public virtual CompraEPPDetalle? CompraDetalle { get; set; }
+
+        [ForeignKey("IdRequisicionEntrega")]
+        public virtual RequisicionEntrega? Entrega { get; set; }
 
         [ForeignKey("IdEmpleadoDestino")]
         public virtual Empleado? EmpleadoDestino { get; set; }

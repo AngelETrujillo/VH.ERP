@@ -61,13 +61,13 @@ namespace VH.API.Controllers
         // POST: api/ordenescompra
         [HttpPost]
         [RequierePermisoApi("ORDENES_COMPRA", "crear")]
-        public async Task<ActionResult<OrdenCompraResponseDto>> Generar([FromBody] GenerarOrdenCompraRequestDto dto)
+        public async Task<ActionResult> Generar([FromBody] GenerarOrdenCompraRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var orden = await _ordenService.GenerarAsync(dto, GetUserId());
+                var (orden, avisos) = await _ordenService.GenerarAsync(dto, GetUserId());
 
                 await _logService.RegistrarAsync(
                     GetUserId(), "Crear", "OrdenCompra", orden.IdOrdenCompra,
@@ -76,7 +76,10 @@ namespace VH.API.Controllers
                 var completa = await _ordenService.GetOrdenByIdAsync(orden.IdOrdenCompra) ?? orden;
                 var response = _mapper.Map<OrdenCompraResponseDto>(completa);
 
-                return CreatedAtAction(nameof(GetById), new { id = response.IdOrdenCompra }, response);
+                return CreatedAtAction(
+                    nameof(GetById),
+                    new { id = response.IdOrdenCompra },
+                    new { orden = response, avisos });
             }
             catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
             {

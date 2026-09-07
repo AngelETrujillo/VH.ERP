@@ -241,10 +241,11 @@ namespace VH.Services.Services
             if (empleado == null)
                 return (false, $"El empleado con ID {idEmpleado} no existe.");
 
-            // Una persona firma una sola vez por documento.
-            if (requisicion.Entregas.Any(e => e.IdEmpleado == idEmpleado))
-                return (false, $"{empleado.NombreCompleto} ya firmó la entrega de esta requisición.");
-
+            // Antes se exigía una sola firma por persona por documento. Con material
+            // que llega en partes eso deja la segunda mitad sin poder entregarse:
+            // la persona ya firmó, y lo que le falta se queda en la bodega. Ahora
+            // firma cada vez que se lleva algo, y lo que impide entregar dos veces
+            // el mismo renglón es el estado del renglón, no la firma.
             var repetido = detalles
                 .GroupBy(d => d.IdDetalle)
                 .FirstOrDefault(g => g.Count() > 1);
@@ -344,7 +345,8 @@ namespace VH.Services.Services
                     detalle.EstadoRenglon = EstadoRenglonRequisicion.Surtido;
                 }
 
-                // La firma de esta persona, que ampara sólo lo que ella recibió.
+                // La firma de este acto de entrega, que ampara sólo lo que esta
+                // persona se llevó hoy.
                 var firma = new RequisicionEntrega
                 {
                     IdRequisicion = requisicion.IdRequisicion,
@@ -356,6 +358,16 @@ namespace VH.Services.Services
                     Observaciones = observaciones
                 };
                 await _unitOfWork.RequisicionesEntregas.AddAsync(firma);
+                await _unitOfWork.CompleteAsync();
+
+                // Cada renglón queda amarrado a la firma que lo respalda: con varias
+                // firmas por documento, es lo único que dice cuál cubrió qué.
+                foreach (var entrega in detalles)
+                {
+                    var detalle = requisicion.Detalles.First(d => d.IdRequisicionDetalle == entrega.IdDetalle);
+                    detalle.IdRequisicionEntrega = firma.IdRequisicionEntrega;
+                    _unitOfWork.RequisicionesEPPDetalle.Update(detalle);
+                }
 
                 // El documento queda parcial mientras otras personas no hayan recibido.
                 requisicion.EstadoRequisicion = requisicion.CalcularEstado();

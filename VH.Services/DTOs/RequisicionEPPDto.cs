@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -231,6 +231,9 @@ namespace VH.Services.DTOs
         public int? IdCompraDetalle { get; set; }
         public string? DescripcionLote { get; set; }
         public decimal? CantidadEntregada { get; set; }
+
+        /// <summary>Firma que amparó este renglón, cuando ya se surtió.</summary>
+        public int? IdRequisicionEntrega { get; set; }
 
         // Calculados
         public bool Entregado => EstadoRenglon == EstadoRenglonRequisicion.Surtido;

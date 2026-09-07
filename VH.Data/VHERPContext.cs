@@ -571,9 +571,11 @@ namespace VH.Data
                 entity.Property(e => e.Observaciones).HasMaxLength(500);
                 entity.Property(e => e.FechaEntrega).IsRequired();
 
-                // Una persona firma una sola vez por documento: todo lo que recibe
-                // de esa requisición queda amparado por esa firma.
-                entity.HasIndex(e => new { e.IdRequisicion, e.IdEmpleado }).IsUnique();
+                // Una persona puede firmar varias veces el mismo documento: una por
+                // cada vez que se lleva material. Cuando lo pedido llega en partes
+                // —y con órdenes de compra parciales es lo normal— exigir una sola
+                // firma por documento dejaba la segunda mitad sin poder entregarse.
+                entity.HasIndex(e => new { e.IdRequisicion, e.IdEmpleado });
                 entity.HasIndex(e => e.FechaEntrega);
 
                 entity.HasOne(e => e.Empleado)
@@ -602,6 +604,12 @@ namespace VH.Data
                 // La bandeja de faltantes de la fase 5 consulta por estas dos.
                 entity.HasIndex(d => d.EstadoRenglon);
                 entity.HasIndex(d => d.IdEmpleadoDestino);
+
+                // La firma no arrastra consigo los renglones que amparó.
+                entity.HasOne(d => d.Entrega)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdRequisicionEntrega)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(d => d.Requisicion)
                     .WithMany(r => r.Detalles)

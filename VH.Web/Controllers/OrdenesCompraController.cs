@@ -88,8 +88,16 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsJsonAsync("api/ordenescompra", dto);
                 if (response.IsSuccessStatusCode)
                 {
-                    var orden = await response.Content.ReadFromJsonAsync<OrdenCompraResponseDto>();
+                    var resultado = await response.Content.ReadFromJsonAsync<GenerarResultado>();
+                    var orden = resultado?.Orden;
+
                     TempData["Mensaje"] = $"Orden {orden?.Folio} emitida. Los materiales salen de la bandeja de faltantes.";
+
+                    // Si la orden se quedó corta para alguien, el comprador tiene
+                    // que enterarse ahora, no cuando llegue el material.
+                    if (resultado?.Avisos is { Count: > 0 })
+                        TempData["Avisos"] = System.Text.Json.JsonSerializer.Serialize(resultado.Avisos);
+
                     return RedirectToAction(nameof(Details), new { id = orden?.IdOrdenCompra });
                 }
 
@@ -137,6 +145,12 @@ namespace VH.Web.Controllers
             }
 
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private sealed class GenerarResultado
+        {
+            public OrdenCompraResponseDto? Orden { get; set; }
+            public List<string> Avisos { get; set; } = new();
         }
 
         private async Task CargarListasEnViewBag()

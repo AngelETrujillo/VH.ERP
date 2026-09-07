@@ -13,6 +13,11 @@ namespace VH.Services.Entities
     /// obreros hacen falta varias firmas: una firma amparando material que
     /// recibieron cinco personas distintas no sirve como evidencia de entrega de
     /// EPP, y ese respaldo es justamente lo que hace valioso al módulo.
+    ///
+    /// Es un acto de entrega, no un renglón por persona: cuando lo pedido llega
+    /// en partes, la misma persona firma varias veces el mismo documento, una por
+    /// cada vez que se lleva material. Cada renglón guarda cuál de esas firmas lo
+    /// amparó.
     /// </summary>
     [Table("RequisicionesEntregas")]
     public class RequisicionEntrega

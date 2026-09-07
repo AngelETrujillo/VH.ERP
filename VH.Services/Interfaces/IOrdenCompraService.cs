@@ -30,8 +30,14 @@ namespace VH.Services.Interfaces
         /// Emite la orden con las líneas elegidas y amarra cada una con los
         /// renglones de requisición que cubre, del más antiguo al más nuevo.
         /// Esos renglones salen de la bandeja de faltantes.
+        ///
+        /// Cuando la orden no alcanza para un renglón completo, ese renglón se
+        /// parte: lo comprado sale de la bandeja y lo que falta se queda en ella.
+        /// Devuelve los avisos de lo que quedó a medias o de sobra, para que el
+        /// comprador vea que su orden se quedó corta antes de mandarla.
         /// </summary>
-        Task<OrdenCompra> GenerarAsync(GenerarOrdenCompraRequestDto dto, string userId);
+        Task<(OrdenCompra Orden, List<string> Avisos)> GenerarAsync(
+            GenerarOrdenCompraRequestDto dto, string userId);
 
         /// <summary>
         /// Cancela la orden. Las coberturas se sueltan y sus renglones vuelven a

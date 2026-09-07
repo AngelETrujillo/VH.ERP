@@ -1,7 +1,14 @@
-@model VH.Services.DTOs.OrdenCompraResponseDto
+﻿@model VH.Services.DTOs.OrdenCompraResponseDto
 @using VH.Web.Extensions
 @{
     ViewData["Title"] = $"Orden {Model.Folio}";
+
+    var avisos = new List<string>();
+    if (TempData["Avisos"] is string json)
+    {
+        try { avisos = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? new(); }
+        catch { avisos = new(); }
+    }
 }
 
 <div class="container-fluid">
@@ -30,6 +37,18 @@
         <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (avisos.Any())
+    {
+        <div class="alert alert-warning">
+            <h6 class="fw-bold"><i class="bi bi-exclamation-circle me-2"></i>Esta orden se quedó corta</h6>
+            <ul class="mb-0 ps-3">
+                @foreach (var aviso in avisos)
+                {
+                    <li>@aviso</li>
+                }
+            </ul>
         </div>
     }
 

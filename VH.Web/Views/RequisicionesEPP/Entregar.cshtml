@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.RequisicionEPPResponseDto
+﻿@model VH.Services.DTOs.RequisicionEPPResponseDto
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using VH.Web.Extensions
 @{
@@ -196,16 +196,28 @@
                             @foreach (var grupo in Model.Detalles.Where(d => d.IdEmpleadoDestino.HasValue)
                                         .GroupBy(d => new { d.IdEmpleadoDestino, d.NombreEmpleadoDestino }))
                             {
-                                var yaFirmo = Model.Entregas.Any(e => e.IdEmpleado == grupo.Key.IdEmpleadoDestino);
+                                // Con material que llega en partes una persona firma
+                                // varias veces, así que haber firmado ya no significa
+                                // que haya terminado: lo que cuenta es si le queda
+                                // algo por recibir.
+                                var yaFirmo = grupo.All(d => d.Entregado);
+                                var firmasPrevias = Model.Entregas.Count(e => e.IdEmpleado == grupo.Key.IdEmpleadoDestino);
                                 var esActual = grupo.Key.IdEmpleadoDestino == idEmpleado;
                                 <li class="list-group-item d-flex justify-content-between align-items-center @(esActual ? "bg-success-subtle" : "")">
                                     <div>
                                         <span class="fw-semibold small">@grupo.Key.NombreEmpleadoDestino</span>
-                                        <br /><small class="text-muted">@grupo.Count() material(es)</small>
+                                        <br />
+                                        <small class="text-muted">
+                                            @grupo.Count(d => d.Entregado) de @grupo.Count() material(es)
+                                            @if (firmasPrevias > 0 && !yaFirmo)
+                                            {
+                                                <span>&middot; firmó @firmasPrevias vez(ces)</span>
+                                            }
+                                        </small>
                                     </div>
                                     @if (yaFirmo)
                                     {
-                                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> Firmó</span>
+                                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> Completo</span>
                                     }
                                     else if (esActual)
                                     {
