@@ -22,13 +22,28 @@
         <span class="badge bg-@Model.EstadoClase fs-6 px-3 py-2 ms-2">@Model.EstadoTexto</span>
     </div>
 
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <!-- Botones de acción en móvil (arriba) -->
     <div class="d-md-none mb-3">
         <div class="d-flex gap-2 flex-wrap">
-            @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+            @if (puedeEditar && Model.TieneRenglonesPorDecidir && (esSuperAdmin || esAdmin))
             {
                 <a asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" class="btn btn-warning flex-fill">
-                    <i class="bi bi-check-circle me-1"></i>Aprobar / Rechazar
+                    <i class="bi bi-check-circle me-1"></i>Aprobar / Rechazar (@Model.RenglonesPorDecidir)
                 </a>
             }
             @if (puedeEditar && Model.EstadoRequisicion is VH.Services.Entities.EstadoRequisicion.Aprobada or VH.Services.Entities.EstadoRequisicion.Parcial)
@@ -364,10 +379,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        @if (puedeEditar && Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                        @if (puedeEditar && Model.TieneRenglonesPorDecidir && (esSuperAdmin || esAdmin))
                         {
                             <a asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" class="btn btn-warning btn-lg">
-                                <i class="bi bi-check-circle me-2"></i>Aprobar / Rechazar
+                                <i class="bi bi-check-circle me-2"></i>Aprobar / Rechazar (@Model.RenglonesPorDecidir)
                             </a>
                         }
                         @if (puedeEditar && Model.EstadoRequisicion is VH.Services.Entities.EstadoRequisicion.Aprobada or VH.Services.Entities.EstadoRequisicion.Parcial)

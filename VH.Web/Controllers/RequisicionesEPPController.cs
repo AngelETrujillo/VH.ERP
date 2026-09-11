@@ -141,10 +141,14 @@ namespace VH.Web.Controllers
 
             var requisicion = await response.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
 
-            if (requisicion?.EstadoRequisicion != EstadoRequisicion.Pendiente)
+            // La autorización es por renglón: mientras quede alguno sin decidir, la
+            // página debe abrir aunque el documento ya tenga renglones autorizados.
+            // Antes sólo abría con el documento completo pendiente, y tras la primera
+            // decisión el resto de los renglones se quedaba sin forma de resolverse.
+            if (requisicion == null || !requisicion.TieneRenglonesPorDecidir)
             {
-                TempData["Error"] = "Solo se pueden aprobar requisiciones pendientes";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "Esta requisición no tiene renglones pendientes de autorizar.";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             return View(requisicion);
@@ -162,12 +166,18 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsJsonAsync($"api/requisicionesepp/{id}/aprobar", dto);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = dto.Aprobada ? "Requisición aprobada" : "Requisición rechazada";
-                    return RedirectToAction(nameof(Index));
+                    var cuantos = dto.IdsRenglones?.Count ?? 0;
+                    var accion = dto.Aprobada ? "autorizado(s)" : "rechazado(s)";
+                    TempData["Mensaje"] = cuantos > 0
+                        ? $"{cuantos} renglón(es) {accion}."
+                        : $"Renglones pendientes {accion}.";
+
+                    // A la ficha y no al listado: ahí se ve cómo quedó cada renglón, y
+                    // desde ahí se decide lo que falte.
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -176,6 +186,30 @@ namespace VH.Web.Controllers
             }
 
             return RedirectToAction(nameof(Aprobar), new { id });
+        }
+
+        /// <summary>
+        /// El API responde los errores como JSON; al usuario se le muestra sólo el
+        /// mensaje, no el cuerpo crudo.
+        /// </summary>
+        private static string ExtraerMensaje(string cuerpo)
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(cuerpo);
+                foreach (var nombre in new[] { "mensaje", "message" })
+                {
+                    if (doc.RootElement.TryGetProperty(nombre, out var valor) &&
+                        valor.ValueKind == System.Text.Json.JsonValueKind.String)
+                        return valor.GetString() ?? cuerpo;
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // No era JSON: se muestra tal cual.
+            }
+
+            return cuerpo;
         }
 
         // GET: RequisicionesEPP/Entregar/5?idEmpleado=7

@@ -112,7 +112,7 @@
                                class="btn btn-outline-info btn-sm flex-fill">
                                 <i class="bi bi-eye me-1"></i>Ver
                             </a>
-                            @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                            @if (puedeEditar && item.TieneRenglonesPorDecidir && (esSuperAdmin || esAdmin))
                             {
                                 <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                    class="btn btn-outline-warning btn-sm flex-fill">
@@ -196,7 +196,7 @@
                                                    class="btn btn-outline-info" title="Ver detalles">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                                                @if (puedeEditar && item.TieneRenglonesPorDecidir)
                                                 {
                                                     <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                                        class="btn btn-outline-warning" title="Aprobar/Rechazar">

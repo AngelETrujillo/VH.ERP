@@ -147,6 +147,15 @@ namespace VH.Services.DTOs
         public int TotalMateriales => Detalles.Count;
         public decimal TotalCantidadSolicitada => Detalles.Sum(d => d.CantidadSolicitada);
 
+        /// <summary>
+        /// Renglones que todavía esperan que alguien los autorice o los rechace. La
+        /// autorización es por renglón, así que un documento ya aprobado en parte
+        /// puede seguir teniéndolos.
+        /// </summary>
+        public int RenglonesPorDecidir => Detalles.Count(d => d.EstadoRenglon == EstadoRenglonRequisicion.Solicitado);
+
+        public bool TieneRenglonesPorDecidir => RenglonesPorDecidir > 0;
+
         /// <summary>Personas distintas que reciben algo en este documento.</summary>
         public int TotalEmpleados => Detalles
             .Where(d => d.IdEmpleadoDestino.HasValue)
