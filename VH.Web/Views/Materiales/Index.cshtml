@@ -1,6 +1,6 @@
-﻿@model IEnumerable<VH.Services.DTOs.MaterialEPPResponseDto>
+﻿@model IEnumerable<VH.Services.DTOs.MaterialResponseDto>
 @{
-    ViewData["Title"] = "Materiales EPP";
+    ViewData["Title"] = "Materiales";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
     var puedeCrear = PermisoHelper.PuedeCrear(Context.Session, "EMPLEADOS", esSuperAdmin);
     var puedeEditar = PermisoHelper.PuedeEditar(Context.Session, "EMPLEADOS", esSuperAdmin);
@@ -12,9 +12,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1 fw-bold text-dark">
-                <i class="bi bi-shield-check text-primary me-2"></i>Materiales EPP
+                <i class="bi bi-shield-check text-primary me-2"></i>Materiales
             </h2>
-            <p class="text-muted mb-0">Catálogo de equipos de protección personal</p>
+            <p class="text-muted mb-0">Catálogo de EPP, consumibles y herramienta</p>
         </div>
         @if (puedeCrear)
         {
@@ -72,6 +72,7 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4">Material</th>
+                            <th>Tipo</th>
                             <th>Unidad</th>
                             <th class="text-end">Costo Estimado</th>
                             <th class="text-center">Stock Global</th>
@@ -98,6 +99,11 @@
                                                 }
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(item.TipoMaterialClase)-subtle text-@(item.TipoMaterialClase)">
+                                            @item.TipoMaterialTexto
+                                        </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary-subtle text-secondary">
@@ -161,11 +167,11 @@
                         else
                         {
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="text-center py-5">
                                         <i class="bi bi-shield-check display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay materiales registrados</h5>
-                                        <p class="text-muted">Comienza agregando tu primer material EPP</p>
+                                        <p class="text-muted">Comienza agregando tu primer material</p>
                                         <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Agregar Material
                                         </a>

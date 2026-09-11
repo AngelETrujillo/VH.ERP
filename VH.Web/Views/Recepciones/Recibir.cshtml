@@ -1,0 +1,245 @@
+@model VH.Services.DTOs.PreparacionRecepcionDto
+@{
+    ViewData["Title"] = $"Recibir orden {Model.Folio}";
+    var renglones = Model.Renglones.Where(r => !r.Completo).ToList();
+    var completos = Model.Renglones.Where(r => r.Completo).ToList();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-box-arrow-in-down text-primary me-2"></i>Recibir @Model.Folio
+            </h2>
+            <p class="text-muted mb-0">
+                @Model.NombreProveedor &middot; entrega en <strong>@Model.NombreAlmacen</strong>
+                @if (!string.IsNullOrWhiteSpace(Model.NombreProyecto))
+                {
+                    <span class="text-muted">(@Model.NombreProyecto)</span>
+                }
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i>Volver a la bandeja
+        </a>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!renglones.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle text-success" style="font-size:3rem;"></i>
+                <h5 class="mt-3">Esta orden ya se recibió completa en @Model.NombreAlmacen</h5>
+                <a asp-action="Index" class="btn btn-primary mt-2">Volver a la bandeja</a>
+            </div>
+        </div>
+        return;
+    }
+
+    <form asp-action="Recibir" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="IdOrdenCompra" value="@Model.IdOrdenCompra">
+        <input type="hidden" name="IdAlmacen" value="@Model.IdAlmacen">
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Documento del proveedor</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-semibold">FECHA DE RECEPCIÓN</label>
+                        <input type="date" name="FechaRecepcion" class="form-control"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-semibold">NÚMERO DE FACTURA</label>
+                        <input type="text" name="NumeroFactura" class="form-control" maxlength="50"
+                               placeholder="FAC-1234">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-semibold">UUID DEL CFDI</label>
+                        <input type="text" name="UuidCFDI" class="form-control" maxlength="36">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-semibold">IVA DE LA FACTURA</label>
+                        <input type="number" step="0.01" min="0" name="Iva" class="form-control" value="0">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted fw-semibold">OBSERVACIONES</label>
+                        <textarea name="Observaciones" class="form-control" rows="2" maxlength="500"
+                                  placeholder="Llegó en dos tarimas, el chofer no traía la factura impresa..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Conteo</h6>
+                <span class="badge bg-secondary">@renglones.Count material(es) pendientes</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Material</th>
+                                <th class="text-center" style="width:110px;">Falta</th>
+                                <th class="text-center" style="width:120px;">Llegó</th>
+                                <th class="text-center" style="width:120px;">Se acepta</th>
+                                <th class="text-center" style="width:130px;">Precio real</th>
+                                <th style="width:240px;">Datos del lote</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < renglones.Count; i++)
+                            {
+                                var r = renglones[i];
+                                <tr>
+                                    <td class="ps-4">
+                                        <input type="hidden" name="Lineas[@i].IdOrdenCompraDetalle" value="@r.IdOrdenCompraDetalle">
+                                        <div class="fw-semibold">@r.NombreMaterial</div>
+                                        <small class="text-muted">
+                                            Pedido @r.CantidadPedida.ToString("0.##") @r.UnidadMedida
+                                            a @r.PrecioUnitarioPactado.ToString("C")
+                                            @if (r.CantidadRecibida > 0)
+                                            {
+                                                <span>&middot; ya recibido @r.CantidadRecibida.ToString("0.##")</span>
+                                            }
+                                        </small>
+                                        @if (r.Esperan.Any())
+                                        {
+                                            <div class="mt-2">
+                                                @foreach (var e in r.Esperan)
+                                                {
+                                                    <span class="badge @(e.CubiertoAhora ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary") me-1 mb-1">
+                                                        <i class="bi bi-person me-1"></i>@(string.IsNullOrWhiteSpace(e.NombreEmpleado) ? e.NumeroRequisicion : e.NombreEmpleado)
+                                                        &middot; @e.Cantidad.ToString("0.##")
+                                                        &middot; @e.DiasEsperando d
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-center fw-bold">@r.Pendiente.ToString("0.##")</td>
+                                    <td>
+                                        <input type="number" step="0.01" min="0" max="@r.Pendiente"
+                                               name="Lineas[@i].CantidadRecibida"
+                                               class="form-control form-control-sm text-center js-recibida"
+                                               data-fila="@i" value="@r.Pendiente.ToString("0.##")">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" min="0" max="@r.Pendiente"
+                                               name="Lineas[@i].CantidadAceptada"
+                                               class="form-control form-control-sm text-center js-aceptada"
+                                               data-fila="@i" value="@r.Pendiente.ToString("0.##")">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" min="0.01"
+                                               name="Lineas[@i].PrecioUnitarioReal"
+                                               class="form-control form-control-sm text-center"
+                                               value="@r.PrecioUnitarioPactado.ToString("0.00")">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-1">
+                                            @if (r.RequiereTalla)
+                                            {
+                                                <input type="text" name="Lineas[@i].Talla" maxlength="20"
+                                                       class="form-control form-control-sm" placeholder="Talla">
+                                            }
+                                            @if (r.ControlaCaducidad)
+                                            {
+                                                <input type="date" name="Lineas[@i].FechaCaducidad"
+                                                       class="form-control form-control-sm" title="Caducidad">
+                                            }
+                                            <input type="text" name="Lineas[@i].LoteProveedor" maxlength="50"
+                                                   class="form-control form-control-sm" placeholder="Lote del proveedor">
+                                            <input type="text" name="Lineas[@i].MotivoRechazo" maxlength="500"
+                                                   class="form-control form-control-sm js-motivo d-none"
+                                                   data-fila="@i" placeholder="Motivo del rechazo">
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">
+                    Sólo entra al almacén lo que se acepta. Lo rechazado queda asentado y la orden
+                    lo sigue esperando.
+                </small>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-2"></i>Registrar recepción
+                </button>
+            </div>
+        </div>
+
+        @if (completos.Any())
+        {
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold text-muted">Ya recibido completo</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm align-middle mb-0">
+                        <tbody>
+                            @foreach (var r in completos)
+                            {
+                                <tr>
+                                    <td class="ps-4">@r.NombreMaterial</td>
+                                    <td class="text-end pe-4 text-muted">
+                                        @r.CantidadRecibida.ToString("0.##") de @r.CantidadPedida.ToString("0.##") @r.UnidadMedida
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Lo aceptado nunca puede pasar de lo que llegó, y en cuanto se rechaza
+        // algo hay que decir por qué: el API lo exige y es mejor pedirlo aquí.
+        document.querySelectorAll('.js-recibida, .js-aceptada').forEach(function (input) {
+            input.addEventListener('input', function () {
+                var fila = this.dataset.fila;
+                var recibida = document.querySelector('.js-recibida[data-fila="' + fila + '"]');
+                var aceptada = document.querySelector('.js-aceptada[data-fila="' + fila + '"]');
+                var motivo = document.querySelector('.js-motivo[data-fila="' + fila + '"]');
+
+                var llego = parseFloat(recibida.value) || 0;
+                var acepta = parseFloat(aceptada.value) || 0;
+
+                if (this.classList.contains('js-recibida') && acepta > llego) {
+                    aceptada.value = recibida.value;
+                    acepta = llego;
+                }
+
+                if (acepta > llego) {
+                    aceptada.value = recibida.value;
+                    acepta = llego;
+                }
+
+                var hayRechazo = llego > acepta;
+                motivo.classList.toggle('d-none', !hayRechazo);
+                motivo.required = hayRechazo;
+                if (!hayRechazo) motivo.value = '';
+            });
+        });
+    </script>
+}

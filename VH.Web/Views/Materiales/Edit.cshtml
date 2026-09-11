@@ -1,6 +1,6 @@
-﻿@model VH.Services.DTOs.MaterialEPPRequestDto
+﻿@model VH.Services.DTOs.MaterialRequestDto
 @{
-    ViewData["Title"] = "Editar Material EPP";
+    ViewData["Title"] = "Editar Material";
 }
 
 <div class="container-fluid">
@@ -11,7 +11,7 @@
         </a>
         <div>
             <h2 class="mb-0 fw-bold text-dark">
-                <i class="bi bi-pencil-square text-warning me-2"></i>Editar Material EPP
+                <i class="bi bi-pencil-square text-warning me-2"></i>Editar Material
             </h2>
             <p class="text-muted mb-0">Modifique la información del material</p>
         </div>
@@ -64,6 +64,44 @@
                                     <input asp-for="CostoUnitarioEstimado" type="number" step="0.01" min="0" class="form-control" />
                                 </div>
                                 <span asp-validation-for="CostoUnitarioEstimado" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clasificación -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Clasificación</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="TipoMaterial" class="form-label fw-semibold">Tipo de Material <span class="text-danger">*</span></label>
+                                <select asp-for="TipoMaterial" class="form-select form-select-lg">
+                                    <option value="1">EPP — Equipo de protección personal</option>
+                                    <option value="2">Consumible</option>
+                                    <option value="3">Herramienta</option>
+                                </select>
+                                <span asp-validation-for="TipoMaterial" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1">
+                                    Cambiarlo a un tipo distinto de EPP deja el material fuera del control de consumo.
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Características</label>
+                                <div class="form-check form-switch">
+                                    <input asp-for="RequiereTalla" class="form-check-input" type="checkbox" role="switch" id="switchTalla">
+                                    <label class="form-check-label" for="switchTalla">Se entrega por talla</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="EsRetornable" class="form-check-input" type="checkbox" role="switch" id="switchRetornable">
+                                    <label class="form-check-label" for="switchRetornable">Debe devolverse</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="ControlaCaducidad" class="form-check-input" type="checkbox" role="switch" id="switchCaducidad">
+                                    <label class="form-check-label" for="switchCaducidad">Caduca en almacén</label>
+                                </div>
                             </div>
                         </div>
                     </div>

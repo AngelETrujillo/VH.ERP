@@ -104,13 +104,12 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4">Fecha</th>
-                            <th>Material</th>
                             <th>Proveedor</th>
-                            <th>Almacén</th>
-                            <th class="text-center">Cantidad</th>
-                            <th class="text-end">P. Unitario</th>
+                            <th>Materiales</th>
+                            <th class="text-center">Renglones</th>
+                            <th class="text-end">Subtotal</th>
                             <th class="text-end">Total</th>
-                            <th class="text-center">Disponible</th>
+                            <th class="text-center">Estado</th>
                             <th class="text-center" style="width:140px;">Acciones</th>
                         </tr>
                     </thead>
@@ -119,14 +118,11 @@
                         {
                             @foreach (var item in Model)
                             {
-                                var porcentajeDisponible = item.CantidadComprada > 0
-                                ? (item.CantidadDisponible / item.CantidadComprada) * 100
-                                : 0;
                                 <tr>
                                     <td class="ps-4">
                                         <div class="d-flex align-items-center">
                                             <div class="icon-circle bg-success-subtle text-success me-3">
-                                                <i class="bi bi-cart-check"></i>
+                                                <i class="bi bi-receipt"></i>
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-semibold">@item.FechaCompra.ToString("dd/MM/yyyy")</h6>
@@ -137,29 +133,24 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span class="fw-semibold">@item.NombreMaterial</span>
-                                        <br><small class="text-muted">@item.UnidadMedidaMaterial</small>
-                                    </td>
                                     <td>@item.NombreProveedor</td>
                                     <td>
-                                        <span class="badge bg-info-subtle text-info">
-                                            <i class="bi bi-box-seam me-1"></i>@item.NombreAlmacen
-                                        </span>
+                                        <span class="fw-semibold">@item.ResumenMateriales</span>
+                                        <br><small class="text-muted">@item.TotalUnidades.FormatoCantidad() unidades</small>
                                     </td>
-                                    <td class="text-center fw-semibold">@item.CantidadComprada</td>
-                                    <td class="text-end">@item.PrecioUnitario.ToString("C2")</td>
-                                    <td class="text-end fw-bold text-success">@item.CostoTotal.ToString("C2")</td>
                                     <td class="text-center">
-                                        @if (item.CantidadDisponible > 0)
+                                        <span class="badge bg-info-subtle text-info">@item.TotalRenglones</span>
+                                    </td>
+                                    <td class="text-end">@item.Subtotal.ToString("C2")</td>
+                                    <td class="text-end fw-bold text-success">@item.Total.ToString("C2")</td>
+                                    <td class="text-center">
+                                        @if (item.TieneDisponible)
                                         {
-                                            <span class="badge bg-success-subtle text-success">
-                                                @item.CantidadDisponible
-                                            </span>
+                                            <span class="badge bg-success-subtle text-success">Con existencia</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary-subtle text-secondary">Agotado</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">Agotada</span>
                                         }
                                     </td>
                                     <td class="text-center">

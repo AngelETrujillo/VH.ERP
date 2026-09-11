@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - VH ERP</title>
+    <title>@ViewData["Title"] - Zentrixia ERP</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -346,8 +346,11 @@
         var puedeVerMateriales = PermisoHelper.PuedeVer(session, "MATERIALES_EPP", esSuperAdmin);
         var puedeVerRequisiciones = PermisoHelper.PuedeVer(session, "REQUISICIONES_EPP", esSuperAdmin);
         var puedeVerCompras = PermisoHelper.PuedeVer(session, "COMPRAS_EPP", esSuperAdmin);
+        var puedeVerOrdenesCompra = PermisoHelper.PuedeVer(session, "ORDENES_COMPRA", esSuperAdmin);
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
+        var puedeVerRecepciones = PermisoHelper.PuedeVer(session, "RECEPCIONES", esSuperAdmin);
+        var puedeVerKardex = PermisoHelper.PuedeVer(session, "KARDEX", esSuperAdmin);
         var puedeVerDashboardAnalytics = PermisoHelper.PuedeVer(session, "DASHBOARD_ANALYTICS", esSuperAdmin);
         var puedeVerAlertasConsumo = PermisoHelper.PuedeVer(session, "ALERTAS_CONSUMO", esSuperAdmin);
         var puedeVerPuestos = PermisoHelper.PuedeVer(session, "PUESTOS", esSuperAdmin);
@@ -357,7 +360,7 @@
         var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
         var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores || puedeVerPuestos;
         var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
-        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios;
+        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios || puedeVerRecepciones || puedeVerKardex;
         var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
     }
 
@@ -366,7 +369,7 @@
         <div class="sidebar-header">
             <a href="/" class="sidebar-logo">
                 <i class="bi bi-building"></i>
-                <span>Villanueva</span>
+                <span>Zentrixia</span>
             </a>
             <button class="sidebar-toggle d-none d-md-block" id="sidebarToggle">
                 <i class="bi bi-list"></i>
@@ -496,6 +499,15 @@
                         </a>
                     </li>
                 }
+                @if (puedeVerOrdenesCompra)
+                {
+                    <li>
+                        <a asp-controller="OrdenesCompra" asp-action="Faltantes" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "OrdenesCompra" ? "active" : "")">
+                            <i class="bi bi-clipboard-plus"></i>
+                            <span class="menu-text">Órdenes de Compra</span>
+                        </a>
+                    </li>
+                }
                 @if (puedeVerCompras)
                 {
                     <li>
@@ -520,6 +532,24 @@
                         <a asp-controller="Inventarios" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventarios" ? "active" : "")">
                             <i class="bi bi-boxes"></i>
                             <span class="menu-text">Control Inventario</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerRecepciones)
+                {
+                    <li>
+                        <a asp-controller="Recepciones" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Recepciones" ? "active" : "")">
+                            <i class="bi bi-truck"></i>
+                            <span class="menu-text">Recepción de Material</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerKardex)
+                {
+                    <li>
+                        <a asp-controller="Kardex" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Kardex" ? "active" : "")">
+                            <i class="bi bi-journals"></i>
+                            <span class="menu-text">Kardex de Almacén</span>
                         </a>
                     </li>
                 }
@@ -618,7 +648,7 @@
         <!-- Footer -->
         <footer class="main-footer">
             <div class="d-flex justify-content-between align-items-center">
-                <span>&copy; 2026 Villanueva Habitat</span>
+                <span>&copy; 2026 Zentrixia Systems</span>
                 <span>Versión 1.0.0</span>
             </div>
         </footer>

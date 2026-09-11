@@ -1,27 +1,37 @@
-﻿@model VH.Services.DTOs.RequisicionEPPResponseDto
+@model VH.Services.DTOs.RequisicionEPPResponseDto
+@using VH.Services.Entities
 @{
-    ViewData["Title"] = $"Aprobar Requisición {Model.NumeroRequisicion}";
+    ViewData["Title"] = $"Autorizar Requisición {Model.NumeroRequisicion}";
+    var porDecidir = Model.RenglonesPorDecidir;
 }
 
 <div class="container-fluid px-3 px-md-4">
 
     <!-- Encabezado -->
     <div class="d-flex align-items-center mb-3 mb-md-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3">
+        <a asp-action="Details" asp-route-id="@Model.IdRequisicion" class="btn btn-outline-secondary me-3">
             <i class="bi bi-arrow-left"></i>
         </a>
         <div class="flex-grow-1 min-w-0">
             <h2 class="mb-0 fw-bold text-dark fs-5 fs-md-2">
-                <i class="bi bi-clipboard-check text-warning me-2"></i>Aprobar Requisición
+                <i class="bi bi-clipboard-check text-warning me-2"></i>Autorizar Requisición
             </h2>
             <p class="text-muted mb-0 small">@Model.NumeroRequisicion</p>
         </div>
-        <span class="badge bg-warning ms-2 fs-6 px-3 py-2">Pendiente</span>
+        <span class="badge bg-warning text-dark ms-2 fs-6 px-3 py-2">@porDecidir por decidir</span>
     </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="row g-3 g-md-4">
 
-        <!-- Info + Materiales -->
+        <!-- Info + Renglones -->
         <div class="col-12 col-lg-8">
 
             <!-- Info general -->
@@ -44,9 +54,9 @@
                             <span>@Model.NombreUsuarioSolicita</span>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="text-muted small text-uppercase fw-semibold d-block">Empleado Receptor</label>
-                            <span class="fw-semibold">@Model.NombreEmpleadoRecibe</span>
-                            <small class="text-muted d-block">@Model.NumeroNominaEmpleado</small>
+                            <label class="text-muted small text-uppercase fw-semibold d-block">Destinatarios</label>
+                            <span class="fw-semibold">@Model.ResumenDestinatarios</span>
+                            <small class="text-muted d-block">@Model.TotalEmpleados trabajador(es) · @Model.TotalMateriales renglón(es)</small>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="text-muted small text-uppercase fw-semibold d-block">Almacén</label>
@@ -63,110 +73,153 @@
                 </div>
             </div>
 
-            <!-- Materiales -->
+            <!-- Renglones -->
             <div class="card shadow-sm border-0 mb-3 mb-md-4">
-                <div class="card-header bg-success text-white py-3">
-                    <h5 class="mb-0 fs-6 fs-md-5"><i class="bi bi-box-seam me-2"></i>Materiales Solicitados</h5>
+                <div class="card-header bg-success text-white py-3 d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="mb-0 fs-6 fs-md-5 me-auto"><i class="bi bi-box-seam me-2"></i>Renglones</h5>
+                    @if (porDecidir > 0)
+                    {
+                        <button type="button" class="btn btn-sm btn-light" data-marcar="todos">Marcar todos</button>
+                        <button type="button" class="btn btn-sm btn-outline-light" data-marcar="ninguno">Ninguno</button>
+                    }
+                </div>
+                <div class="px-3 pt-3 small text-muted">
+                    Marca los renglones sobre los que vas a decidir. Los que no marques quedan
+                    pendientes y los puedes decidir después.
                 </div>
 
-                <!-- Móvil: cards -->
+                <!-- Móvil: tarjetas -->
                 <div class="d-md-none p-3">
                     @foreach (var detalle in Model.Detalles)
                     {
-                        <div class="border rounded p-3 mb-2 bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="fw-semibold">@detalle.NombreMaterial</span>
-                                    <small class="text-muted d-block">@detalle.UnidadMedida</small>
-                                </div>
+                        var pendiente = detalle.EstadoRenglon == EstadoRenglonRequisicion.Solicitado;
+                        <div class="border rounded p-3 mb-2 @(pendiente ? "bg-light" : "bg-white opacity-75")">
+                            <div class="d-flex align-items-start gap-3">
+                                @if (pendiente)
+                                {
+                                    <input type="checkbox" class="form-check-input mt-1 chk-renglon" style="width:1.4em;height:1.4em;"
+                                           id="chk-m-@detalle.IdRequisicionDetalle" value="@detalle.IdRequisicionDetalle" checked />
+                                }
+                                <label class="flex-grow-1 min-w-0" for="@(pendiente ? $"chk-m-{detalle.IdRequisicionDetalle}" : null)">
+                                    <span class="fw-semibold d-block">@detalle.NombreMaterial</span>
+                                    <small class="text-muted d-block">Para: @detalle.Destino</small>
+                                    @if (!pendiente)
+                                    {
+                                        <span class="badge bg-@detalle.EstadoRenglonClase mt-1">@detalle.EstadoRenglonTexto</span>
+                                        @if (!string.IsNullOrEmpty(detalle.MotivoRechazo))
+                                        {
+                                            <small class="text-danger d-block">@detalle.MotivoRechazo</small>
+                                        }
+                                    }
+                                </label>
                                 <div class="text-end">
                                     <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
                                     @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
                                     {
-                                        <br>
-                                
+                                        <br />
                                         <span class="badge bg-secondary mt-1">@detalle.TallaSolicitada</span>
                                     }
                                 </div>
                             </div>
                         </div>
                     }
-                    <div class="d-flex justify-content-between fw-semibold pt-2 border-top mt-1">
-                        <span>Total: @Model.TotalMateriales mat.</span>
-                        <span>@Model.TotalCantidadSolicitada uds.</span>
-                    </div>
                 </div>
 
                 <!-- Escritorio: tabla -->
                 <div class="d-none d-md-block table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">Material</th>
+                                <th class="ps-4" style="width:48px;"></th>
+                                <th>Material</th>
+                                <th>Para</th>
                                 <th class="text-center">Cantidad</th>
                                 <th class="text-center">Talla</th>
+                                <th class="text-center">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var detalle in Model.Detalles)
                             {
-                                <tr>
+                                var pendiente = detalle.EstadoRenglon == EstadoRenglonRequisicion.Solicitado;
+                                <tr class="@(pendiente ? "" : "text-muted")">
                                     <td class="ps-4">
-                                        <strong>@detalle.NombreMaterial</strong>
-                                        <br><small class="text-muted">@detalle.UnidadMedida</small>
+                                        @if (pendiente)
+                                        {
+                                            <input type="checkbox" class="form-check-input chk-renglon"
+                                                   id="chk-d-@detalle.IdRequisicionDetalle" value="@detalle.IdRequisicionDetalle" checked />
+                                        }
                                     </td>
+                                    <td>
+                                        <label for="@(pendiente ? $"chk-d-{detalle.IdRequisicionDetalle}" : null)" class="mb-0">
+                                            <strong>@detalle.NombreMaterial</strong>
+                                            <br /><small class="text-muted">@detalle.UnidadMedida</small>
+                                        </label>
+                                    </td>
+                                    <td>@detalle.Destino</td>
                                     <td class="text-center">
                                         <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
                                     </td>
                                     <td class="text-center">
                                         @(string.IsNullOrEmpty(detalle.TallaSolicitada) ? "-" : detalle.TallaSolicitada)
                                     </td>
+                                    <td class="text-center">
+                                        @if (pendiente)
+                                        {
+                                            <span class="badge bg-warning text-dark">Por decidir</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-@detalle.EstadoRenglonClase">@detalle.EstadoRenglonTexto</span>
+                                            @if (!string.IsNullOrEmpty(detalle.MotivoRechazo))
+                                            {
+                                                <br /><small class="text-danger">@detalle.MotivoRechazo</small>
+                                            }
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
-                        <tfoot class="table-light">
-                            <tr>
-                                <th class="ps-4">Total: @Model.TotalMateriales material(es)</th>
-                                <th class="text-center">@Model.TotalCantidadSolicitada</th>
-                                <th></th>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- Formulario decisión en móvil -->
+            <!-- Decisión en móvil -->
             <div class="d-md-none">
                 <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-dark text-white py-3">
+                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between">
                         <h5 class="mb-0 fs-6"><i class="bi bi-clipboard-check me-2"></i>Decisión</h5>
+                        <span class="small"><span class="js-contador">@porDecidir</span> marcado(s)</span>
                     </div>
                     <div class="card-body p-3">
-                        <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" class="mb-3">
+                        <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
+                              class="mb-3 form-decision" data-accion="autorizar">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="Aprobada" value="true" />
                             <input type="hidden" name="MotivoRechazo" value="" />
-                            <button type="submit" class="btn btn-success w-100 btn-lg fw-semibold"
-                                    onclick="return confirm('¿Está seguro de APROBAR esta requisición?');">
-                                <i class="bi bi-check-lg me-2"></i>Aprobar Requisición
+                            <div class="ids-renglones"></div>
+                            <button type="submit" class="btn btn-success w-100 btn-lg fw-semibold">
+                                <i class="bi bi-check-lg me-2"></i>Autorizar marcados
                             </button>
                         </form>
 
                         <hr>
 
-                        <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" id="formRechazoMobile">
+                        <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
+                              class="form-decision" data-accion="rechazar">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="Aprobada" value="false" />
+                            <div class="ids-renglones"></div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold text-danger">
-                                    <i class="bi bi-x-circle me-1"></i>Motivo de Rechazo <span class="text-danger">*</span>
+                                    <i class="bi bi-x-circle me-1"></i>Motivo de rechazo <span class="text-danger">*</span>
                                 </label>
-                                <textarea name="MotivoRechazo" class="form-control" rows="3"
+                                <textarea name="MotivoRechazo" class="form-control" rows="3" maxlength="500"
                                           placeholder="Indique el motivo del rechazo..."></textarea>
                                 <small class="text-muted">Obligatorio si rechaza</small>
                             </div>
                             <button type="submit" class="btn btn-danger w-100 btn-lg">
-                                <i class="bi bi-x-lg me-2"></i>Rechazar Requisición
+                                <i class="bi bi-x-lg me-2"></i>Rechazar marcados
                             </button>
                         </form>
                     </div>
@@ -174,41 +227,45 @@
             </div>
         </div>
 
-        <!-- Panel decisión escritorio -->
+        <!-- Decisión en escritorio -->
         <div class="col-lg-4 d-none d-md-block">
             <div class="card shadow-sm border-0 mb-4" style="position: sticky; top: 1rem;">
-                <div class="card-header bg-dark text-white py-3">
+                <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Decisión</h5>
+                    <span class="small"><span class="js-contador">@porDecidir</span> marcado(s)</span>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" class="mb-3">
+                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
+                          class="mb-3 form-decision" data-accion="autorizar">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="Aprobada" value="true" />
                         <input type="hidden" name="MotivoRechazo" value="" />
+                        <div class="ids-renglones"></div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg"
-                                    onclick="return confirm('¿Está seguro de APROBAR esta requisición?');">
-                                <i class="bi bi-check-lg me-2"></i>Aprobar Requisición
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-lg me-2"></i>Autorizar marcados
                             </button>
                         </div>
                     </form>
 
                     <hr class="my-4">
 
-                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post" id="formRechazo">
+                    <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
+                          class="form-decision" data-accion="rechazar">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="Aprobada" value="false" />
+                        <div class="ids-renglones"></div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-danger">
-                                <i class="bi bi-x-circle me-1"></i>Motivo de Rechazo
+                                <i class="bi bi-x-circle me-1"></i>Motivo de rechazo
                             </label>
-                            <textarea name="MotivoRechazo" id="MotivoRechazo" class="form-control" rows="3"
+                            <textarea name="MotivoRechazo" class="form-control" rows="3" maxlength="500"
                                       placeholder="Indique el motivo del rechazo..."></textarea>
-                            <small class="text-muted">Obligatorio si rechaza la requisición</small>
+                            <small class="text-muted">Obligatorio si rechaza</small>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-danger" id="btnRechazar">
-                                <i class="bi bi-x-lg me-2"></i>Rechazar Requisición
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-x-lg me-2"></i>Rechazar marcados
                             </button>
                         </div>
                     </form>
@@ -217,11 +274,12 @@
 
             <div class="card shadow-sm border-0 bg-light">
                 <div class="card-body">
-                    <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Información</h6>
+                    <h6 class="fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Cómo funciona</h6>
                     <ul class="small text-muted mb-0">
-                        <li>Al <strong class="text-success">aprobar</strong>, pasará a estado "Aprobada" y podrá ser entregada.</li>
-                        <li>Al <strong class="text-danger">rechazar</strong>, debe indicar un motivo.</li>
-                        <li>Esta acción no se puede deshacer.</li>
+                        <li>La decisión se aplica sólo a los renglones <strong>marcados</strong>.</li>
+                        <li>Al <strong class="text-success">autorizar</strong>, cada renglón aparta material si hay en el almacén, o queda por comprar si no.</li>
+                        <li>Al <strong class="text-danger">rechazar</strong>, el motivo se guarda en cada renglón rechazado.</li>
+                        <li>Lo que no marques queda pendiente: puedes volver a esta pantalla y decidirlo después.</li>
                     </ul>
                 </div>
             </div>
@@ -243,39 +301,80 @@
 
 @section Scripts {
     <script>
-        // Validación rechazo escritorio
-        const formRechazo = document.getElementById('formRechazo');
-        if (formRechazo) {
-            formRechazo.addEventListener('submit', function(e) {
-                const motivo = document.getElementById('MotivoRechazo').value.trim();
-                if (motivo === '') {
-                    e.preventDefault();
-                    alert('Debe indicar el motivo del rechazo.');
-                    document.getElementById('MotivoRechazo').focus();
-                    return false;
-                }
-                if (!confirm('¿Está seguro de RECHAZAR esta requisición?')) {
-                    e.preventDefault();
-                    return false;
-                }
+        // Hay dos listas de casillas (móvil y escritorio) y sólo se ve una. Se
+        // mantienen sincronizadas por el id del renglón, y al enviar se toman los
+        // valores sin repetir.
+        function renglonesMarcados() {
+            const ids = new Set();
+            document.querySelectorAll('.chk-renglon:checked').forEach(function (c) {
+                ids.add(c.value);
+            });
+            return Array.from(ids);
+        }
+
+        function actualizarContador() {
+            const total = renglonesMarcados().length;
+            document.querySelectorAll('.js-contador').forEach(function (el) {
+                el.textContent = total;
             });
         }
 
-        // Validación rechazo móvil
-        const formRechazoMobile = document.getElementById('formRechazoMobile');
-        if (formRechazoMobile) {
-            formRechazoMobile.addEventListener('submit', function(e) {
-                const motivo = this.querySelector('textarea[name="MotivoRechazo"]').value.trim();
-                if (motivo === '') {
-                    e.preventDefault();
-                    alert('Debe indicar el motivo del rechazo.');
-                    return false;
-                }
-                if (!confirm('¿Está seguro de RECHAZAR esta requisición?')) {
-                    e.preventDefault();
-                    return false;
-                }
+        document.querySelectorAll('.chk-renglon').forEach(function (casilla) {
+            casilla.addEventListener('change', function () {
+                document.querySelectorAll('.chk-renglon[value="' + casilla.value + '"]').forEach(function (otra) {
+                    otra.checked = casilla.checked;
+                });
+                actualizarContador();
             });
-        }
+        });
+
+        document.querySelectorAll('[data-marcar]').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                const marcar = boton.dataset.marcar === 'todos';
+                document.querySelectorAll('.chk-renglon').forEach(function (c) {
+                    c.checked = marcar;
+                });
+                actualizarContador();
+            });
+        });
+
+        document.querySelectorAll('.form-decision').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const ids = renglonesMarcados();
+                if (ids.length === 0) {
+                    e.preventDefault();
+                    alert('Marque al menos un renglón.');
+                    return;
+                }
+
+                const rechazo = form.dataset.accion === 'rechazar';
+                if (rechazo) {
+                    const motivo = form.querySelector('textarea[name="MotivoRechazo"]');
+                    if (motivo.value.trim() === '') {
+                        e.preventDefault();
+                        alert('Debe indicar el motivo del rechazo.');
+                        motivo.focus();
+                        return;
+                    }
+                }
+
+                const verbo = rechazo ? 'RECHAZAR' : 'AUTORIZAR';
+                if (!confirm('¿Está seguro de ' + verbo + ' ' + ids.length + ' renglón(es)?')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Sin esto, el servidor decidiría sobre todos los renglones pendientes.
+                const contenedor = form.querySelector('.ids-renglones');
+                contenedor.innerHTML = '';
+                ids.forEach(function (id) {
+                    const campo = document.createElement('input');
+                    campo.type = 'hidden';
+                    campo.name = 'IdsRenglones';
+                    campo.value = id;
+                    contenedor.appendChild(campo);
+                });
+            });
+        });
     </script>
 }

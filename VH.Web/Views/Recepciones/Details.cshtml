@@ -1,0 +1,211 @@
+@model VH.Services.DTOs.RecepcionCompraResponseDto
+@{
+    ViewData["Title"] = $"Recepción {Model.Folio}";
+
+    var avisos = new List<string>();
+    if (TempData["Avisos"] is string json)
+    {
+        try { avisos = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? new(); }
+        catch { avisos = new(); }
+    }
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-box-seam text-primary me-2"></i>Recepción @Model.Folio
+            </h2>
+            <p class="text-muted mb-0">
+                Orden @Model.FolioOrdenCompra &middot; @Model.NombreProveedor &middot;
+                recibida en @Model.NombreAlmacen el @Model.FechaRecepcion.ToString("dd/MM/yyyy")
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Historial" class="btn btn-outline-secondary shadow-sm">
+                <i class="bi bi-clock-history me-2"></i>Historial
+            </a>
+            <a asp-action="Index" class="btn btn-primary shadow-sm">
+                <i class="bi bi-truck me-2"></i>Bandeja
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (avisos.Any())
+    {
+        <div class="alert alert-info">
+            <h6 class="fw-bold"><i class="bi bi-info-circle me-2"></i>Lo que hay que saber de esta entrega</h6>
+            <ul class="mb-0 ps-3">
+                @foreach (var aviso in avisos)
+                {
+                    <li>@aviso</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Recibido</div>
+                    <div class="fs-3 fw-bold">@Model.TotalRecibido.ToString("0.##")</div>
+                    <div class="small text-muted">Piezas que bajaron del camión</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Aceptado</div>
+                    <div class="fs-3 fw-bold text-success">@Model.TotalAceptado.ToString("0.##")</div>
+                    <div class="small text-muted">Entró al inventario</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Rechazado</div>
+                    <div class="fs-3 fw-bold @(Model.TotalRechazado > 0 ? "text-danger" : "")">
+                        @Model.TotalRechazado.ToString("0.##")
+                    </div>
+                    <div class="small text-muted">La orden lo sigue esperando</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Importe</div>
+                    <div class="fs-3 fw-bold">@Model.Importe.ToString("C")</div>
+                    <div class="small text-muted">
+                        @(string.IsNullOrWhiteSpace(Model.NumeroFactura) ? "Sin factura capturada" : $"Factura {Model.NumeroFactura}")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">Materiales recibidos</h6>
+            @if (Model.IdCompra.HasValue)
+            {
+                <a asp-controller="ComprasEPP" asp-action="Details" asp-route-id="@Model.IdCompra"
+                   class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-receipt me-1"></i>Ver la compra que generó
+                </a>
+            }
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Material</th>
+                            <th class="text-center">Llegó</th>
+                            <th class="text-center">Aceptado</th>
+                            <th class="text-end">Pactado</th>
+                            <th class="text-end">Pagado</th>
+                            <th class="text-end">Importe</th>
+                            <th>Lote</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Detalles)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">@d.NombreMaterial</div>
+                                    @if (!string.IsNullOrWhiteSpace(d.MotivoRechazo))
+                                    {
+                                        <small class="text-danger">
+                                            <i class="bi bi-x-circle me-1"></i>@d.MotivoRechazo
+                                        </small>
+                                    }
+                                </td>
+                                <td class="text-center">@d.CantidadRecibida.ToString("0.##") @d.UnidadMedida</td>
+                                <td class="text-center fw-semibold">
+                                    @d.CantidadAceptada.ToString("0.##")
+                                    @if (d.CantidadRechazada > 0)
+                                    {
+                                        <div>
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                -@d.CantidadRechazada.ToString("0.##")
+                                            </span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-end text-muted">@d.PrecioUnitarioPactado.ToString("C")</td>
+                                <td class="text-end fw-semibold">
+                                    @d.PrecioUnitarioReal.ToString("C")
+                                    @if (d.DiferenciaPrecio != 0)
+                                    {
+                                        <div>
+                                            <span class="badge @(d.DiferenciaPrecio > 0 ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success")">
+                                                @d.DiferenciaPrecio.ToString("+0.00;-0.00")
+                                            </span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-end">@d.Importe.ToString("C")</td>
+                                <td>
+                                    <small class="text-muted">
+                                        @if (!string.IsNullOrWhiteSpace(d.Talla))
+                                        {
+                                            <div>Talla @d.Talla</div>
+                                        }
+                                        @if (d.FechaCaducidad.HasValue)
+                                        {
+                                            <div>Caduca @d.FechaCaducidad.Value.ToString("dd/MM/yyyy")</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(d.LoteProveedor))
+                                        {
+                                            <div>Lote prov. @d.LoteProveedor</div>
+                                        }
+                                        @if (d.IdCompraDetalle.HasValue)
+                                        {
+                                            <div>Lote #@d.IdCompraDetalle</div>
+                                        }
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-semibold">Recibió</div>
+                    <div>@Model.NombreUsuarioRecibe</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-semibold">Factura</div>
+                    <div>@(string.IsNullOrWhiteSpace(Model.NumeroFactura) ? "—" : Model.NumeroFactura)</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-semibold">UUID CFDI</div>
+                    <div class="text-break small">@(string.IsNullOrWhiteSpace(Model.UuidCFDI) ? "—" : Model.UuidCFDI)</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-semibold">Observaciones</div>
+                    <div class="small">@(string.IsNullOrWhiteSpace(Model.Observaciones) ? "—" : Model.Observaciones)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

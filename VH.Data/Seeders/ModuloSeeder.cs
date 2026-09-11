@@ -7,8 +7,14 @@ namespace VH.Data.Seeders
     {
         public static async Task SeedAsync(VHERPContext context)
         {
-            if (await context.Modulos.AnyAsync())
-                return;
+            // El seeder es incremental. Antes se saltaba entero si ya había un solo
+            // módulo, de modo que un módulo nuevo nunca llegaba a una base ya
+            // sembrada: quedaba invisible en el menú y sin permiso que otorgar, y
+            // sólo funcionaba para SuperAdmin, que se salta la matriz. Ahora se
+            // agrega lo que falte y se respeta lo que ya está.
+            var existentes = await context.Modulos
+                .Select(m => m.Codigo)
+                .ToListAsync();
 
             var modulos = new List<Modulo>
             {
@@ -29,6 +35,9 @@ namespace VH.Data.Seeders
                 new Modulo { Codigo = "COMPRAS_EPP", Nombre = "Compras EPP", Icono = "bi-cart-plus", ControllerName = "ComprasEPP", Orden = 40 },
                 new Modulo { Codigo = "ENTREGAS_EPP", Nombre = "Entregas EPP", Icono = "bi-clipboard-check", ControllerName = "EntregasEPP", Orden = 41 },
                 new Modulo { Codigo = "INVENTARIOS", Nombre = "Control Inventario", Icono = "bi-boxes", ControllerName = "Inventarios", Orden = 42 },
+                new Modulo { Codigo = "ORDENES_COMPRA", Nombre = "Órdenes de Compra", Icono = "bi-clipboard-plus", ControllerName = "OrdenesCompra", Orden = 43 },
+                new Modulo { Codigo = "RECEPCIONES", Nombre = "Recepción de Material", Icono = "bi-truck", ControllerName = "Recepciones", Orden = 44 },
+                new Modulo { Codigo = "KARDEX", Nombre = "Kardex de Almacén", Icono = "bi-journals", ControllerName = "Kardex", Orden = 45 },
 
                 // Analytics
                 new Modulo { Codigo = "DASHBOARD_ANALYTICS", Nombre = "Dashboard Analytics", Icono = "bi-graph-up", ControllerName = "DashboardAnalytics", Orden = 43 },
@@ -43,8 +52,12 @@ namespace VH.Data.Seeders
                 new Modulo { Codigo = "ADMIN_LOGS", Nombre = "Log Actividad", Icono = "bi-journal-text", ControllerName = "LogActividad", Orden = 53 },
             };
 
-            await context.Modulos.AddRangeAsync(modulos);
-            await context.SaveChangesAsync();
+            var nuevos = modulos.Where(m => !existentes.Contains(m.Codigo)).ToList();
+            if (nuevos.Count > 0)
+            {
+                await context.Modulos.AddRangeAsync(nuevos);
+                await context.SaveChangesAsync();
+            }
 
             // Obtener IDs de módulos padre
             var catalogosBase = await context.Modulos.FirstAsync(m => m.Codigo == "CATALOGOS_BASE");
@@ -65,29 +78,43 @@ namespace VH.Data.Seeders
                 
                 // Almacenes
                 new Modulo { Codigo = "ALMACENES", Nombre = "Almacenes", ControllerName = "Almacenes", IdModuloPadre = almacenesMenu.IdModulo, Orden = 31 },
-                new Modulo { Codigo = "MATERIALES_EPP", Nombre = "Materiales EPP", ControllerName = "Materiales", IdModuloPadre = almacenesMenu.IdModulo, Orden = 32 },
+                new Modulo { Codigo = "MATERIALES_EPP", Nombre = "Materiales", ControllerName = "Materiales", IdModuloPadre = almacenesMenu.IdModulo, Orden = 32 },
             };
 
-            await context.Modulos.AddRangeAsync(subModulos);
-            await context.SaveChangesAsync();
+            var nuevosSub = subModulos.Where(m => !existentes.Contains(m.Codigo)).ToList();
+            if (nuevosSub.Count > 0)
+            {
+                await context.Modulos.AddRangeAsync(nuevosSub);
+                await context.SaveChangesAsync();
+            }
 
-            // Asignar todos los permisos al rol SuperAdmin
+            // SuperAdmin puede con todo; el permiso se otorga sólo donde falta.
             var superAdminRol = await context.Roles.FirstOrDefaultAsync(r => r.Name == "SuperAdmin");
             if (superAdminRol != null)
             {
-                var todosModulos = await context.Modulos.ToListAsync();
-                var permisosSuperAdmin = todosModulos.Select(m => new RolPermiso
-                {
-                    IdRol = superAdminRol.Id,
-                    IdModulo = m.IdModulo,
-                    PuedeVer = true,
-                    PuedeCrear = true,
-                    PuedeEditar = true,
-                    PuedeEliminar = true
-                }).ToList();
+                var conPermiso = await context.RolPermisos
+                    .Where(p => p.IdRol == superAdminRol.Id)
+                    .Select(p => p.IdModulo)
+                    .ToListAsync();
 
-                await context.RolPermisos.AddRangeAsync(permisosSuperAdmin);
-                await context.SaveChangesAsync();
+                var permisosSuperAdmin = await context.Modulos
+                    .Where(m => !conPermiso.Contains(m.IdModulo))
+                    .Select(m => new RolPermiso
+                    {
+                        IdRol = superAdminRol.Id,
+                        IdModulo = m.IdModulo,
+                        PuedeVer = true,
+                        PuedeCrear = true,
+                        PuedeEditar = true,
+                        PuedeEliminar = true
+                    })
+                    .ToListAsync();
+
+                if (permisosSuperAdmin.Count > 0)
+                {
+                    await context.RolPermisos.AddRangeAsync(permisosSuperAdmin);
+                    await context.SaveChangesAsync();
+                }
             }
         }
     }

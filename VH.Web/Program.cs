@@ -1,26 +1,32 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using VH.Web.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// CONFIGURACIÓN DINÁMICA DE API
+// Necesario para que TokenSesionHandler pueda leer la sesiÃ³n de la peticiÃ³n actual.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<TokenSesionHandler>();
+
+// CONFIGURACIï¿½N DINï¿½MICA DE API
 builder.Services.AddHttpClient("ApiERP", client =>
 {
     var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7088/";
     client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddHttpMessageHandler<TokenSesionHandler>();
 
-// Sesión - IMPORTANTE: Configurar correctamente
+// Sesiï¿½n - IMPORTANTE: Configurar correctamente
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Name = ".VHERP.Session";  // Agregar nombre explícito
+    options.Cookie.Name = ".VHERP.Session";  // Agregar nombre explï¿½cito
     options.Cookie.SameSite = SameSiteMode.Lax;  // Agregar esto
 });
 
@@ -30,10 +36,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
-        options.Cookie.Name = ".VHERP.Auth";  // Agregar nombre explícito
+        options.Cookie.Name = ".VHERP.Auth";  // Agregar nombre explï¿½cito
     });
 
 builder.Services.AddAuthorization();
+
+// Cultura Mï¿½xico (moneda MXN)
+var culturaMx = new System.Globalization.CultureInfo("es-MX");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culturaMx;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaMx;
 
 var app = builder.Build();
 

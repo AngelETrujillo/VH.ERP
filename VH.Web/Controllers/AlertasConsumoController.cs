@@ -276,7 +276,9 @@ namespace VH.Web.Controllers
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/materiales");
+                // Sólo EPP: vida útil, frecuencia y solicitud prematura no significan
+                // nada sobre un consumible o una herramienta.
+                var response = await _httpClient.GetAsync("api/materiales?tipo=EPP");
                 if (response.IsSuccessStatusCode)
                 {
                     var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<dynamic>>();

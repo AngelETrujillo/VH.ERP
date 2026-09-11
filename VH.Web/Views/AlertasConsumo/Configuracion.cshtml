@@ -50,8 +50,8 @@
                                     <td>@config.UnidadMedida</td>
                                     <td class="text-center">@config.VidaUtilDias</td>
                                     <td class="text-center">@config.FrecuenciaMinimaDias</td>
-                                    <td class="text-center">@(config.CantidadMaximaMensual?.ToString("N2") ?? "-")</td>
-                                    <td class="text-center">@(config.CantidadMaximaPorEntrega?.ToString("N2") ?? "-")</td>
+                                    <td class="text-center">@(config.CantidadMaximaMensual?.FormatoCantidad() ?? "-")</td>
+                                    <td class="text-center">@(config.CantidadMaximaPorEntrega?.FormatoCantidad() ?? "-")</td>
                                     <td class="text-center">@config.UmbralAlertaPorcentaje%</td>
                                     <td class="text-center">
                                         @if (config.RequiereDevolucion)

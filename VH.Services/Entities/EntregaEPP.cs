@@ -13,8 +13,10 @@ namespace VH.Services.Entities
         // ===== RELACIONES (Claves Foráneas) =====
         [Required]
         public int IdEmpleado { get; set; }
+
+        /// <summary>Lote del que salió el material: un renglón de compra.</summary>
         [Required]
-        public int IdCompra { get; set; }
+        public int IdCompraDetalle { get; set; }
 
         // ===== DATOS DE LA ENTREGA =====
         [Required]
@@ -31,7 +33,7 @@ namespace VH.Services.Entities
         [ForeignKey("IdEmpleado")]
         public virtual Empleado? Empleado { get; set; }
 
-        [ForeignKey("IdCompra")]
-        public virtual CompraEPP? Compra { get; set; }
+        [ForeignKey("IdCompraDetalle")]
+        public virtual CompraEPPDetalle? CompraDetalle { get; set; }
     }
 }

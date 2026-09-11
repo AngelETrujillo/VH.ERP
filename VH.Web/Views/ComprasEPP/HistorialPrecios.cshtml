@@ -1,10 +1,10 @@
-﻿@model IEnumerable<VH.Services.DTOs.CompraEPPResponseDto>
+﻿@model IEnumerable<VH.Services.DTOs.HistorialPrecioDto>
 @{
     ViewData["Title"] = "Historial de Precios";
     var precioPromedio = Model?.Any() == true ? Model.Average(c => c.PrecioUnitario) : 0;
     var precioMinimo = Model?.Any() == true ? Model.Min(c => c.PrecioUnitario) : 0;
     var precioMaximo = Model?.Any() == true ? Model.Max(c => c.PrecioUnitario) : 0;
-    var totalComprado = Model?.Any() == true ? Model.Sum(c => c.CantidadComprada) : 0;
+    var totalComprado = Model?.Any() == true ? Model.Sum(c => c.Cantidad) : 0;
     var totalInvertido = Model?.Any() == true ? Model.Sum(c => c.CostoTotal) : 0;
 }
 
@@ -167,7 +167,7 @@
                                             <i class="bi bi-box-seam me-1"></i>@item.NombreAlmacen
                                         </span>
                                     </td>
-                                    <td class="text-center fw-semibold">@item.CantidadComprada</td>
+                                    <td class="text-center fw-semibold">@item.Cantidad.FormatoCantidad()</td>
                                     <td class="text-end">
                                         <span class="fw-bold">@item.PrecioUnitario.ToString("C2")</span>
                                     </td>

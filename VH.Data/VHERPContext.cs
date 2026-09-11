@@ -19,15 +19,23 @@ namespace VH.Data
         // Catálogos EPP
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<Proveedor> Proveedores { get; set; }
-        public DbSet<MaterialEPP> MaterialesEPP { get; set; }
+        public DbSet<Material> Materiales { get; set; }
         public DbSet<Almacen> Almacenes { get; set; }
 
         // Transacciones EPP
         public DbSet<CompraEPP> ComprasEPP { get; set; }
+        public DbSet<CompraEPPDetalle> ComprasEPPDetalle { get; set; }
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<EntregaEPP> EntregasEPP { get; set; }
         public DbSet<RequisicionEPP> RequisicionesEPP { get; set; }
         public DbSet<RequisicionEPPDetalle> RequisicionesEPPDetalle { get; set; }
+        public DbSet<RequisicionEntrega> RequisicionesEntregas { get; set; }
+        public DbSet<OrdenCompra> OrdenesCompra { get; set; }
+        public DbSet<OrdenCompraDetalle> OrdenesCompraDetalle { get; set; }
+        public DbSet<RequisicionCobertura> RequisicionesCobertura { get; set; }
+        public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
+        public DbSet<RecepcionCompra> RecepcionesCompra { get; set; }
+        public DbSet<RecepcionCompraDetalle> RecepcionesCompraDetalle { get; set; }
 
         // Analytics
         public DbSet<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; set; }
@@ -48,13 +56,21 @@ namespace VH.Data
             ConfigurarPuesto(modelBuilder);
             ConfigurarEmpleado(modelBuilder);
             ConfigurarProveedor(modelBuilder);
-            ConfigurarMaterialEPP(modelBuilder);
+            ConfigurarMaterial(modelBuilder);
             ConfigurarAlmacen(modelBuilder);
             ConfigurarCompraEPP(modelBuilder);
+            ConfigurarCompraEPPDetalle(modelBuilder);
             ConfigurarInventario(modelBuilder);
             ConfigurarEntregaEPP(modelBuilder);
             ConfigurarRequisicionEPP(modelBuilder);
             ConfigurarRequisicionEPPDetalle(modelBuilder);
+            ConfigurarRequisicionEntrega(modelBuilder);
+            ConfigurarOrdenCompra(modelBuilder);
+            ConfigurarOrdenCompraDetalle(modelBuilder);
+            ConfigurarRequisicionCobertura(modelBuilder);
+            ConfigurarMovimientoInventario(modelBuilder);
+            ConfigurarRecepcionCompra(modelBuilder);
+            ConfigurarRecepcionCompraDetalle(modelBuilder);
             ConfigurarConfiguracionMaterialEPP(modelBuilder);
             ConfigurarAlertaConsumo(modelBuilder);
             ConfigurarEstadisticaEmpleadoMensual(modelBuilder);
@@ -152,14 +168,18 @@ namespace VH.Data
             });
         }
 
-        private void ConfigurarMaterialEPP(ModelBuilder modelBuilder)
+        private void ConfigurarMaterial(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<MaterialEPP>(entity =>
+            modelBuilder.Entity<Material>(entity =>
             {
                 entity.HasKey(m => m.IdMaterial);
                 entity.Property(m => m.Nombre).IsRequired().HasMaxLength(200);
                 entity.Property(m => m.Descripcion).HasMaxLength(500);
                 entity.Property(m => m.CostoUnitarioEstimado).HasPrecision(18, 2);
+                entity.Property(m => m.TipoMaterial).IsRequired();
+
+                // Las pantallas de compras, requisiciones y alertas filtran por tipo.
+                entity.HasIndex(m => m.TipoMaterial);
 
                 entity.HasOne(m => m.UnidadMedida)
                     .WithMany()
@@ -216,13 +236,55 @@ namespace VH.Data
             {
                 entity.HasKey(c => c.IdCompra);
                 entity.Property(c => c.FechaCompra).IsRequired();
-                entity.Property(c => c.CantidadComprada).IsRequired().HasPrecision(18, 4);
-                entity.Property(c => c.CantidadDisponible).IsRequired().HasPrecision(18, 4);
-                entity.Property(c => c.PrecioUnitario).IsRequired().HasPrecision(18, 2);
                 entity.Property(c => c.NumeroDocumento).HasMaxLength(50);
+                entity.Property(c => c.UuidCFDI).HasMaxLength(36);
+                entity.Property(c => c.Moneda).HasMaxLength(3);
                 entity.Property(c => c.Observaciones).HasMaxLength(500);
+                entity.Property(c => c.Subtotal).HasPrecision(18, 2);
+                entity.Property(c => c.Iva).HasPrecision(18, 2);
+                entity.Property(c => c.Total).HasPrecision(18, 2);
 
                 entity.HasIndex(c => c.FechaCompra);
+                entity.HasIndex(c => c.NumeroDocumento);
+
+                entity.HasOne(c => c.Proveedor)
+                    .WithMany(p => p.Compras)
+                    .HasForeignKey(c => c.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Cancelar la compra se lleva sus renglones: un lote no existe fuera
+                // del documento que lo trajo.
+                entity.HasMany(c => c.Detalles)
+                    .WithOne(d => d.Compra)
+                    .HasForeignKey(d => d.IdCompra)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarCompraEPPDetalle(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CompraEPPDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdCompraDetalle);
+                entity.Property(d => d.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.CantidadDisponible).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.PrecioUnitario).IsRequired().HasPrecision(18, 2);
+                entity.Property(d => d.Talla).HasMaxLength(20);
+                entity.Property(d => d.RowVersion).IsRowVersion();
+
+                // La búsqueda de lotes disponibles al surtir va siempre por este par.
+                entity.HasIndex(d => new { d.IdMaterial, d.IdAlmacen });
+                entity.HasIndex(d => d.FechaCaducidad);
+
+                entity.HasOne(d => d.Material)
+                    .WithMany(m => m.Compras)
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Almacen)
+                    .WithMany(a => a.Compras)
+                    .HasForeignKey(d => d.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 
@@ -232,9 +294,11 @@ namespace VH.Data
             {
                 entity.HasKey(i => i.IdInventario);
                 entity.Property(i => i.Existencia).HasPrecision(18, 4);
+                entity.Property(i => i.Comprometido).HasPrecision(18, 4);
                 entity.Property(i => i.StockMinimo).HasPrecision(18, 4);
                 entity.Property(i => i.StockMaximo).HasPrecision(18, 4);
                 entity.Property(i => i.UbicacionPasillo).HasMaxLength(100);
+                entity.Property(i => i.RowVersion).IsRowVersion();
 
                 entity.HasIndex(i => new { i.IdAlmacen, i.IdMaterial }).IsUnique();
             });
@@ -252,9 +316,9 @@ namespace VH.Data
 
                 entity.HasIndex(e => e.FechaEntrega);
 
-                entity.HasOne(e => e.Compra)
+                entity.HasOne(e => e.CompraDetalle)
                     .WithMany()
-                    .HasForeignKey(e => e.IdCompra)
+                    .HasForeignKey(e => e.IdCompraDetalle)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
@@ -267,25 +331,16 @@ namespace VH.Data
                 entity.Property(r => r.NumeroRequisicion).IsRequired().HasMaxLength(20);
                 entity.Property(r => r.Justificacion).HasMaxLength(500);
                 entity.Property(r => r.MotivoRechazo).HasMaxLength(500);
-                entity.Property(r => r.FirmaDigital).HasMaxLength(500000);
-                entity.Property(r => r.FotoEvidencia).HasMaxLength(300);
-                entity.Property(r => r.Observaciones).HasMaxLength(500);
                 entity.Property(r => r.EstadoRequisicion).IsRequired();
 
                 entity.HasIndex(r => r.NumeroRequisicion).IsUnique();
                 entity.HasIndex(r => r.FechaSolicitud);
                 entity.HasIndex(r => r.EstadoRequisicion);
                 entity.HasIndex(r => r.IdUsuarioSolicita);
-                entity.HasIndex(r => r.IdEmpleadoRecibe);
 
                 entity.HasOne(r => r.UsuarioSolicita)
                     .WithMany()
                     .HasForeignKey(r => r.IdUsuarioSolicita)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(r => r.EmpleadoRecibe)
-                    .WithMany()
-                    .HasForeignKey(r => r.IdEmpleadoRecibe)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(r => r.Almacen)
@@ -298,9 +353,239 @@ namespace VH.Data
                     .HasForeignKey(r => r.IdUsuarioAprueba)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(r => r.UsuarioEntrega)
+                // Las firmas mueren con el documento que las ampara.
+                entity.HasMany(r => r.Entregas)
+                    .WithOne(e => e.Requisicion)
+                    .HasForeignKey(e => e.IdRequisicion)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarMovimientoInventario(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<MovimientoInventario>(entity =>
+            {
+                entity.HasKey(m => m.IdMovimiento);
+                entity.Property(m => m.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(m => m.SaldoResultante).HasPrecision(18, 4);
+                entity.Property(m => m.CostoUnitario).HasPrecision(18, 2);
+                entity.Property(m => m.DocumentoTipo).HasMaxLength(50);
+                entity.Property(m => m.DocumentoFolio).HasMaxLength(50);
+                entity.Property(m => m.Observaciones).HasMaxLength(500);
+                entity.Property(m => m.Tipo).IsRequired();
+                entity.Property(m => m.Fecha).IsRequired();
+
+                // El kardex se lee siempre por material y almacén en orden de fecha.
+                entity.HasIndex(m => new { m.IdMaterial, m.IdAlmacen, m.Fecha });
+                entity.HasIndex(m => m.Fecha);
+                entity.HasIndex(m => new { m.DocumentoTipo, m.DocumentoId });
+
+                entity.HasOne(m => m.Material)
                     .WithMany()
-                    .HasForeignKey(r => r.IdUsuarioEntrega)
+                    .HasForeignKey(m => m.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Almacen)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.CompraDetalle)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Usuario)
+                    .WithMany()
+                    .HasForeignKey(m => m.IdUsuario)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
+
+        private void ConfigurarOrdenCompra(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrdenCompra>(entity =>
+            {
+                entity.HasKey(o => o.IdOrdenCompra);
+                entity.Property(o => o.Folio).IsRequired().HasMaxLength(20);
+                entity.Property(o => o.Moneda).HasMaxLength(3);
+                entity.Property(o => o.Observaciones).HasMaxLength(500);
+                entity.Property(o => o.MotivoCancelacion).HasMaxLength(500);
+                entity.Property(o => o.Estado).IsRequired();
+
+                entity.HasIndex(o => o.Folio).IsUnique();
+                entity.HasIndex(o => o.FechaEmision);
+                entity.HasIndex(o => o.Estado);
+
+                entity.HasOne(o => o.Proveedor)
+                    .WithMany()
+                    .HasForeignKey(o => o.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(o => o.UsuarioEmite)
+                    .WithMany()
+                    .HasForeignKey(o => o.IdUsuarioEmite)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(o => o.Detalles)
+                    .WithOne(d => d.OrdenCompra)
+                    .HasForeignKey(d => d.IdOrdenCompra)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarOrdenCompraDetalle(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrdenCompraDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdOrdenCompraDetalle);
+                entity.Property(d => d.CantidadPedida).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.CantidadRecibida).HasPrecision(18, 4);
+                entity.Property(d => d.PrecioUnitarioPactado).IsRequired().HasPrecision(18, 2);
+                entity.Property(d => d.Observaciones).HasMaxLength(500);
+
+                // El cálculo de lo que viene en camino consulta por este par.
+                entity.HasIndex(d => new { d.IdMaterial, d.IdAlmacenDestino });
+
+                entity.HasOne(d => d.Material)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.AlmacenDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdAlmacenDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
+
+        private void ConfigurarRecepcionCompra(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RecepcionCompra>(entity =>
+            {
+                entity.HasKey(r => r.IdRecepcion);
+                entity.Property(r => r.Folio).IsRequired().HasMaxLength(20);
+                entity.Property(r => r.FechaRecepcion).IsRequired();
+                entity.Property(r => r.NumeroFactura).HasMaxLength(50);
+                entity.Property(r => r.UuidCFDI).HasMaxLength(36);
+                entity.Property(r => r.Observaciones).HasMaxLength(500);
+
+                entity.HasIndex(r => r.Folio).IsUnique();
+                entity.HasIndex(r => r.FechaRecepcion);
+                entity.HasIndex(r => new { r.IdOrdenCompra, r.IdAlmacen });
+
+                // Una orden se borra sólo si nunca se recibió nada: la recepción es
+                // el documento que respalda la entrada al almacén y no se arrastra
+                // detrás de su orden.
+                entity.HasOne(r => r.OrdenCompra)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdOrdenCompra)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Almacen)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdAlmacen)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.UsuarioRecibe)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdUsuarioRecibe)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Compra)
+                    .WithMany()
+                    .HasForeignKey(r => r.IdCompra)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasMany(r => r.Detalles)
+                    .WithOne(d => d.Recepcion)
+                    .HasForeignKey(d => d.IdRecepcion)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarRecepcionCompraDetalle(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RecepcionCompraDetalle>(entity =>
+            {
+                entity.HasKey(d => d.IdRecepcionDetalle);
+                entity.Property(d => d.CantidadRecibida).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.CantidadAceptada).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.PrecioUnitarioReal).IsRequired().HasPrecision(18, 2);
+                entity.Property(d => d.Talla).HasMaxLength(20);
+                entity.Property(d => d.LoteProveedor).HasMaxLength(50);
+                entity.Property(d => d.MotivoRechazo).HasMaxLength(500);
+
+                entity.HasIndex(d => d.IdOrdenCompraDetalle);
+
+                entity.HasOne(d => d.OrdenCompraDetalle)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdOrdenCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Material)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdMaterial)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Si el lote desaparece por una cancelación de compra, la recepción
+                // permanece: es la constancia de que el material llegó.
+                entity.HasOne(d => d.CompraDetalle)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+        }
+
+        private void ConfigurarRequisicionCobertura(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RequisicionCobertura>(entity =>
+            {
+                entity.HasKey(c => c.IdRequisicionCobertura);
+                entity.Property(c => c.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(c => c.Origen).IsRequired();
+
+                entity.HasIndex(c => c.IdRequisicionDetalle);
+
+                entity.HasOne(c => c.RequisicionDetalle)
+                    .WithMany(d => d.Coberturas)
+                    .HasForeignKey(c => c.IdRequisicionDetalle)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Cancelar la orden suelta sus coberturas y los renglones vuelven
+                // a la bandeja de faltantes.
+                entity.HasOne(c => c.OrdenCompraDetalle)
+                    .WithMany(d => d.Coberturas)
+                    .HasForeignKey(c => c.IdOrdenCompraDetalle)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void ConfigurarRequisicionEntrega(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RequisicionEntrega>(entity =>
+            {
+                entity.HasKey(e => e.IdRequisicionEntrega);
+                entity.Property(e => e.FirmaDigital).IsRequired().HasMaxLength(500000);
+                entity.Property(e => e.FotoEvidencia).HasMaxLength(300);
+                entity.Property(e => e.Observaciones).HasMaxLength(500);
+                entity.Property(e => e.FechaEntrega).IsRequired();
+
+                // Una persona puede firmar varias veces el mismo documento: una por
+                // cada vez que se lleva material. Cuando lo pedido llega en partes
+                // —y con órdenes de compra parciales es lo normal— exigir una sola
+                // firma por documento dejaba la segunda mitad sin poder entregarse.
+                entity.HasIndex(e => new { e.IdRequisicion, e.IdEmpleado });
+                entity.HasIndex(e => e.FechaEntrega);
+
+                entity.HasOne(e => e.Empleado)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdEmpleado)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.UsuarioEntrega)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdUsuarioEntrega)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
@@ -313,6 +598,18 @@ namespace VH.Data
                 entity.Property(d => d.CantidadSolicitada).IsRequired().HasPrecision(18, 4);
                 entity.Property(d => d.CantidadEntregada).HasPrecision(18, 4);
                 entity.Property(d => d.TallaSolicitada).HasMaxLength(20);
+                entity.Property(d => d.MotivoRechazo).HasMaxLength(500);
+                entity.Property(d => d.EstadoRenglon).IsRequired();
+
+                // La bandeja de faltantes de la fase 5 consulta por estas dos.
+                entity.HasIndex(d => d.EstadoRenglon);
+                entity.HasIndex(d => d.IdEmpleadoDestino);
+
+                // La firma no arrastra consigo los renglones que amparó.
+                entity.HasOne(d => d.Entrega)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdRequisicionEntrega)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(d => d.Requisicion)
                     .WithMany(r => r.Detalles)
@@ -324,9 +621,24 @@ namespace VH.Data
                     .HasForeignKey(d => d.IdMaterial)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(d => d.Compra)
+                entity.HasOne(d => d.CompraDetalle)
                     .WithMany()
-                    .HasForeignKey(d => d.IdCompra)
+                    .HasForeignKey(d => d.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.EmpleadoDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdEmpleadoDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.ProyectoDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdProyectoDestino)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.ConceptoPartida)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdConceptoPartida)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }

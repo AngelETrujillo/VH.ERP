@@ -90,8 +90,8 @@
                         <!-- Empleado y fecha -->
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
-                                <div class="fw-semibold">@item.NombreEmpleadoRecibe</div>
-                                <div class="text-muted small">@item.NumeroNominaEmpleado</div>
+                                <div class="fw-semibold">@item.ResumenDestinatarios</div>
+                                <div class="text-muted small">@item.TotalEmpleados trabajador(es)</div>
                             </div>
                             <div class="text-end text-muted small">
                                 @item.FechaSolicitud.ToString("dd/MM/yy")
@@ -112,7 +112,7 @@
                                class="btn btn-outline-info btn-sm flex-fill">
                                 <i class="bi bi-eye me-1"></i>Ver
                             </a>
-                            @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                            @if (puedeEditar && item.TieneRenglonesPorDecidir && (esSuperAdmin || esAdmin))
                             {
                                 <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                    class="btn btn-outline-warning btn-sm flex-fill">
@@ -180,8 +180,8 @@
                                         </td>
                                         <td>@item.NombreUsuarioSolicita</td>
                                         <td>
-                                            <div>@item.NombreEmpleadoRecibe</div>
-                                            <small class="text-muted">@item.NumeroNominaEmpleado</small>
+                                            <div>@item.ResumenDestinatarios</div>
+                                            <small class="text-muted">@item.TotalEmpleados trabajador(es)</small>
                                         </td>
                                         <td>@item.NombreAlmacen</td>
                                         <td class="text-center">
@@ -196,7 +196,7 @@
                                                    class="btn btn-outline-info" title="Ver detalles">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                                                @if (puedeEditar && item.TieneRenglonesPorDecidir)
                                                 {
                                                     <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                                        class="btn btn-outline-warning" title="Aprobar/Rechazar">

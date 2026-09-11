@@ -31,17 +31,17 @@ namespace VH.Services.Services
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.FechaEntrega >= inicioAnio &&
                      (!idProyecto.HasValue || e.Empleado!.IdProyecto == idProyecto),
-                "Compra.Material,Empleado");
+                "CompraDetalle.Material,Empleado");
 
             var entregasList = entregas.ToList();
 
             // Consumo mes actual
             var entregasMesActual = entregasList.Where(e => e.FechaEntrega >= inicioMesActual);
-            var consumoMesActual = entregasMesActual.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+            var consumoMesActual = entregasMesActual.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
 
             // Consumo mes anterior
             var entregasMesAnterior = entregasList.Where(e => e.FechaEntrega >= inicioMesAnterior && e.FechaEntrega < inicioMesActual);
-            var consumoMesAnterior = entregasMesAnterior.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+            var consumoMesAnterior = entregasMesAnterior.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
 
             // Variación
             var variacion = consumoMesAnterior > 0
@@ -49,7 +49,7 @@ namespace VH.Services.Services
                 : 0;
 
             // Consumo acumulado año
-            var consumoAcumulado = entregasList.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+            var consumoAcumulado = entregasList.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
 
             // Alertas
             var resumenAlertas = await _alertaService.GetResumenAlertasAsync(idProyecto);
@@ -72,7 +72,7 @@ namespace VH.Services.Services
             {
                 var consumoProyecto = entregasMesActual
                     .Where(e => e.Empleado?.IdProyecto == proyecto.IdProyecto)
-                    .Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+                    .Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
 
                 if (consumoProyecto > proyecto.PresupuestoEPPMensual)
                     proyectosSobre++;
@@ -215,7 +215,7 @@ namespace VH.Services.Services
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.FechaEntrega >= inicioMes && e.FechaEntrega < finMes &&
                      (!idProyecto.HasValue || e.Empleado!.IdProyecto == idProyecto),
-                "Compra,Empleado.Proyecto,Empleado.PuestoCatalogo");
+                "CompraDetalle,Empleado.Proyecto,Empleado.PuestoCatalogo");
 
             var agrupado = entregas
                 .GroupBy(e => e.IdEmpleado)
@@ -227,8 +227,8 @@ namespace VH.Services.Services
                     Mes = mes,
                     TotalEntregas = g.Count(),
                     TotalUnidades = g.Sum(e => e.CantidadEntregada),
-                    CostoTotal = g.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0)),
-                    MaterialesDistintos = g.Select(e => e.Compra?.IdMaterial).Distinct().Count(),
+                    CostoTotal = g.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0)),
+                    MaterialesDistintos = g.Select(e => e.CompraDetalle?.IdMaterial).Distinct().Count(),
                     Empleado = g.First().Empleado,
                     Proyecto = g.First().Empleado?.Proyecto
                 })
@@ -317,7 +317,7 @@ namespace VH.Services.Services
             // Últimas entregas
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
-                "Compra.Material");
+                "CompraDetalle.Material");
             var ultimasEntregas = entregas
                 .OrderByDescending(e => e.FechaEntrega)
                 .Take(10)
@@ -325,9 +325,9 @@ namespace VH.Services.Services
                 {
                     IdEntrega = e.IdEntrega,
                     FechaEntrega = e.FechaEntrega,
-                    NombreMaterial = e.Compra?.Material?.Nombre ?? "",
+                    NombreMaterial = e.CompraDetalle?.Material?.Nombre ?? "",
                     Cantidad = e.CantidadEntregada,
-                    Costo = e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0)
+                    Costo = e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0)
                 })
                 .ToList();
 
@@ -353,7 +353,7 @@ namespace VH.Services.Services
                 .ToList();
 
             // Calcular totales
-            var costoTotal = entregas.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+            var costoTotal = entregas.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
             var historialList = historial.ToList();
             var promedioMensual = historialList.Any() ? historialList.Average(h => h.CostoTotal) : 0;
 
@@ -409,19 +409,19 @@ namespace VH.Services.Services
         {
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
-                "Compra.Material");
+                "CompraDetalle.Material");
 
             var agrupado = entregas
-                .Where(e => e.Compra?.Material != null)
-                .GroupBy(e => e.Compra!.IdMaterial)
+                .Where(e => e.CompraDetalle?.Material != null)
+                .GroupBy(e => e.CompraDetalle!.IdMaterial)
                 .Select(g => new MaterialFrecuenteDto
                 {
                     IdMaterial = g.Key,
-                    NombreMaterial = g.First().Compra?.Material?.Nombre ?? "",
+                    NombreMaterial = g.First().CompraDetalle?.Material?.Nombre ?? "",
                     VecesSolicitado = g.Count(),
                     CantidadTotal = g.Sum(e => e.CantidadEntregada),
-                    CostoTotal = g.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0)),
-                    VidaUtilEsperada = g.First().Compra?.Material?.VidaUtilDiasDefault
+                    CostoTotal = g.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0)),
+                    VidaUtilEsperada = g.First().CompraDetalle?.Material?.VidaUtilDiasDefault
                 })
                 .OrderByDescending(m => m.VecesSolicitado)
                 .Take(top);
@@ -470,7 +470,7 @@ namespace VH.Services.Services
                 var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                     e => e.FechaEntrega >= fechaInicio &&
                          (!idProyecto.HasValue || e.Empleado!.IdProyecto == idProyecto),
-                    "Compra,Empleado");
+                    "CompraDetalle,Empleado");
 
                 puntos = entregas
                     .GroupBy(e => new { e.FechaEntrega.Year, e.FechaEntrega.Month })
@@ -479,7 +479,7 @@ namespace VH.Services.Services
                         Anio = g.Key.Year,
                         Mes = g.Key.Month,
                         Etiqueta = $"{GetNombreMesCorto(g.Key.Month)} {g.Key.Year}",
-                        Valor = g.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0)),
+                        Valor = g.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0)),
                         PresupuestoReferencia = 0 // No hay presupuesto en este caso
                     })
                     .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
@@ -560,11 +560,11 @@ namespace VH.Services.Services
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.Empleado!.IdProyecto == idProyecto &&
                      e.FechaEntrega >= inicioMes && e.FechaEntrega < finMes,
-                "Empleado,Compra.Material");
+                "Empleado,CompraDetalle.Material");
 
             var materiales = entregas
-                .Where(e => e.Compra?.Material != null)
-                .Select(e => e.Compra!.Material!)
+                .Where(e => e.CompraDetalle?.Material != null)
+                .Select(e => e.CompraDetalle!.Material!)
                 .DistinctBy(m => m.IdMaterial)
                 .OrderBy(m => m.Nombre)
                 .ToList();
@@ -585,7 +585,7 @@ namespace VH.Services.Services
                 foreach (var material in materiales)
                 {
                     var cantidad = entregas
-                        .Where(e => e.IdEmpleado == empleado.IdEmpleado && e.Compra?.IdMaterial == material.IdMaterial)
+                        .Where(e => e.IdEmpleado == empleado.IdEmpleado && e.CompraDetalle?.IdMaterial == material.IdMaterial)
                         .Sum(e => e.CantidadEntregada);
 
                     if (cantidad > maxValor) maxValor = cantidad;
@@ -637,7 +637,7 @@ namespace VH.Services.Services
 
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado && e.FechaEntrega >= inicioMes && e.FechaEntrega < finMes,
-                "Compra");
+                "CompraDetalle");
 
             var alertas = await _unitOfWork.AlertasConsumo.FindAsync(
                 a => a.IdEmpleado == idEmpleado && a.FechaGeneracion >= inicioMes && a.FechaGeneracion < finMes);
@@ -655,8 +655,8 @@ namespace VH.Services.Services
 
             estadistica.TotalEntregas = entregas.Count();
             estadistica.TotalUnidades = entregas.Sum(e => e.CantidadEntregada);
-            estadistica.CostoTotal = entregas.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
-            estadistica.MaterialesDistintos = entregas.Select(e => e.Compra?.IdMaterial).Distinct().Count();
+            estadistica.CostoTotal = entregas.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
+            estadistica.MaterialesDistintos = entregas.Select(e => e.CompraDetalle?.IdMaterial).Distinct().Count();
             estadistica.AlertasGeneradas = alertas.Count();
             estadistica.FechaActualizacion = DateTime.Now;
 
@@ -679,7 +679,7 @@ namespace VH.Services.Services
             var empleados = await _unitOfWork.Empleados.FindAsync(e => e.IdProyecto == idProyecto && e.Activo);
             var entregas = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.Empleado!.IdProyecto == idProyecto && e.FechaEntrega >= inicioMes && e.FechaEntrega < finMes,
-                "Compra,Empleado");
+                "CompraDetalle,Empleado");
 
             var alertas = await _unitOfWork.AlertasConsumo.FindAsync(
                 a => a.IdProyecto == idProyecto && a.FechaGeneracion >= inicioMes && a.FechaGeneracion < finMes);
@@ -694,7 +694,7 @@ namespace VH.Services.Services
                 Mes = mes
             };
 
-            var costoTotal = entregas.Sum(e => e.CantidadEntregada * (e.Compra?.PrecioUnitario ?? 0));
+            var costoTotal = entregas.Sum(e => e.CantidadEntregada * (e.CompraDetalle?.PrecioUnitario ?? 0));
             var totalEmpleados = empleados.Count();
 
             estadistica.TotalEmpleados = totalEmpleados;
@@ -871,7 +871,7 @@ namespace VH.Services.Services
 
         public async Task<IEnumerable<(int Id, string Nombre)>> GetMaterialesParaFiltroAsync()
         {
-            var materiales = await _unitOfWork.MaterialesEPP.FindAsync(m => m.Activo);
+            var materiales = await _unitOfWork.Materiales.FindAsync(m => m.Activo);
             return materiales.Select(m => (m.IdMaterial, m.Nombre));
         }
 

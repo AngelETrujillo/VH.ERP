@@ -27,6 +27,6 @@ namespace VH.Services.Entities
         [ForeignKey("IdProyecto")]
         public virtual Proyecto? Proyecto { get; set; }
         public virtual ICollection<Inventario> Inventarios { get; set; } = new List<Inventario>();
-        public virtual ICollection<CompraEPP> Compras { get; set; } = new List<CompraEPP>();
+        public virtual ICollection<CompraEPPDetalle> Compras { get; set; } = new List<CompraEPPDetalle>();
     }
 }
