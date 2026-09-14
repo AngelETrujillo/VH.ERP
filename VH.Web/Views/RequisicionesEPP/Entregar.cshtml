@@ -9,7 +9,7 @@
 
     // Sólo lo que recibe esta persona: cada firma ampara únicamente lo suyo.
     var renglones = Model.Detalles
-        .Where(d => d.IdEmpleadoDestino == idEmpleado && d.EstadoRenglon == VH.Services.Entities.EstadoRenglonRequisicion.Autorizado)
+        .Where(d => d.IdEmpleadoDestino == idEmpleado && d.ListoParaEntregar)
         .ToList();
 
     var empleado = renglones.FirstOrDefault();

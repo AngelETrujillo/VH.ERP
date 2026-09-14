@@ -236,7 +236,15 @@ namespace VH.Web.Controllers
             var pendientes = requisicion.EmpleadosPorSurtir;
             if (pendientes.Count == 0)
             {
-                TempData["Error"] = "Esta requisición ya no tiene material por surtir a trabajadores";
+                // Distinguir por qué no hay nada que entregar: no es lo mismo un documento
+                // ya surtido que uno cuyo material todavía no llega.
+                var esperando = requisicion.Detalles.Count(d =>
+                    d.EstadoRenglon == EstadoRenglonRequisicion.PorComprar ||
+                    d.EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra);
+
+                TempData["Error"] = esperando > 0
+                    ? $"Todavía no hay material listo para entregar: {esperando} renglón(es) esperan compra o recepción."
+                    : "Esta requisición ya no tiene material por surtir a trabajadores.";
                 return RedirectToAction(nameof(Details), new { id });
             }
 
@@ -287,8 +295,7 @@ namespace VH.Web.Controllers
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -310,12 +317,13 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsync($"api/requisicionesepp/{id}/cancelar", null);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = "Requisición cancelada";
-                    return RedirectToAction(nameof(Index));
+                    TempData["Mensaje"] = "Requisición cancelada. Si tenía material apartado, volvió a quedar disponible.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                // El motivo real, por ejemplo que sólo el solicitante puede cancelar,
+                // viene en el cuerpo de la respuesta: se muestra como texto, no como JSON.
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -323,7 +331,9 @@ namespace VH.Web.Controllers
                 TempData["Error"] = "Error al cancelar la requisición";
             }
 
-            return RedirectToAction(nameof(Index));
+            // A la ficha y no al listado: ahí se muestran los mensajes y se ve cómo
+            // quedó cada renglón.
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         // POST: RequisicionesEPP/SubirFoto

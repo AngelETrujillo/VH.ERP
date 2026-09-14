@@ -52,7 +52,7 @@
                     <i class="bi bi-box-arrow-right me-1"></i>Entregar
                 </a>
             }
-            @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+            @if (Model.PuedeCancelarse)
             {
                 <form asp-action="Cancelar" asp-route-id="@Model.IdRequisicion" method="post" class="flex-fill"
                       onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
@@ -391,7 +391,7 @@
                                 <i class="bi bi-box-arrow-right me-2"></i>Registrar Entrega
                             </a>
                         }
-                        @if (Model.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                        @if (Model.PuedeCancelarse)
                         {
                             <form asp-action="Cancelar" asp-route-id="@Model.IdRequisicion" method="post"
                                   onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">

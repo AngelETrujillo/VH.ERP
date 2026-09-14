@@ -156,6 +156,13 @@ namespace VH.Services.DTOs
 
         public bool TieneRenglonesPorDecidir => RenglonesPorDecidir > 0;
 
+        /// <summary>
+        /// La misma regla que aplica el servicio al cancelar: que quede algún renglón
+        /// vivo y que no se haya entregado nada. Un documento ya autorizado sí puede
+        /// cancelarse, y cancelarlo libera lo que tenía apartado.
+        /// </summary>
+        public bool PuedeCancelarse => Detalles.Any(d => d.EstaPendiente) && !Detalles.Any(d => d.Entregado);
+
         /// <summary>Personas distintas que reciben algo en este documento.</summary>
         public int TotalEmpleados => Detalles
             .Where(d => d.IdEmpleadoDestino.HasValue)
@@ -185,8 +192,7 @@ namespace VH.Services.DTOs
 
         /// <summary>Empleados con renglones autorizados que aún no han firmado.</summary>
         public List<int> EmpleadosPorSurtir => Detalles
-            .Where(d => d.IdEmpleadoDestino.HasValue && d.EstaPendiente
-                        && d.EstadoRenglon == EstadoRenglonRequisicion.Reservado)
+            .Where(d => d.IdEmpleadoDestino.HasValue && d.ListoParaEntregar)
             .Select(d => d.IdEmpleadoDestino!.Value)
             .Distinct()
             .ToList();
@@ -223,6 +229,12 @@ namespace VH.Services.DTOs
             EstadoRenglonRequisicion.Rechazado => "Rechazado",
             EstadoRenglonRequisicion.Surtido => "Surtido",
             EstadoRenglonRequisicion.Cancelado => "Cancelado",
+            // Los estados que llegaron con la reserva, las órdenes de compra y la
+            // recepción no tenían nombre propio y salían con el nombre interno.
+            EstadoRenglonRequisicion.Reservado => "Reservado",
+            EstadoRenglonRequisicion.PorComprar => "Por comprar",
+            EstadoRenglonRequisicion.EnOrdenCompra => "En orden de compra",
+            EstadoRenglonRequisicion.Recibido => "Recibido",
             _ => EstadoRenglon.ToString()
         };
         public string EstadoRenglonClase => EstadoRenglon switch
@@ -232,6 +244,12 @@ namespace VH.Services.DTOs
             EstadoRenglonRequisicion.Rechazado => "danger",
             EstadoRenglonRequisicion.Surtido => "success",
             EstadoRenglonRequisicion.Cancelado => "secondary",
+            // Reservado y Recibido comparten color: en los dos el material ya está
+            // apartado a nombre de la persona y sólo falta entregarlo.
+            EstadoRenglonRequisicion.Reservado => "primary",
+            EstadoRenglonRequisicion.Recibido => "primary",
+            EstadoRenglonRequisicion.PorComprar => "dark",
+            EstadoRenglonRequisicion.EnOrdenCompra => "info",
             _ => "secondary"
         };
         public string? MotivoRechazo { get; set; }
@@ -251,6 +269,17 @@ namespace VH.Services.DTOs
             EstadoRenglon != EstadoRenglonRequisicion.Rechazado &&
             EstadoRenglon != EstadoRenglonRequisicion.Cancelado &&
             EstadoRenglon != EstadoRenglonRequisicion.Surtido;
+
+        /// <summary>
+        /// Tiene material a nombre de la persona y sólo falta entregarlo: reservado
+        /// desde la existencia, recibido de una orden de compra, o autorizado sin
+        /// reserva. Es la misma regla con la que el servicio acepta una entrega; antes
+        /// la pantalla usaba otra y ofrecía una lista vacía.
+        /// </summary>
+        public bool ListoParaEntregar =>
+            EstadoRenglon == EstadoRenglonRequisicion.Reservado ||
+            EstadoRenglon == EstadoRenglonRequisicion.Recibido ||
+            EstadoRenglon == EstadoRenglonRequisicion.Autorizado;
 
         /// <summary>A quién va: la persona, o la obra/partida cuando no hay persona.</summary>
         public string Destino => IdEmpleadoDestino.HasValue
