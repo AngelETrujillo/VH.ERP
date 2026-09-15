@@ -132,22 +132,22 @@
                                     </td>
                                     <td class="text-center fw-bold">@r.Pendiente.FormatoCantidad()</td>
                                     <td>
-                                        <input type="number" step="0.01" min="0" max="@r.Pendiente"
+                                        <input type="number" step="0.01" min="0" max="@r.Pendiente.FormatoInput()"
                                                name="Lineas[@i].CantidadRecibida"
                                                class="form-control form-control-sm text-center js-recibida"
-                                               data-fila="@i" value="@r.Pendiente.FormatoCantidad()">
+                                               data-fila="@i" value="@r.Pendiente.FormatoInput()">
                                     </td>
                                     <td>
-                                        <input type="number" step="0.01" min="0" max="@r.Pendiente"
+                                        <input type="number" step="0.01" min="0" max="@r.Pendiente.FormatoInput()"
                                                name="Lineas[@i].CantidadAceptada"
                                                class="form-control form-control-sm text-center js-aceptada"
-                                               data-fila="@i" value="@r.Pendiente.FormatoCantidad()">
+                                               data-fila="@i" value="@r.Pendiente.FormatoInput()">
                                     </td>
                                     <td>
                                         <input type="number" step="0.01" min="0.01"
                                                name="Lineas[@i].PrecioUnitarioReal"
                                                class="form-control form-control-sm text-center"
-                                               value="@r.PrecioUnitarioPactado.ToString("0.00")">
+                                               value="@r.PrecioUnitarioPactado.FormatoInputPrecio()">
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column gap-1">

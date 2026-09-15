@@ -1,4 +1,6 @@
-﻿namespace VH.Web.Helpers
+﻿using System.Globalization;
+
+namespace VH.Web.Helpers
 {
     public static class FormatoHelper
     {
@@ -19,6 +21,25 @@
             return valor == Math.Truncate(valor)
                 ? valor.ToString("N0")
                 : valor.ToString("N2");
+        }
+
+        /// <summary>
+        /// Valor para un &lt;input type="number"&gt;.
+        ///
+        /// Un campo numérico de HTML sólo acepta punto decimal y ningún separador
+        /// de miles: con "1,500" el navegador lo toma como vacío y el usuario
+        /// pierde el dato sin que nada se lo avise. Por eso aquí no se usa el
+        /// formato de presentación, que sí agrupa.
+        /// </summary>
+        public static string FormatoInput(this decimal valor)
+        {
+            return valor.ToString("0.####", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>Precio para un &lt;input type="number"&gt;: dos decimales, sin agrupar.</summary>
+        public static string FormatoInputPrecio(this decimal valor)
+        {
+            return valor.ToString("0.00", CultureInfo.InvariantCulture);
         }
 
         /// <summary>

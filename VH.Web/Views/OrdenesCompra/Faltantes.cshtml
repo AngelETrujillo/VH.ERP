@@ -128,7 +128,7 @@
                                             @(f.EnTransito > 0 ? f.EnTransito.FormatoCantidad() : "-")
                                         </td>
                                         <td class="text-center">
-                                            <input type="number" name="Lineas[@i].Cantidad" value="@f.Faltante"
+                                            <input type="number" name="Lineas[@i].Cantidad" value="@f.Faltante.FormatoInput()"
                                                    class="form-control form-control-sm text-center cantidad-linea"
                                                    step="0.01" min="0.01" style="width:90px; margin:auto;"
                                                    data-idx="@i" oninput="recalcular()">
@@ -136,7 +136,7 @@
                                         <td class="text-end">
                                             <div class="input-group input-group-sm" style="width:120px; margin-left:auto;">
                                                 <span class="input-group-text">$</span>
-                                                <input type="number" name="Lineas[@i].PrecioUnitario" value="@f.UltimoPrecio"
+                                                <input type="number" name="Lineas[@i].PrecioUnitario" value="@f.UltimoPrecio.FormatoInputPrecio()"
                                                        class="form-control text-end precio-linea"
                                                        step="0.01" min="0.01" data-idx="@i" oninput="recalcular()">
                                             </div>
