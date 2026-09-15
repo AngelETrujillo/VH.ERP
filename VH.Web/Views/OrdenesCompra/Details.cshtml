@@ -42,7 +42,9 @@
     @if (avisos.Any())
     {
         <div class="alert alert-warning">
-            <h6 class="fw-bold"><i class="bi bi-exclamation-circle me-2"></i>Esta orden se quedó corta</h6>
+            @* Estos avisos cubren dos casos opuestos —pedir de menos y pedir de
+               más—, así que el encabezado no puede dar por hecho ninguno. *@
+            <h6 class="fw-bold"><i class="bi bi-exclamation-circle me-2"></i>Revise esta orden antes de mandarla</h6>
             <ul class="mb-0 ps-3">
                 @foreach (var aviso in avisos)
                 {
