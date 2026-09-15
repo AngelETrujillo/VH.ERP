@@ -84,6 +84,16 @@ namespace VH.Web.Controllers
                     if (response.IsSuccessStatusCode)
                     {
                         TempData["Mensaje"] = "Material creado exitosamente";
+
+                        // El stock mínimo no es del material: es de cada almacén que lo
+                        // guarda. Un material recién creado no tiene ninguno, así que
+                        // nunca va a aparecer en la bandeja de reposición hasta que
+                        // alguien se lo configure. Más vale decirlo ahora.
+                        TempData["WarningMessage"] =
+                            "Este material aún no tiene stock mínimo en ningún almacén. " +
+                            "Sin mínimo no se vigila y nunca aparecerá en la reposición de compras. " +
+                            "Configúrelo en Control de Inventario.";
+
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();

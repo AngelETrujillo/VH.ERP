@@ -58,6 +58,7 @@ namespace VH.Web.Controllers
                 var faltantes = await response.Content.ReadFromJsonAsync<IEnumerable<FaltanteDto>>();
 
                 await CargarListasEnViewBag();
+                await CargarReposicionEnViewBag(idAlmacen);
                 ViewBag.FiltroAlmacen = idAlmacen;
 
                 return View(faltantes);
@@ -67,6 +68,7 @@ namespace VH.Web.Controllers
                 _logger.LogError(ex, "Error al cargar faltantes");
                 ViewBag.ErrorMessage = "Error al calcular los faltantes";
                 await CargarListasEnViewBag();
+                await CargarReposicionEnViewBag(idAlmacen);
                 return View(new List<FaltanteDto>());
             }
         }
@@ -145,6 +147,31 @@ namespace VH.Web.Controllers
             }
 
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        /// <summary>
+        /// La bandeja de reposición viaja aparte de los faltantes: son dos motivos
+        /// de compra distintos que comparten una sola orden.
+        /// </summary>
+        private async Task CargarReposicionEnViewBag(int? idAlmacen)
+        {
+            try
+            {
+                var url = "api/ordenescompra/reposicion";
+                if (idAlmacen.HasValue) url += $"?idAlmacen={idAlmacen}";
+
+                var bandeja = await _httpClient.GetFromJsonAsync<BandejaReposicionDto>(url);
+                ViewBag.Reposicion = bandeja?.Renglones ?? new List<ReposicionDto>();
+                ViewBag.SinMinimo = bandeja?.SinMinimo ?? 0;
+            }
+            catch (Exception ex)
+            {
+                // Que falle la sugerencia de reposición no debe tumbar la pantalla:
+                // los faltantes por requisición son lo urgente y siguen ahí.
+                _logger.LogError(ex, "Error al calcular la reposición de stock");
+                ViewBag.Reposicion = new List<ReposicionDto>();
+                ViewBag.SinMinimo = 0;
+            }
         }
 
         private sealed class GenerarResultado

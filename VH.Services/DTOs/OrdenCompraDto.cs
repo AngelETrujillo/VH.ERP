@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -12,6 +12,66 @@ namespace VH.Services.DTOs
     /// Una línea de la bandeja del Comprador: cuánto falta de un material en un
     /// almacén, y quién lo está esperando.
     /// </summary>
+    /// <summary>
+    /// Lo que conviene reponer aunque nadie lo haya pedido.
+    ///
+    /// La bandeja de faltantes nace de la demanda: alguien pidió algo y no lo hay.
+    /// Esta nace del mínimo: nadie lo ha pedido todavía, pero el almacén está por
+    /// debajo de lo que se decidió tener, y esperar a que alguien lo pida es
+    /// esperar a quedarse sin material a media obra.
+    /// </summary>
+    public class ReposicionDto
+    {
+        public int IdMaterial { get; set; }
+        public string NombreMaterial { get; set; } = string.Empty;
+        public string UnidadMedida { get; set; } = string.Empty;
+
+        public int IdAlmacen { get; set; }
+        public string NombreAlmacen { get; set; } = string.Empty;
+        public string NombreProyecto { get; set; } = string.Empty;
+
+        public decimal Existencia { get; set; }
+        public decimal Comprometido { get; set; }
+        public decimal StockMinimo { get; set; }
+        public decimal StockMaximo { get; set; }
+
+        /// <summary>Pedido y sin recibir, descontando lo ya prometido a alguien.</summary>
+        public decimal EnTransito { get; set; }
+
+        /// <summary>
+        /// Cuánto conviene pedir: llenar hasta el máximo descontando lo que ya
+        /// viene en camino. Sin máximo definido, sólo lo necesario para volver al
+        /// mínimo.
+        /// </summary>
+        public decimal Sugerido { get; set; }
+
+        public decimal UltimoPrecio { get; set; }
+        public int? IdUltimoProveedor { get; set; }
+        public string? UltimoProveedor { get; set; }
+
+        public decimal Disponible => Existencia - Comprometido;
+
+        /// <summary>Qué tan por debajo del mínimo está, para ordenar lo más urgente primero.</summary>
+        public decimal Faltante => Math.Max(0, StockMinimo - Disponible);
+
+        /// <summary>Sin existencia libre: la obra ya se quedó sin este material.</summary>
+        public bool Agotado => Disponible <= 0;
+    }
+
+    /// <summary>
+    /// La bandeja de reposición y lo que no alcanzó a entrar en ella.
+    /// </summary>
+    public class BandejaReposicionDto
+    {
+        public List<ReposicionDto> Renglones { get; set; } = new();
+
+        /// <summary>
+        /// Pares material/almacén sin mínimo definido. No se vigilan, y callarlo
+        /// haría creer que todo está cubierto cuando en realidad nadie los mira.
+        /// </summary>
+        public int SinMinimo { get; set; }
+    }
+
     public class FaltanteDto
     {
         public int IdMaterial { get; set; }

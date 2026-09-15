@@ -40,18 +40,7 @@ namespace VH.Services.Services
             // "cubrirían" también la petición de un tercero, que se quedaría
             // esperando un material que nadie va a comprar. Es el mismo problema que
             // el comprometido resuelve sobre la existencia, aplicado al tránsito.
-            var renglonesOrden = (await _unitOfWork.OrdenesCompraDetalle.FindAsync(
-                    d => d.CantidadRecibida < d.CantidadPedida,
-                    includeProperties: "OrdenCompra,Coberturas"))
-                .Where(d => d.OrdenCompra != null && d.OrdenCompra.Estado != EstadoOrdenCompra.Cancelada)
-                .ToList();
-
-            var enTransito = renglonesOrden
-                .GroupBy(d => new { d.IdMaterial, d.IdAlmacenDestino })
-                .ToDictionary(
-                    g => (g.Key.IdMaterial, g.Key.IdAlmacenDestino),
-                    g => g.Sum(d => Math.Max(0,
-                        (d.CantidadPedida - d.CantidadRecibida) - (d.Coberturas?.Sum(c => c.Cantidad) ?? 0))));
+            var enTransito = await CalcularEnTransitoAsync();
 
             var faltantes = new List<FaltanteDto>();
 
@@ -363,6 +352,94 @@ namespace VH.Services.Services
             }
 
             return $"{prefijo}{(ultimo + 1):D4}";
+        }
+
+        /// <summary>
+        /// Lo que viene en camino y todavía no tiene dueño, por material y almacén.
+        ///
+        /// Se descuenta lo ya prometido a alguien: dos cascos que vienen para Juan
+        /// y Víctor no pueden contarse además como cobertura de un tercero, que se
+        /// quedaría esperando un material que nadie va a comprar.
+        /// </summary>
+        private async Task<Dictionary<(int, int), decimal>> CalcularEnTransitoAsync()
+        {
+            var renglonesOrden = (await _unitOfWork.OrdenesCompraDetalle.FindAsync(
+                    d => d.CantidadRecibida < d.CantidadPedida,
+                    includeProperties: "OrdenCompra,Coberturas"))
+                .Where(d => d.OrdenCompra != null && d.OrdenCompra.Estado != EstadoOrdenCompra.Cancelada)
+                .ToList();
+
+            return renglonesOrden
+                .GroupBy(d => new { d.IdMaterial, d.IdAlmacenDestino })
+                .ToDictionary(
+                    g => (g.Key.IdMaterial, g.Key.IdAlmacenDestino),
+                    g => g.Sum(d => Math.Max(0,
+                        (d.CantidadPedida - d.CantidadRecibida) - (d.Coberturas?.Sum(c => c.Cantidad) ?? 0))));
+        }
+
+        public async Task<BandejaReposicionDto> GetReposicionAsync(int? idAlmacen = null)
+        {
+            var inventarios = (await _unitOfWork.Inventarios.GetAllAsync(
+                    includeProperties: "Material.UnidadMedida,Almacen.Proyecto"))
+                .Where(i => i.Material == null || i.Material.Activo)
+                .Where(i => !idAlmacen.HasValue || i.IdAlmacen == idAlmacen.Value)
+                .ToList();
+
+            var bandeja = new BandejaReposicionDto
+            {
+                // Un material sin mínimo no se vigila: nunca va a aparecer aquí por
+                // más vacío que esté el anaquel. Se cuentan para poder decirlo.
+                SinMinimo = inventarios.Count(i => i.StockMinimo <= 0)
+            };
+
+            var bajoMinimo = inventarios.Where(i => i.StockMinimo > 0 && i.Disponible < i.StockMinimo).ToList();
+            if (bajoMinimo.Count == 0) return bandeja;
+
+            var enTransito = await CalcularEnTransitoAsync();
+
+            foreach (var inv in bajoMinimo)
+            {
+                enTransito.TryGetValue((inv.IdMaterial, inv.IdAlmacen), out var transito);
+
+                // Llenar hasta el máximo; sin máximo definido, sólo volver al
+                // mínimo. En ambos casos se descuenta lo que ya viene en camino,
+                // porque pedirlo otra vez sería comprar dos veces lo mismo.
+                var meta = inv.StockMaximo > 0 ? inv.StockMaximo : inv.StockMinimo;
+                var sugerido = meta - inv.Disponible - transito;
+
+                // Ya viene suficiente en camino: no hay nada que pedir todavía.
+                if (sugerido <= 0) continue;
+
+                var ultimaCompra = await GetUltimaCompraAsync(inv.IdMaterial);
+
+                bandeja.Renglones.Add(new ReposicionDto
+                {
+                    IdMaterial = inv.IdMaterial,
+                    NombreMaterial = inv.Material?.Nombre ?? $"Material {inv.IdMaterial}",
+                    UnidadMedida = inv.Material?.UnidadMedida?.Abreviatura ?? "",
+                    IdAlmacen = inv.IdAlmacen,
+                    NombreAlmacen = inv.Almacen?.Nombre ?? "",
+                    NombreProyecto = inv.Almacen?.Proyecto?.Nombre ?? "",
+                    Existencia = inv.Existencia,
+                    Comprometido = inv.Comprometido,
+                    StockMinimo = inv.StockMinimo,
+                    StockMaximo = inv.StockMaximo,
+                    EnTransito = transito,
+                    Sugerido = sugerido,
+                    UltimoPrecio = ultimaCompra?.PrecioUnitario ?? inv.Material?.CostoUnitarioEstimado ?? 0,
+                    IdUltimoProveedor = ultimaCompra?.Compra?.IdProveedor,
+                    UltimoProveedor = ultimaCompra?.Compra?.Proveedor?.Nombre
+                });
+            }
+
+            // Lo agotado primero, y después lo que más lejos está de su mínimo.
+            bandeja.Renglones = bandeja.Renglones
+                .OrderByDescending(r => r.Agotado)
+                .ThenByDescending(r => r.Faltante)
+                .ThenBy(r => r.NombreMaterial)
+                .ToList();
+
+            return bandeja;
         }
 
         /// <summary>A quién va dirigido un renglón, para poder nombrarlo en un aviso.</summary>

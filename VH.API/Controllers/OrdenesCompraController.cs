@@ -40,6 +40,14 @@ namespace VH.API.Controllers
             return Ok(await _ordenService.GetFaltantesAsync(idAlmacen));
         }
 
+        // GET: api/ordenescompra/reposicion?idAlmacen=1
+        // Lo que conviene reponer aunque nadie lo haya pedido.
+        [HttpGet("reposicion")]
+        public async Task<ActionResult<BandejaReposicionDto>> GetReposicion([FromQuery] int? idAlmacen = null)
+        {
+            return Ok(await _ordenService.GetReposicionAsync(idAlmacen));
+        }
+
         // GET: api/ordenescompra?estado=Emitida
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OrdenCompraResponseDto>>> GetAll(

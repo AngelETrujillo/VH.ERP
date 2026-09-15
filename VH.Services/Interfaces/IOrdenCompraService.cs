@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -21,6 +21,16 @@ namespace VH.Services.Interfaces
         /// obrero de otra que está a doscientos kilómetros.
         /// </summary>
         Task<IEnumerable<FaltanteDto>> GetFaltantesAsync(int? idAlmacen = null);
+
+        /// <summary>
+        /// Lo que conviene reponer aunque nadie lo haya pedido: pares
+        /// material/almacén cuyo disponible cayó por debajo del mínimo.
+        ///
+        /// Vive junto a los faltantes y no en el servicio de inventario porque
+        /// necesita lo mismo que ellos: descontar lo que ya viene en camino y
+        /// sugerir el último precio pagado.
+        /// </summary>
+        Task<BandejaReposicionDto> GetReposicionAsync(int? idAlmacen = null);
 
         Task<IEnumerable<OrdenCompra>> GetOrdenesAsync(EstadoOrdenCompra? estado = null);
 
