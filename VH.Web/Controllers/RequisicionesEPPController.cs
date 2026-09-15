@@ -20,6 +20,10 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        /// <summary>Identificador del usuario conectado, tal como lo ve el API.</summary>
+        private string? UsuarioActual() =>
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         private void SetAuthHeader()
         {
             var token = HttpContext.Session.GetString("JwtToken");
@@ -150,6 +154,13 @@ namespace VH.Web.Controllers
                 TempData["Error"] = "Esta requisición no tiene renglones pendientes de autorizar.";
                 return RedirectToAction(nameof(Details), new { id });
             }
+
+            // Nadie autoriza lo que él mismo pidió. El API ya lo rechaza, pero
+            // dejar los botones a la vista hace que el usuario marque renglones,
+            // confirme y sólo entonces se entere de que no podía: más vale decirlo
+            // antes y no ofrecer el botón.
+            ViewBag.EsSolicitante = !string.IsNullOrEmpty(requisicion.IdUsuarioSolicita)
+                                    && requisicion.IdUsuarioSolicita == UsuarioActual();
 
             return View(requisicion);
         }

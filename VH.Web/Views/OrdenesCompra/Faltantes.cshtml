@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.FaltanteDto>
+﻿@model IEnumerable<VH.Services.DTOs.FaltanteDto>
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using VH.Web.Extensions
 @{
@@ -101,6 +101,11 @@
                                     <tr>
                                         <td class="ps-3">
                                             <input type="checkbox" class="form-check-input chk-linea" data-idx="@i" checked>
+                                            @* Sin este Index, desmarcar un renglón deja huecos en la numeración
+                                               (Lineas[1] sin Lineas[0]) y el enlace de modelo se detiene en el
+                                               primer hueco: la orden llegaba vacía al servidor aunque hubiera
+                                               materiales seleccionados. *@
+                                            <input type="hidden" name="Lineas.Index" value="@i" />
                                             <input type="hidden" name="Lineas[@i].IdMaterial" value="@f.IdMaterial" />
                                             <input type="hidden" name="Lineas[@i].IdAlmacenDestino" value="@f.IdAlmacen" />
                                         </td>

@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
+﻿@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
 @{
     ViewData["Title"] = "Detalle de Alerta";
 }
@@ -55,7 +55,7 @@
                         </div>
                         <div class="col-md-6">
                             <p class="mb-1 text-muted">Costo Estimado de Pérdida</p>
-                            <p class="fw-bold fs-5 text-danger">@(Model.CostoEstimado?.ToString("C") ?? "No calculado")</p>
+                            <p class="fw-bold fs-5 text-danger">@(Model.CostoEstimado?.ToString("C2") ?? "No calculado")</p>
                         </div>
                     </div>
                 </div>

@@ -18,9 +18,12 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("ALMACENES"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Almacén
-            </a>
+                </a>
+            }
         }
     </div>
 
@@ -156,17 +159,23 @@
                                             </a>
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdAlmacen"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("ALMACENES"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdAlmacen"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdAlmacen"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("ALMACENES"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdAlmacen"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
                                     </td>
@@ -181,9 +190,12 @@
                                         <i class="bi bi-box-seam display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay almacenes registrados</h5>
                                         <p class="text-muted">Comienza creando tu primer almacén</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("ALMACENES"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Crear Almacén
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>

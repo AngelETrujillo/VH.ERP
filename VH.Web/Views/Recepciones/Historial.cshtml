@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.RecepcionCompraResponseDto>
+﻿@model IEnumerable<VH.Services.DTOs.RecepcionCompraResponseDto>
 @{
     ViewData["Title"] = "Recepciones";
     var lista = Model?.OrderByDescending(r => r.FechaRecepcion).ToList()
@@ -64,18 +64,18 @@
                                     </td>
                                     <td><small>@r.ResumenMateriales</small></td>
                                     <td class="text-center">
-                                        <span class="fw-semibold">@r.TotalAceptado.ToString("0.##")</span>
+                                        <span class="fw-semibold">@r.TotalAceptado.FormatoCantidad()</span>
                                         @if (r.HuboRechazo)
                                         {
                                             <div>
                                                 <span class="badge bg-danger-subtle text-danger">
-                                                    @r.TotalRechazado.ToString("0.##") rechazado
+                                                    @r.TotalRechazado.FormatoCantidad() rechazado
                                                 </span>
                                             </div>
                                         }
                                     </td>
                                     <td class="text-end">
-                                        @r.Importe.ToString("C")
+                                        @r.Importe.ToString("C2")
                                         @if (r.HuboDiferenciaPrecio)
                                         {
                                             <div>

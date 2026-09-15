@@ -130,7 +130,7 @@
                                     <small class="text-muted d-block">@detalle.UnidadMedida</small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                    <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada.FormatoCantidad()</span>
                                     @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
                                     {
                                         <br>
@@ -182,10 +182,10 @@
                                             }
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                            <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada.FormatoCantidad()</span>
                                             @if (detalle.Entregado && detalle.CantidadEntregada.HasValue)
                                             {
-                                                <br><small class="text-success">Entregado: @detalle.CantidadEntregada</small>
+                                                <br><small class="text-success">Entregado: @detalle.CantidadEntregada.FormatoCantidad()</small>
                                             }
                                         </td>
                                         <td class="text-center">
@@ -279,7 +279,7 @@
                                         <li>
                                             <i class="bi bi-check2 text-success me-1"></i>
                                             @d.NombreMaterial —
-                                            <span class="fw-semibold">@d.CantidadEntregada @d.UnidadMedida</span>
+                                            <span class="fw-semibold">@d.CantidadEntregada.FormatoCantidad() @d.UnidadMedida</span>
                                             @if (!string.IsNullOrEmpty(d.DescripcionLote))
                                             {
                                                 <span class="text-muted">· @d.DescripcionLote</span>

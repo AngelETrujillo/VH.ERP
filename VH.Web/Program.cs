@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using VH.Web.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +59,11 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
+
+// Después de autenticar y de tener sesión: ahí se puede saber si la cookie
+// quedó viva sin su token.
+app.UseMiddleware<VH.Web.Middleware.SesionExpiradaMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(

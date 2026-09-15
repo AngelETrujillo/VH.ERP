@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.OrdenPorRecibirDto>
+﻿@model IEnumerable<VH.Services.DTOs.OrdenPorRecibirDto>
 @{
     ViewData["Title"] = "Recepción de Material";
     var lista = Model?.ToList() ?? new List<VH.Services.DTOs.OrdenPorRecibirDto>();
@@ -141,8 +141,8 @@
                                         <small class="text-muted">@o.NombreProyecto</small>
                                     </td>
                                     <td><small>@o.ResumenMateriales</small></td>
-                                    <td class="text-center fw-semibold">@o.PiezasPendientes.ToString("0.##")</td>
-                                    <td class="text-end">@o.ImportePendiente.ToString("C")</td>
+                                    <td class="text-center fw-semibold">@o.PiezasPendientes.FormatoCantidad()</td>
+                                    <td class="text-end">@o.ImportePendiente.ToString("C2")</td>
                                     <td class="text-center">
                                         @if (o.DiasRetraso > 0)
                                         {
@@ -168,12 +168,15 @@
                                         }
                                     </td>
                                     <td class="text-center">
+                                        @if (Html.PuedeCrear("RECEPCIONES"))
+                                        {
                                         <a asp-action="Recibir"
                                            asp-route-idOrdenCompra="@o.IdOrdenCompra"
                                            asp-route-idAlmacen="@o.IdAlmacen"
                                            class="btn btn-sm btn-primary">
                                             <i class="bi bi-box-arrow-in-down me-1"></i>Recibir
                                         </a>
+                                        }
                                     </td>
                                 </tr>
                             }

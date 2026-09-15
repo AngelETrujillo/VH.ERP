@@ -457,3 +457,11 @@
         width: 100%;
     }
 }
+
+/* ===== COLOR DE ACENTO "INFO" =====
+   Bootstrap 5.1 pinta .text-info con rgba(var(--bs-info-rgb), var(--bs-text-opacity)),
+   que resuelve a cian. Aquí se sustituye por el morado de la marca. Los fondos
+   .bg-info se dejan como estaban: sólo cambia el texto. */
+.text-info {
+    color: #ac0cb2 !important;
+}

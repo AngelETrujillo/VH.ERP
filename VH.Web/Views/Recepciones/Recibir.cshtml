@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.PreparacionRecepcionDto
+﻿@model VH.Services.DTOs.PreparacionRecepcionDto
 @{
     ViewData["Title"] = $"Recibir orden {Model.Folio}";
     var renglones = Model.Renglones.Where(r => !r.Completo).ToList();
@@ -109,11 +109,11 @@
                                         <input type="hidden" name="Lineas[@i].IdOrdenCompraDetalle" value="@r.IdOrdenCompraDetalle">
                                         <div class="fw-semibold">@r.NombreMaterial</div>
                                         <small class="text-muted">
-                                            Pedido @r.CantidadPedida.ToString("0.##") @r.UnidadMedida
-                                            a @r.PrecioUnitarioPactado.ToString("C")
+                                            Pedido @r.CantidadPedida.FormatoCantidad() @r.UnidadMedida
+                                            a @r.PrecioUnitarioPactado.ToString("C2")
                                             @if (r.CantidadRecibida > 0)
                                             {
-                                                <span>&middot; ya recibido @r.CantidadRecibida.ToString("0.##")</span>
+                                                <span>&middot; ya recibido @r.CantidadRecibida.FormatoCantidad()</span>
                                             }
                                         </small>
                                         @if (r.Esperan.Any())
@@ -123,25 +123,25 @@
                                                 {
                                                     <span class="badge @(e.CubiertoAhora ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary") me-1 mb-1">
                                                         <i class="bi bi-person me-1"></i>@(string.IsNullOrWhiteSpace(e.NombreEmpleado) ? e.NumeroRequisicion : e.NombreEmpleado)
-                                                        &middot; @e.Cantidad.ToString("0.##")
+                                                        &middot; @e.Cantidad.FormatoCantidad()
                                                         &middot; @e.DiasEsperando d
                                                     </span>
                                                 }
                                             </div>
                                         }
                                     </td>
-                                    <td class="text-center fw-bold">@r.Pendiente.ToString("0.##")</td>
+                                    <td class="text-center fw-bold">@r.Pendiente.FormatoCantidad()</td>
                                     <td>
                                         <input type="number" step="0.01" min="0" max="@r.Pendiente"
                                                name="Lineas[@i].CantidadRecibida"
                                                class="form-control form-control-sm text-center js-recibida"
-                                               data-fila="@i" value="@r.Pendiente.ToString("0.##")">
+                                               data-fila="@i" value="@r.Pendiente.FormatoCantidad()">
                                     </td>
                                     <td>
                                         <input type="number" step="0.01" min="0" max="@r.Pendiente"
                                                name="Lineas[@i].CantidadAceptada"
                                                class="form-control form-control-sm text-center js-aceptada"
-                                               data-fila="@i" value="@r.Pendiente.ToString("0.##")">
+                                               data-fila="@i" value="@r.Pendiente.FormatoCantidad()">
                                     </td>
                                     <td>
                                         <input type="number" step="0.01" min="0.01"
@@ -199,7 +199,7 @@
                                 <tr>
                                     <td class="ps-4">@r.NombreMaterial</td>
                                     <td class="text-end pe-4 text-muted">
-                                        @r.CantidadRecibida.ToString("0.##") de @r.CantidadPedida.ToString("0.##") @r.UnidadMedida
+                                        @r.CantidadRecibida.FormatoCantidad() de @r.CantidadPedida.FormatoCantidad() @r.UnidadMedida
                                     </td>
                                 </tr>
                             }

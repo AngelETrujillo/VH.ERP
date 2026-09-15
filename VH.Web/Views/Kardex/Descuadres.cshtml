@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.DescuadreDto>
+﻿@model IEnumerable<VH.Services.DTOs.DescuadreDto>
 @{
     ViewData["Title"] = "Descuadres de Inventario";
     var lista = Model?.ToList() ?? new List<VH.Services.DTOs.DescuadreDto>();
@@ -66,8 +66,8 @@
                                 <tr>
                                     <td class="ps-4 fw-semibold">@d.NombreMaterial</td>
                                     <td>@d.NombreAlmacen</td>
-                                    <td class="text-end">@d.SaldoRegistrado.ToString("0.##")</td>
-                                    <td class="text-end">@d.SaldoKardex.ToString("0.##")</td>
+                                    <td class="text-end">@d.SaldoRegistrado.FormatoCantidad()</td>
+                                    <td class="text-end">@d.SaldoKardex.FormatoCantidad()</td>
                                     <td class="text-end fw-bold @(d.Diferencia > 0 ? "text-success" : "text-danger")">
                                         @d.Diferencia.ToString("+0.##;-0.##")
                                     </td>

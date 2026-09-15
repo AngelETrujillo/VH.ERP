@@ -98,7 +98,18 @@ namespace VH.Web.Controllers
                     var response = await _httpClient.PostAsJsonAsync("api/comprasepp", dto);
                     if (response.IsSuccessStatusCode)
                     {
-                        TempData["Mensaje"] = "Compra registrada exitosamente";
+                        // La pantalla de compras lee SuccessMessage/WarningMessage;
+                        // con "Mensaje" ni el acuse de la compra se veía.
+                        TempData["SuccessMessage"] = "Compra registrada exitosamente";
+
+                        // El API avisa aquí cuando una compra deja el stock por
+                        // encima del máximo. Antes se descartaba, y el almacenista
+                        // sólo se enteraba si entraba a Control de Inventario a
+                        // buscarlo: el aviso llegaba cuando ya no servía de nada.
+                        var resultado = await response.Content.ReadFromJsonAsync<CompraCreadaResultado>();
+                        if (resultado?.Alertas is { Count: > 0 })
+                            TempData["WarningMessage"] = string.Join(" ", resultado.Alertas);
+
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
@@ -112,6 +123,16 @@ namespace VH.Web.Controllers
             }
             await CargarListasEnViewBag();
             return View(dto);
+        }
+
+        /// <summary>
+        /// Respuesta del alta de compra: el documento y los avisos de stock que
+        /// haya disparado.
+        /// </summary>
+        private sealed class CompraCreadaResultado
+        {
+            public CompraEPPResponseDto? Data { get; set; }
+            public List<string> Alertas { get; set; } = new();
         }
 
         // GET: ComprasEPP/Edit/5

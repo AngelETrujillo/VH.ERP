@@ -12,9 +12,12 @@
             </h2>
             <p class="text-muted mb-0">Existencias de materiales EPP por almacén</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+        @if (Html.PuedeCrear("INVENTARIOS"))
+        {
+            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
             <i class="bi bi-plus-lg me-2"></i>Nuevo Registro
-        </a>
+            </a>
+        }
     </div>
 
     <!-- Alertas -->
@@ -217,14 +220,20 @@
                                                class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@item.IdInventario"
-                                               class="btn btn-outline-warning" title="Editar">
+                                            @if (Html.PuedeEditar("INVENTARIOS"))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.IdInventario"
+                                                class="btn btn-outline-warning" title="Editar">
                                                 <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a asp-action="Delete" asp-route-id="@item.IdInventario"
-                                               class="btn btn-outline-danger" title="Eliminar">
+                                                </a>
+                                            }
+                                            @if (Html.PuedeEliminar("INVENTARIOS"))
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.IdInventario"
+                                                class="btn btn-outline-danger" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
-                                            </a>
+                                                </a>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -238,9 +247,12 @@
                                         <i class="bi bi-boxes display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay registros de inventario</h5>
                                         <p class="text-muted">El inventario se crea automáticamente con las compras</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("INVENTARIOS"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Crear Registro
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>

@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.CompraEPPResponseDto
+﻿@model VH.Services.DTOs.CompraEPPResponseDto
 @using VH.Web.Extensions
 @{
     ViewData["Title"] = $"Compra {(string.IsNullOrEmpty(Model.NumeroDocumento) ? "#" + Model.IdCompra : Model.NumeroDocumento)}";
@@ -140,14 +140,20 @@
             </div>
 
             <div class="d-grid gap-2">
-                <a asp-action="Edit" asp-route-id="@Model.IdCompra" class="btn btn-warning">
+                @if (Html.PuedeEditar("COMPRAS_EPP"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.IdCompra" class="btn btn-warning">
                     <i class="bi bi-pencil me-2"></i>Editar documento
-                </a>
+                    </a>
+                }
                 @if (Model.PuedeCancelarse)
                 {
-                    <a asp-action="Delete" asp-route-id="@Model.IdCompra" class="btn btn-outline-danger">
+                    @if (Html.PuedeEliminar("COMPRAS_EPP"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.IdCompra" class="btn btn-outline-danger">
                         <i class="bi bi-trash me-2"></i>Cancelar compra
-                    </a>
+                        </a>
+                    }
                 }
                 else
                 {

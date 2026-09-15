@@ -1,4 +1,4 @@
-@using VH.Services.DTOs.Analytics
+﻿@using VH.Services.DTOs.Analytics
 @{
     ViewData["Title"] = "Dashboard Analytics";
     var kpis = ViewBag.KPIs as KPIsEjecutivosDto;
@@ -50,7 +50,7 @@
             <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
             <div class="flex-grow-1">
                 <strong>@resumenAlertas.TotalCriticas alertas críticas</strong> requieren atención inmediata.
-                Pérdida potencial estimada: <strong>@resumenAlertas.CostoPotencialTotal.ToString("C")</strong>
+                Pérdida potencial estimada: <strong>@resumenAlertas.CostoPotencialTotal.ToString("C2")</strong>
             </div>
             <a asp-controller="AlertasConsumo" asp-action="Index" asp-route-soloPendientes="true" class="btn btn-danger btn-sm">
                 Ver Alertas
@@ -66,7 +66,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted mb-1 small">Consumo del Mes</p>
-                            <h3 class="fw-bold mb-0">@(kpis?.ConsumoMesActual.ToString("C") ?? "$0")</h3>
+                            <h3 class="fw-bold mb-0">@(kpis?.ConsumoMesActual.ToString("C2") ?? "$0")</h3>
                             @if (kpis != null)
                             {
                                 var variacionClass = kpis.VariacionConsumoMensual > 0 ? "text-danger" : "text-success";
@@ -224,7 +224,7 @@
                                                 <br><small class="text-muted">@item.NumeroNomina - @item.Puesto</small>
                                             </td>
                                             <td><small>@item.NombreProyecto</small></td>
-                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C2")</td>
                                             <td class="text-center">
                                                 <span class="badge bg-@item.ColorIndicador">@item.NivelRiesgo</span>
                                             </td>
@@ -276,7 +276,7 @@
                                                 <br><small class="text-muted">@item.NumeroNomina - @item.Puesto</small>
                                             </td>
                                             <td><small>@item.NombreProyecto</small></td>
-                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C2")</td>
                                             <td class="text-center">
                                                 <span class="badge bg-@item.ColorIndicador">@item.NivelRiesgo</span>
                                             </td>

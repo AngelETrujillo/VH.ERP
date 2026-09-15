@@ -1,4 +1,4 @@
-@using VH.Services.DTOs.Analytics
+﻿@using VH.Services.DTOs.Analytics
 @{
     ViewData["Title"] = "Ranking de Consumidores";
     var ranking = ViewBag.Ranking as RankingConsumoResponseDto;
@@ -13,7 +13,7 @@
             <p class="text-muted mb-0">
                 Período: @(new DateTime(ViewBag.Anio, ViewBag.Mes, 1).ToString("MMMM yyyy")) |
                 @(ranking?.TotalEmpleadosAnalizados ?? 0) empleados analizados |
-                Promedio: @(ranking?.PromedioGeneral.ToString("C") ?? "$0")
+                Promedio: @(ranking?.PromedioGeneral.ToString("C2") ?? "$0")
             </p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary">
@@ -136,7 +136,7 @@
                                             <td><small>@item.Puesto</small></td>
                                             <td><small>@item.NombreProyecto</small></td>
                                             <td class="text-center">@item.TotalEntregas</td>
-                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C2")</td>
                                             <td class="text-end">
                                                 @if (item.DesviacionPorcentaje > 0)
                                                 {
@@ -218,7 +218,7 @@
                                             <td><small>@item.Puesto</small></td>
                                             <td><small>@item.NombreProyecto</small></td>
                                             <td class="text-center">@item.TotalEntregas</td>
-                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C")</td>
+                                            <td class="text-end fw-bold">@item.CostoTotal.ToString("C2")</td>
                                             <td class="text-end">
                                                 <span class="text-success">@item.DesviacionPorcentaje.ToString("N1")%</span>
                                             </td>

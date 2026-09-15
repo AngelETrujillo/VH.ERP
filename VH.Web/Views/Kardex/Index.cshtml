@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.MovimientoInventarioResponseDto>
+﻿@model IEnumerable<VH.Services.DTOs.MovimientoInventarioResponseDto>
 @{
     ViewData["Title"] = "Kardex de Almacén";
 
@@ -120,7 +120,7 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="small text-muted text-uppercase fw-semibold">Existencia actual</div>
-                        <div class="fs-3 fw-bold">@saldoFinal.ToString("0.##")</div>
+                        <div class="fs-3 fw-bold">@saldoFinal.FormatoCantidad()</div>
                         <div class="small text-muted">@nombreMaterial en @nombreAlmacen</div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="small text-muted text-uppercase fw-semibold">Entradas</div>
-                        <div class="fs-3 fw-bold text-success">+@entradas.ToString("0.##")</div>
+                        <div class="fs-3 fw-bold text-success">+@entradas.FormatoCantidad()</div>
                         <div class="small text-muted">En el periodo consultado</div>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="small text-muted text-uppercase fw-semibold">Salidas</div>
-                        <div class="fs-3 fw-bold text-danger">-@salidas.ToString("0.##")</div>
+                        <div class="fs-3 fw-bold text-danger">-@salidas.FormatoCantidad()</div>
                         <div class="small text-muted">En el periodo consultado</div>
                     </div>
                 </div>
@@ -146,6 +146,14 @@
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body d-flex flex-column justify-content-center gap-2">
+                        @if (!Html.PuedeCrear("KARDEX"))
+                        {
+                            <span class="text-muted small">
+                                <i class="bi bi-lock me-1"></i>Sólo consulta: no puede registrar movimientos.
+                            </span>
+                        }
+                        else
+                        {
                         <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalAjuste">
                             <i class="bi bi-sliders me-1"></i>Ajustar por conteo
                         </button>
@@ -157,6 +165,7 @@
                                 <i class="bi bi-trash me-1"></i>Merma
                             </button>
                         </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -216,15 +225,15 @@
                                             }
                                         </td>
                                         <td class="text-end text-success fw-semibold">
-                                            @(m.AfectaExistencia && m.Cantidad > 0 ? m.Cantidad.ToString("0.##") : "")
+                                            @(m.AfectaExistencia && m.Cantidad > 0 ? m.Cantidad.FormatoCantidad() : "")
                                         </td>
                                         <td class="text-end text-danger fw-semibold">
-                                            @(m.AfectaExistencia && m.Cantidad < 0 ? Math.Abs(m.Cantidad).ToString("0.##") : "")
+                                            @(m.AfectaExistencia && m.Cantidad < 0 ? Math.Abs(m.Cantidad).FormatoCantidad() : "")
                                         </td>
                                         <td class="text-end fw-bold">
                                             @if (m.AfectaExistencia)
                                             {
-                                                @m.SaldoResultante.ToString("0.##")
+                                                @m.SaldoResultante.FormatoCantidad()
                                             }
                                             else
                                             {
@@ -232,7 +241,7 @@
                                             }
                                         </td>
                                         <td class="text-end">
-                                            @(m.CostoUnitario.HasValue ? m.CostoUnitario.Value.ToString("C") : "")
+                                            @(m.CostoUnitario.HasValue ? m.CostoUnitario.Value.ToString("C2") : "")
                                         </td>
                                         <td><small class="text-muted">@m.NombreUsuario</small></td>
                                     </tr>
@@ -265,7 +274,7 @@
                     </div>
                     <div class="modal-body">
                         <p class="text-muted small">
-                            El sistema dice que hay <strong>@saldoFinal.ToString("0.##")</strong> de
+                            El sistema dice que hay <strong>@saldoFinal.FormatoCantidad()</strong> de
                             @nombreMaterial en @nombreAlmacen. Escriba lo que se contó en el anaquel.
                         </p>
                         <div class="mb-3">

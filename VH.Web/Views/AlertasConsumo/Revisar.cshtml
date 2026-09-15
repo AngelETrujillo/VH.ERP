@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
+﻿@model VH.Services.DTOs.Analytics.AlertaConsumoResponseDto
 @{
     ViewData["Title"] = "Revisar Alerta";
 }
@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted">Costo Estimado</label>
-                            <p class="fw-bold text-danger">@(Model.CostoEstimado?.ToString("C") ?? "N/A")</p>
+                            <p class="fw-bold text-danger">@(Model.CostoEstimado?.ToString("C2") ?? "N/A")</p>
                         </div>
                     </div>
                 </div>

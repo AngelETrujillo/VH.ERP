@@ -1,4 +1,4 @@
-@model IEnumerable<VH.Services.DTOs.OrdenCompraResponseDto>
+﻿@model IEnumerable<VH.Services.DTOs.OrdenCompraResponseDto>
 @using VH.Web.Extensions
 @{
     ViewData["Title"] = "Órdenes de Compra";
@@ -13,9 +13,12 @@
             </h2>
             <p class="text-muted mb-0">Pedidos a proveedores para cubrir lo que falta en almacén</p>
         </div>
+        @if (Html.PuedeCrear("ORDENES_COMPRA"))
+        {
         <a asp-action="Faltantes" class="btn btn-primary btn-lg shadow-sm">
             <i class="bi bi-plus-lg me-2"></i>Ver faltantes
         </a>
+        }
     </div>
 
     @if (TempData["Mensaje"] != null)

@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.RecepcionCompraResponseDto
+﻿@model VH.Services.DTOs.RecepcionCompraResponseDto
 @{
     ViewData["Title"] = $"Recepción {Model.Folio}";
 
@@ -57,7 +57,7 @@
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <div class="small text-muted text-uppercase fw-semibold">Recibido</div>
-                    <div class="fs-3 fw-bold">@Model.TotalRecibido.ToString("0.##")</div>
+                    <div class="fs-3 fw-bold">@Model.TotalRecibido.FormatoCantidad()</div>
                     <div class="small text-muted">Piezas que bajaron del camión</div>
                 </div>
             </div>
@@ -66,7 +66,7 @@
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <div class="small text-muted text-uppercase fw-semibold">Aceptado</div>
-                    <div class="fs-3 fw-bold text-success">@Model.TotalAceptado.ToString("0.##")</div>
+                    <div class="fs-3 fw-bold text-success">@Model.TotalAceptado.FormatoCantidad()</div>
                     <div class="small text-muted">Entró al inventario</div>
                 </div>
             </div>
@@ -76,7 +76,7 @@
                 <div class="card-body">
                     <div class="small text-muted text-uppercase fw-semibold">Rechazado</div>
                     <div class="fs-3 fw-bold @(Model.TotalRechazado > 0 ? "text-danger" : "")">
-                        @Model.TotalRechazado.ToString("0.##")
+                        @Model.TotalRechazado.FormatoCantidad()
                     </div>
                     <div class="small text-muted">La orden lo sigue esperando</div>
                 </div>
@@ -86,7 +86,7 @@
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <div class="small text-muted text-uppercase fw-semibold">Importe</div>
-                    <div class="fs-3 fw-bold">@Model.Importe.ToString("C")</div>
+                    <div class="fs-3 fw-bold">@Model.Importe.ToString("C2")</div>
                     <div class="small text-muted">
                         @(string.IsNullOrWhiteSpace(Model.NumeroFactura) ? "Sin factura capturada" : $"Factura {Model.NumeroFactura}")
                     </div>
@@ -133,21 +133,21 @@
                                         </small>
                                     }
                                 </td>
-                                <td class="text-center">@d.CantidadRecibida.ToString("0.##") @d.UnidadMedida</td>
+                                <td class="text-center">@d.CantidadRecibida.FormatoCantidad() @d.UnidadMedida</td>
                                 <td class="text-center fw-semibold">
-                                    @d.CantidadAceptada.ToString("0.##")
+                                    @d.CantidadAceptada.FormatoCantidad()
                                     @if (d.CantidadRechazada > 0)
                                     {
                                         <div>
                                             <span class="badge bg-danger-subtle text-danger">
-                                                -@d.CantidadRechazada.ToString("0.##")
+                                                -@d.CantidadRechazada.FormatoCantidad()
                                             </span>
                                         </div>
                                     }
                                 </td>
-                                <td class="text-end text-muted">@d.PrecioUnitarioPactado.ToString("C")</td>
+                                <td class="text-end text-muted">@d.PrecioUnitarioPactado.ToString("C2")</td>
                                 <td class="text-end fw-semibold">
-                                    @d.PrecioUnitarioReal.ToString("C")
+                                    @d.PrecioUnitarioReal.ToString("C2")
                                     @if (d.DiferenciaPrecio != 0)
                                     {
                                         <div>
@@ -157,7 +157,7 @@
                                         </div>
                                     }
                                 </td>
-                                <td class="text-end">@d.Importe.ToString("C")</td>
+                                <td class="text-end">@d.Importe.ToString("C2")</td>
                                 <td>
                                     <small class="text-muted">
                                         @if (!string.IsNullOrWhiteSpace(d.Talla))

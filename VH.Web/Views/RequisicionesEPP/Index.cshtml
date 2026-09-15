@@ -19,10 +19,13 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary shadow-sm">
+            @if (Html.PuedeCrear("REQUISICIONES_EPP"))
+            {
+                <a asp-action="Create" class="btn btn-primary shadow-sm">
                 <i class="bi bi-plus-lg me-1 me-md-2"></i>
                 <span class="d-none d-sm-inline">Nueva </span>Requisición
-            </a>
+                </a>
+            }
         }
     </div>
 

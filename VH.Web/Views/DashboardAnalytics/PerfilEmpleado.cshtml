@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.Analytics.PerfilConsumoEmpleadoDto
+﻿@model VH.Services.DTOs.Analytics.PerfilConsumoEmpleadoDto
 @{
     ViewData["Title"] = $"Perfil de {Model.NombreCompleto}";
 }
@@ -33,7 +33,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body">
-                    <div class="display-6 fw-bold text-primary">@Model.CostoTotalHistorico.ToString("C")</div>
+                    <div class="display-6 fw-bold text-primary">@Model.CostoTotalHistorico.ToString("C2")</div>
                     <p class="text-muted mb-0">Costo Total Histórico</p>
                     <small class="text-muted">@Model.TotalEntregasHistorico entregas</small>
                 </div>
@@ -42,9 +42,9 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body">
-                    <div class="display-6 fw-bold text-info">@Model.PromedioMensual.ToString("C")</div>
+                    <div class="display-6 fw-bold text-info">@Model.PromedioMensual.ToString("C2")</div>
                     <p class="text-muted mb-0">Promedio Mensual</p>
-                    <small class="text-muted">vs grupo: @Model.PromedioGrupoPuesto.ToString("C")</small>
+                    <small class="text-muted">vs grupo: @Model.PromedioGrupoPuesto.ToString("C2")</small>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                                     <strong>@material.NombreMaterial</strong>
                                     <br><small class="text-muted">@material.VecesSolicitado veces | @material.CantidadTotal unidades</small>
                                 </div>
-                                <span class="badge bg-primary rounded-pill">@material.CostoTotal.ToString("C")</span>
+                                <span class="badge bg-primary rounded-pill">@material.CostoTotal.ToString("C2")</span>
                             </li>
                         }
                     </ul>
@@ -117,7 +117,7 @@
                                         <td>@entrega.FechaEntrega.ToString("dd/MM/yyyy")</td>
                                         <td>@entrega.NombreMaterial</td>
                                         <td class="text-center">@entrega.Cantidad</td>
-                                        <td class="text-end">@entrega.Costo.ToString("C")</td>
+                                        <td class="text-end">@entrega.Costo.ToString("C2")</td>
                                     </tr>
                                 }
                             </tbody>

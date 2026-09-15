@@ -163,6 +163,8 @@
             {
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
+                        @if (Html.PuedeEliminar("ORDENES_COMPRA"))
+                        {
                         <form asp-action="Cancelar" asp-route-id="@Model.IdOrdenCompra" method="post">
                             @Html.AntiForgeryToken()
                             <label class="form-label fw-semibold small">Cancelar la orden</label>
@@ -175,6 +177,7 @@
                                 Los materiales volverán a la bandeja de faltantes.
                             </small>
                         </form>
+                        }
                     </div>
                 </div>
             }

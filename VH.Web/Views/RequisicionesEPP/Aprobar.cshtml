@@ -1,8 +1,9 @@
-@model VH.Services.DTOs.RequisicionEPPResponseDto
+﻿@model VH.Services.DTOs.RequisicionEPPResponseDto
 @using VH.Services.Entities
 @{
     ViewData["Title"] = $"Autorizar Requisición {Model.NumeroRequisicion}";
     var porDecidir = Model.RenglonesPorDecidir;
+    var esSolicitante = ViewBag.EsSolicitante is true;
 }
 
 <div class="container-fluid px-3 px-md-4">
@@ -26,6 +27,20 @@
         <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (esSolicitante)
+    {
+        <div class="alert alert-warning d-flex align-items-start">
+            <i class="bi bi-person-exclamation me-2 fs-5"></i>
+            <div>
+                <strong>Usted solicitó esta requisición, así que no puede autorizarla.</strong>
+                <div class="small mt-1">
+                    Debe revisarla otra persona con permiso para autorizar. Aquí puede ver el
+                    detalle de lo pedido, pero los botones de decisión no están disponibles.
+                </div>
+            </div>
         </div>
     }
 
@@ -113,7 +128,7 @@
                                     }
                                 </label>
                                 <div class="text-end">
-                                    <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                    <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada.FormatoCantidad()</span>
                                     @if (!string.IsNullOrEmpty(detalle.TallaSolicitada))
                                     {
                                         <br />
@@ -158,7 +173,7 @@
                                     </td>
                                     <td>@detalle.Destino</td>
                                     <td class="text-center">
-                                        <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada</span>
+                                        <span class="badge bg-primary fs-6">@detalle.CantidadSolicitada.FormatoCantidad()</span>
                                     </td>
                                     <td class="text-center">
                                         @(string.IsNullOrEmpty(detalle.TallaSolicitada) ? "-" : detalle.TallaSolicitada)
@@ -192,6 +207,14 @@
                         <span class="small"><span class="js-contador">@porDecidir</span> marcado(s)</span>
                     </div>
                     <div class="card-body p-3">
+                    @if (esSolicitante)
+                    {
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-lock me-1"></i>No puede decidir sobre su propia requisición.
+                        </p>
+                    }
+                    else
+                    {
                         <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
                               class="mb-3 form-decision" data-accion="autorizar">
                             @Html.AntiForgeryToken()
@@ -222,6 +245,7 @@
                                 <i class="bi bi-x-lg me-2"></i>Rechazar marcados
                             </button>
                         </form>
+                    }
                     </div>
                 </div>
             </div>
@@ -235,6 +259,15 @@
                     <span class="small"><span class="js-contador">@porDecidir</span> marcado(s)</span>
                 </div>
                 <div class="card-body">
+                @if (esSolicitante)
+                {
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-lock me-1"></i>
+                        No puede decidir sobre su propia requisición. La autoriza otra persona.
+                    </p>
+                }
+                else
+                {
                     <form asp-action="Aprobar" asp-route-id="@Model.IdRequisicion" method="post"
                           class="mb-3 form-decision" data-accion="autorizar">
                         @Html.AntiForgeryToken()
@@ -269,6 +302,7 @@
                             </button>
                         </div>
                     </form>
+                }
                 </div>
             </div>
 
