@@ -257,7 +257,14 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.NombreProyectoDestino, opt => opt.MapFrom(src =>
                     src.ProyectoDestino != null ? src.ProyectoDestino.Nombre : null))
                 .ForMember(dest => dest.DescripcionPartida, opt => opt.MapFrom(src =>
-                    src.ConceptoPartida != null ? src.ConceptoPartida.Descripcion : null));
+                    src.ConceptoPartida != null ? src.ConceptoPartida.Descripcion : null))
+                // Lo apartado: si el renglón nació de una orden de compra, lo que de
+                // esa cobertura ya llegó; si se reservó de la existencia que había,
+                // todo lo solicitado.
+                .ForMember(dest => dest.CantidadApartada, opt => opt.MapFrom(src =>
+                    src.Coberturas != null && src.Coberturas.Count > 0
+                        ? src.Coberturas.Sum(c => c.CantidadApartada)
+                        : src.CantidadSolicitada));
 
             CreateMap<RequisicionEPPRequestDto, RequisicionEPP>()
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));

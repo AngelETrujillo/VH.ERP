@@ -543,6 +543,7 @@ namespace VH.Data
             {
                 entity.HasKey(c => c.IdRequisicionCobertura);
                 entity.Property(c => c.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(c => c.CantidadApartada).HasPrecision(18, 4);
                 entity.Property(c => c.Origen).IsRequired();
 
                 entity.HasIndex(c => c.IdRequisicionDetalle);

@@ -164,8 +164,12 @@ namespace VH.Services.Entities
         EnOrdenCompra = 7,
 
         /// <summary>
-        /// Llegó el material de la orden y quedó apartado a su nombre: listo para
+        /// Llegó material de la orden y quedó apartado a su nombre: listo para
         /// surtirse y firmarse, igual que un renglón reservado.
+        ///
+        /// Puede haber llegado sólo una parte. En ese caso se entrega y se firma lo
+        /// que hay, el renglón sigue en este estado esperando el resto, y lo que ya
+        /// llegó queda apartado para que nadie más se lo lleve.
         /// </summary>
         Recibido = 8
     }

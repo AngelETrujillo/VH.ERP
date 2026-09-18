@@ -93,6 +93,14 @@ namespace VH.Services.Services
                 e => e.IdRequisicion == id,
                 includeProperties: "Empleado,UsuarioEntrega");
 
+            // Y otra para las coberturas, que dicen cuánto de cada renglón ya llegó
+            // y está apartado. Van aparte por lo mismo que las firmas: sumar
+            // caminos de include a una sola consulta dispara el tiempo que EF tarda
+            // en generar el SQL.
+            var idsDetalle = requisicion.Detalles.Select(d => d.IdRequisicionDetalle).ToList();
+            await _unitOfWork.RequisicionesCobertura.FindAsync(
+                c => idsDetalle.Contains(c.IdRequisicionDetalle));
+
             return requisicion;
         }
 
@@ -217,6 +225,25 @@ namespace VH.Services.Services
                     "mientras autorizaba. Vuelva a intentarlo para repartir sobre el " +
                     "stock actual.");
             }
+        }
+
+        /// <summary>
+        /// Cuánto material hay apartado a nombre de un renglón.
+        ///
+        /// Cuando se reservó de la existencia que ya había, es todo lo solicitado.
+        /// Cuando vino de una orden de compra, es lo que de verdad ha llegado, que
+        /// puede ser una parte si el proveedor entregó a medias.
+        /// </summary>
+        private async Task<decimal> ApartadoDelRenglonAsync(RequisicionEPPDetalle detalle)
+        {
+            var coberturas = await _unitOfWork.RequisicionesCobertura.FindAsync(
+                c => c.IdRequisicionDetalle == detalle.IdRequisicionDetalle);
+
+            var lista = coberturas.ToList();
+
+            return lista.Count == 0
+                ? detalle.CantidadSolicitada
+                : lista.Sum(c => c.CantidadApartada);
         }
 
         /// <summary>
@@ -354,6 +381,23 @@ namespace VH.Services.Services
                         $"No se puede entregar más de lo solicitado. " +
                         $"Solicitado: {detalle.CantidadSolicitada}, ya entregado: {yaEntregado}, " +
                         $"a entregar ahora: {totalAhora}.");
+
+                // Un renglón con material apartado sólo puede llevarse lo suyo. El
+                // resto de la existencia puede estar apartada para otra persona, y
+                // la pantalla de entrega sólo ve los lotes, que no saben de eso.
+                if (detalle.TieneReserva)
+                {
+                    var apartado = await ApartadoDelRenglonAsync(detalle);
+                    var suyo = apartado - yaEntregado;
+
+                    if (totalAhora > suyo)
+                        return (false,
+                            $"Sólo hay {suyo:0.##} apartado a nombre de esta persona para " +
+                            $"'{detalle.Material?.Nombre ?? $"material {detalle.IdMaterial}"}'. " +
+                            (apartado < detalle.CantidadSolicitada
+                                ? "El resto todavía no llega del proveedor."
+                                : "Ya se entregó el resto."));
+                }
 
                 // Sin lote indicado, el sistema reparte solo. Con lote indicado
                 // manda el almacenista: habrá visto algo en el anaquel que el
@@ -503,14 +547,33 @@ namespace VH.Services.Services
             if (vivos.Count == 0)
                 throw new InvalidOperationException("La requisición no tiene renglones que cancelar.");
 
+            // Lo apartado por orden de compra se sabe en la cobertura; lo apartado
+            // de la existencia que ya había es la cantidad solicitada completa.
+            var idsVivos = vivos.Select(d => d.IdRequisicionDetalle).ToList();
+            var coberturas = (await _unitOfWork.RequisicionesCobertura.FindAsync(
+                    c => idsVivos.Contains(c.IdRequisicionDetalle)))
+                .GroupBy(c => c.IdRequisicionDetalle)
+                .ToDictionary(g => g.Key, g => g.Sum(c => c.CantidadApartada));
+
             foreach (var detalle in vivos)
             {
-                // Lo apartado vuelve a estar disponible para quien venga detrás.
+                // Lo apartado vuelve a estar disponible para quien venga detrás,
+                // pero sólo lo que de verdad sigue apartado: ni lo que nunca llegó
+                // ni lo que esta persona ya se llevó.
                 if (detalle.TieneReserva)
                 {
-                    await _inventarioService.LiberarReservaAsync(
-                        detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada,
-                        userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
+                    var apartado = coberturas.TryGetValue(detalle.IdRequisicionDetalle, out var porOrden)
+                        ? porOrden
+                        : detalle.CantidadSolicitada;
+
+                    var porLiberar = apartado - (detalle.CantidadEntregada ?? 0);
+
+                    if (porLiberar > 0)
+                    {
+                        await _inventarioService.LiberarReservaAsync(
+                            detalle.IdMaterial, requisicion.IdAlmacen, porLiberar,
+                            userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
+                    }
                 }
 
                 detalle.EstadoRenglon = EstadoRenglonRequisicion.Cancelado;

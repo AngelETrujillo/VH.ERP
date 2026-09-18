@@ -137,35 +137,33 @@ namespace VH.Services.Services
                     .ToList();
 
                 // Quién espera esto, del más antiguo al más nuevo: es el mismo orden
-                // en que se les va a cubrir cuando llegue el material.
+                // en que se les va a apartar cuando llegue el material. Sigue en la
+                // lista quien recibió sólo una parte.
                 var enEspera = delRenglon
-                    .Where(c => c.RequisicionDetalle!.EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra)
+                    .Where(c => !c.LlegoCompleta)
+                    .Where(c => c.RequisicionDetalle!.EstadoRenglon is EstadoRenglonRequisicion.EnOrdenCompra
+                                                                    or EstadoRenglonRequisicion.Recibido)
                     .OrderBy(c => c.RequisicionDetalle!.Requisicion?.FechaSolicitud ?? DateTime.MaxValue)
                     .ThenBy(c => c.IdRequisicionDetalle)
                     .ToList();
 
-                // Con lo que falta por llegar se cuenta también lo que ya llegó y
-                // todavía no le tocó a nadie, porque una entrega anterior no
-                // alcanzó a cubrir un renglón completo.
-                var repartido = delRenglon
-                    .Where(c => c.RequisicionDetalle!.EstadoRenglon is EstadoRenglonRequisicion.Recibido
-                                                                    or EstadoRenglonRequisicion.Surtido)
-                    .Sum(c => c.Cantidad);
-
+                // A lo que falta por llegar se suma lo que ya llegó y todavía no se
+                // le apartó a nadie.
+                var repartido = delRenglon.Sum(c => c.CantidadApartada);
                 var alcanza = dto.Pendiente + Math.Max(0, renglon.CantidadRecibida - repartido);
 
                 foreach (var cobertura in enEspera)
                 {
                     var detalle = cobertura.RequisicionDetalle!;
-                    var cubierto = alcanza >= cobertura.Cantidad;
-                    if (cubierto) alcanza -= cobertura.Cantidad;
+                    var cubierto = alcanza >= cobertura.PorLlegar;
+                    if (cubierto) alcanza -= cobertura.PorLlegar;
 
                     dto.Esperan.Add(new EsperandoDto
                     {
                         IdRequisicionDetalle = detalle.IdRequisicionDetalle,
                         IdRequisicion = detalle.IdRequisicion,
                         NumeroRequisicion = detalle.Requisicion?.NumeroRequisicion ?? "",
-                        Cantidad = cobertura.Cantidad,
+                        Cantidad = cobertura.PorLlegar,
                         IdEmpleadoDestino = detalle.IdEmpleadoDestino,
                         NombreEmpleado = detalle.EmpleadoDestino?.NombreCompleto ?? "",
                         FechaSolicitud = detalle.Requisicion?.FechaSolicitud ?? DateTime.Now,
@@ -447,14 +445,15 @@ namespace VH.Services.Services
                 .Where(c => c.RequisicionDetalle != null)
                 .ToList();
 
-            // Lo que ya se le entregó a alguien de este renglón no vuelve a repartirse.
-            var repartido = todas
-                .Where(c => c.RequisicionDetalle!.EstadoRenglon is EstadoRenglonRequisicion.Recibido
-                                                                or EstadoRenglonRequisicion.Surtido)
-                .Sum(c => c.Cantidad);
+            // Lo ya apartado no vuelve a repartirse. Se lee de la cobertura y no
+            // del estado del renglón porque una cobertura puede estar servida a
+            // medias, y el estado no sabe de mitades.
+            var repartido = todas.Sum(c => c.CantidadApartada);
 
             var coberturas = todas
-                .Where(c => c.RequisicionDetalle!.EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra)
+                .Where(c => !c.LlegoCompleta)
+                .Where(c => c.RequisicionDetalle!.EstadoRenglon is EstadoRenglonRequisicion.EnOrdenCompra
+                                                                or EstadoRenglonRequisicion.Recibido)
                 .OrderBy(c => c.RequisicionDetalle!.Requisicion?.FechaSolicitud ?? DateTime.MaxValue)
                 .ThenBy(c => c.IdRequisicionDetalle)
                 .ToList();
@@ -463,38 +462,54 @@ namespace VH.Services.Services
 
             foreach (var cobertura in coberturas)
             {
-                // Una entrega parcial no cubre a medias a nadie: se cubre completo
-                // a quien lleva más tiempo esperando, y el resto sigue en espera.
-                if (disponible < cobertura.Cantidad) break;
+                if (disponible <= 0) break;
+
+                // Se aparta lo que haya llegado, aunque no alcance para cerrar el
+                // renglón. Antes, una entrega parcial no apartaba nada y el material
+                // quedaba como existencia libre: la siguiente requisición que se
+                // autorizara se llevaba lo que se había comprado para otro, y esa
+                // persona seguía esperando algo que ya estaba en la bodega.
+                var aApartar = Math.Min(disponible, cobertura.PorLlegar);
+                if (aApartar <= 0) continue;
 
                 var detalle = cobertura.RequisicionDetalle!;
                 var requisicion = detalle.Requisicion;
                 var idAlmacen = requisicion?.IdAlmacen ?? renglon.IdAlmacenDestino;
 
                 var apartado = await _inventarioService.ReservarAsync(
-                    detalle.IdMaterial, idAlmacen, cobertura.Cantidad,
+                    detalle.IdMaterial, idAlmacen, aApartar,
                     userId, detalle.IdRequisicion, requisicion?.NumeroRequisicion);
 
                 if (!apartado)
                 {
                     // Se acaba de sumar la existencia, así que esto sólo ocurre si
                     // alguien más se la llevó en el intervalo. El renglón se queda
-                    // en la orden y se avisa, en vez de marcarlo listo en falso.
+                    // como está y se avisa, en vez de marcarlo listo en falso.
                     avisos.Add(
                         $"No se pudo apartar el material de {detalle.EmpleadoDestino?.NombreCompleto ?? "un renglón"} " +
                         $"({requisicion?.NumeroRequisicion}): otra operación tomó la existencia. Revise el inventario.");
                     continue;
                 }
 
+                cobertura.CantidadApartada += aApartar;
+                _unitOfWork.RequisicionesCobertura.Update(cobertura);
+
+                // Con material apartado a su nombre, el renglón ya se puede surtir
+                // y firmar, aunque sea por partes.
                 detalle.EstadoRenglon = EstadoRenglonRequisicion.Recibido;
                 _unitOfWork.RequisicionesEPPDetalle.Update(detalle);
 
-                disponible -= cobertura.Cantidad;
+                disponible -= aApartar;
 
                 var quien = detalle.EmpleadoDestino?.NombreCompleto;
-                avisos.Add(string.IsNullOrWhiteSpace(quien)
-                    ? $"Ya se puede surtir {cobertura.Cantidad} de la requisición {requisicion?.NumeroRequisicion}."
-                    : $"Ya se puede surtir a {quien}: {cobertura.Cantidad} de la requisición {requisicion?.NumeroRequisicion}.");
+                var aQuien = string.IsNullOrWhiteSpace(quien)
+                    ? $"la requisición {requisicion?.NumeroRequisicion}"
+                    : $"{quien} ({requisicion?.NumeroRequisicion})";
+
+                avisos.Add(cobertura.LlegoCompleta
+                    ? $"Ya se puede surtir a {aQuien}: {aApartar:0.##}, completo."
+                    : $"Ya se puede surtir a {aQuien}: {aApartar:0.##} de {cobertura.Cantidad:0.##}. " +
+                      $"Quedan {cobertura.PorLlegar:0.##} por llegar, apartados en cuanto lleguen.");
             }
 
             return avisos;

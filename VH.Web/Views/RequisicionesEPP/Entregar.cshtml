@@ -120,7 +120,12 @@
 
                                         var disponibleTotal = lotesMaterial.Sum(l => l.CantidadDisponible);
                                         var falta = Math.Max(0, d.CantidadSolicitada - (d.CantidadEntregada ?? 0));
-                                        var aEntregar = Math.Min(falta, disponibleTotal);
+
+                                        // El tope es lo apartado a nombre de esta persona, no lo que
+                                        // haya en los lotes: el resto de la existencia puede estar
+                                        // apartada para alguien más.
+                                        var suyo = Math.Max(0, d.CantidadApartada - (d.CantidadEntregada ?? 0));
+                                        var aEntregar = Math.Min(Math.Min(falta, disponibleTotal), suyo);
 
                                         // De qué lotes va a salir, en el mismo orden en que el
                                         // servidor los va a consumir.
@@ -183,7 +188,7 @@
                                                             <i class="bi bi-box me-1"></i>
                                                             <span>Saldrá del lote #@reparto[0].Lote.IdCompraDetalle</span>
                                                         }
-                                                        <span class="d-block">Disponible en bodega: @disponibleTotal.FormatoCantidad()</span>
+                                                        <span class="d-block">Apartado a su nombre: @suyo.FormatoCantidad() · en bodega: @disponibleTotal.FormatoCantidad()</span>
                                                     </small>
                                                 }
                                             </td>
@@ -197,7 +202,7 @@
                                                 @if (aEntregar < falta)
                                                 {
                                                     <small class="text-warning d-block mt-1">
-                                                        Faltan @((falta - aEntregar).FormatoCantidad()) por surtir
+                                                        Faltan @((falta - aEntregar).FormatoCantidad()) por llegar del proveedor
                                                     </small>
                                                 }
                                             </td>

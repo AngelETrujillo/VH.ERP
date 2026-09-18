@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -32,6 +33,26 @@ namespace VH.Services.Entities
 
         [Required]
         public decimal Cantidad { get; set; }
+
+        /// <summary>
+        /// Cuánto de esta cobertura ya llegó al almacén y quedó apartado a nombre
+        /// del renglón.
+        ///
+        /// Sin este dato, una recepción parcial dejaba el material que sí llegó
+        /// como existencia libre, y la siguiente requisición que se autorizara se
+        /// lo llevaba: la persona seguía esperando algo que se compró para ella y
+        /// que ya estaba en la bodega. Se guarda aquí, y no se deduce del estado
+        /// del renglón, porque una orden puede llegar en varias entregas y hay que
+        /// saber qué parte de cada cobertura ya se apartó.
+        /// </summary>
+        public decimal CantidadApartada { get; set; }
+
+        /// <summary>Lo que esta cobertura todavía espera del proveedor.</summary>
+        [NotMapped]
+        public decimal PorLlegar => Math.Max(0, Cantidad - CantidadApartada);
+
+        [NotMapped]
+        public bool LlegoCompleta => CantidadApartada >= Cantidad;
 
         // ===== NAVEGACIÓN =====
 

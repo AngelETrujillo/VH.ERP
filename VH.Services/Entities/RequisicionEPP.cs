@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -114,8 +114,9 @@ namespace VH.Services.Entities
                                   or EstadoRenglonRequisicion.Cancelado))
                 return EstadoRequisicion.Entregada;
 
-            // Algo ya se surtió pero queda pendiente.
-            if (Detalles.Any(d => d.EstaSurtido))
+            // Algo ya salió del almacén pero queda pendiente. Cuenta también el
+            // renglón surtido a medias: alguien ya firmó por una parte.
+            if (Detalles.Any(d => d.EstaSurtido || (d.CantidadEntregada ?? 0) > 0))
                 return EstadoRequisicion.Parcial;
 
             // Autorizado, reservado, esperando compra, pedido o recibido: el

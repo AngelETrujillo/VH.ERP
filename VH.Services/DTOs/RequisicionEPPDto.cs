@@ -256,6 +256,14 @@ namespace VH.Services.DTOs
         public string? MotivoRechazo { get; set; }
 
         // Entrega
+
+        /// <summary>
+        /// Cuánto hay apartado a nombre de este renglón. Con una orden que llegó a
+        /// medias es menos de lo solicitado, y es el tope de lo que se le puede
+        /// entregar hoy a esa persona.
+        /// </summary>
+        public decimal CantidadApartada { get; set; }
+
         public int? IdCompraDetalle { get; set; }
         public string? DescripcionLote { get; set; }
         public decimal? CantidadEntregada { get; set; }
