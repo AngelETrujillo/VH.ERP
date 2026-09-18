@@ -131,6 +131,36 @@ namespace VH.Web.Controllers
                 new { idOrdenCompra = dto.IdOrdenCompra, idAlmacen = dto.IdAlmacen });
         }
 
+        // POST: Recepciones/Cancelar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("RECEPCIONES", "eliminar")]
+        public async Task<IActionResult> Cancelar(int id, string motivo)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(
+                    $"api/recepciones/{id}/cancelar", new CancelarRecepcionRequestDto(motivo ?? ""));
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Mensaje"] =
+                        "Recepción deshecha. El material salió del almacén, lo apartado se liberó " +
+                        "y la orden volvió a esperarlo.";
+                    return RedirectToAction(nameof(Historial));
+                }
+
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al deshacer la recepción");
+                TempData["Error"] = "Error al deshacer la recepción";
+            }
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         // GET: Recepciones/Historial
         public async Task<IActionResult> Historial()
         {

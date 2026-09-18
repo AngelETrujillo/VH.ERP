@@ -70,6 +70,12 @@ namespace VH.Services.DTOs
         string? MotivoRechazo
     );
 
+    public record CancelarRecepcionRequestDto(
+        [Required(ErrorMessage = "Debe indicar el motivo")]
+        [MaxLength(500)]
+        string Motivo
+    );
+
     // ===== PREPARACIÓN DE LA PANTALLA =====
 
     /// <summary>

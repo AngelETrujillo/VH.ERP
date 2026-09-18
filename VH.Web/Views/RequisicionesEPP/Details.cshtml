@@ -22,20 +22,6 @@
         <span class="badge bg-@Model.EstadoClase fs-6 px-3 py-2 ms-2">@Model.EstadoTexto</span>
     </div>
 
-    @if (TempData["Mensaje"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <!-- Botones de acción en móvil (arriba) -->
     <div class="d-md-none mb-3">

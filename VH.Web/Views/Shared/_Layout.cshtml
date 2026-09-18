@@ -642,6 +642,11 @@
 
         <!-- Page Content -->
         <div class="content-wrapper">
+            @* Los acuses y errores viven aquí para que ninguna pantalla se quede
+               sin mostrarlos. *@
+            <div class="px-3 px-md-4 pt-3">
+                <partial name="_Avisos" />
+            </div>
             @RenderBody()
         </div>
 

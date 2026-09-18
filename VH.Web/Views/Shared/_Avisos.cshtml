@@ -1,4 +1,4 @@
-@*
+﻿@*
     Acuses y advertencias que sobreviven a un redireccionamiento.
 
     Cada pantalla venía escribiendo su propio bloque y con distinta llave
@@ -6,18 +6,32 @@
     acuses que el controlador mandaba y la vista nunca enseñaba. Aquí se aceptan
     las dos y se agrega la advertencia, que antes no existía en ningún lado.
 
-    Los errores siguen viviendo en cada vista: varias los muestran junto al
-    formulario que los provocó y moverlos aquí los sacaría de contexto.
+    Se muestra desde el layout, así que vale para todas las pantallas. Doce
+    módulos mandaban acuses y errores que nadie enseñaba: borrabas un almacén y
+    la pantalla no decía ni que se borró ni que falló.
+
+    ViewBag.ErrorMessage se queda en cada vista: ese lo pone la pantalla que
+    falló al cargar y suele ir junto a lo que no se pudo mostrar.
 *@
 @{
     var exito = TempData["Mensaje"] ?? TempData["SuccessMessage"];
     var advertencia = TempData["WarningMessage"];
+    var problema = TempData["Error"] ?? TempData["ErrorMessage"];
 }
 
 @if (exito != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle me-2"></i>@exito
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+@if (problema != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start" role="alert">
+        <i class="bi bi-exclamation-triangle me-2 fs-5"></i>
+        <div class="flex-grow-1">@problema</div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
 }

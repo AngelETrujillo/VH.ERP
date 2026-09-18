@@ -80,6 +80,35 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<RecepcionCompraResponseDto>(recepcion));
         }
 
+        // POST: api/recepciones/5/cancelar
+        [HttpPost("{id}/cancelar")]
+        [RequierePermisoApi("RECEPCIONES", "Eliminar")]
+        public async Task<ActionResult> Cancelar(int id, [FromBody] CancelarRecepcionRequestDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
+            {
+                var (exito, error) = await _recepcionService.CancelarAsync(id, dto.Motivo, GetUserId());
+
+                if (!exito) return BadRequest(new { message = error });
+
+                await _logService.RegistrarAsync(
+                    GetUserId(), "Cancelar", "RecepcionCompra", id,
+                    $"Recepción deshecha. {dto.Motivo}", GetUserIP());
+
+                return Ok(new { message = "Recepción deshecha." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // POST: api/recepciones
         [HttpPost]
         [RequierePermisoApi("RECEPCIONES", "Crear")]

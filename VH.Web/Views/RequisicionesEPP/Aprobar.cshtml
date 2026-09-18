@@ -22,13 +22,6 @@
         <span class="badge bg-warning text-dark ms-2 fs-6 px-3 py-2">@porDecidir por decidir</span>
     </div>
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     @if (esSolicitante)
     {

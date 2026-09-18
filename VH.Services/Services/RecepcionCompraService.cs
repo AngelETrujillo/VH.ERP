@@ -526,6 +526,152 @@ namespace VH.Services.Services
             return EstadoOrdenCompra.Emitida;
         }
 
+        public async Task<(bool Exito, string? Error)> CancelarAsync(int idRecepcion, string motivo, string userId)
+        {
+            if (string.IsNullOrWhiteSpace(motivo))
+                return (false, "Debe indicar el motivo de la cancelación.");
+
+            var recepcion = await _unitOfWork.RecepcionesCompra.GetByIdAsync(
+                idRecepcion, includeProperties: "Detalles.Material,Detalles.OrdenCompraDetalle,OrdenCompra.Detalles");
+
+            if (recepcion == null)
+                return (false, "La recepción no existe.");
+
+            // Sólo la última de esa orden en ese almacén. El material se reparte
+            // entre quienes esperaban en orden de llegada, y deshacer una del
+            // medio dejaría ese reparto sin forma de reconstruirse.
+            var posteriores = (await _unitOfWork.RecepcionesCompra.FindAsync(
+                    r => r.IdOrdenCompra == recepcion.IdOrdenCompra
+                         && r.IdAlmacen == recepcion.IdAlmacen
+                         && r.IdRecepcion > recepcion.IdRecepcion))
+                .ToList();
+
+            if (posteriores.Count > 0)
+                return (false,
+                    $"Hay {posteriores.Count} recepción(es) posterior(es) de esta orden en este almacén. " +
+                    "Deshágalas primero, de la más reciente a la más antigua.");
+
+            // Nada de lo que trajo puede haber salido ya del almacén.
+            foreach (var detalle in recepcion.Detalles.Where(d => d.IdCompraDetalle.HasValue))
+            {
+                var lote = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(detalle.IdCompraDetalle!.Value);
+                if (lote != null && lote.CantidadDisponible < lote.Cantidad)
+                    return (false,
+                        $"Ya se entregó material de '{detalle.Material?.Nombre ?? "un renglón"}' de esta recepción. " +
+                        "No se puede deshacer.");
+            }
+
+            var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                foreach (var detalle in recepcion.Detalles)
+                {
+                    var renglon = recepcion.OrdenCompra?.Detalles
+                        .FirstOrDefault(d => d.IdOrdenCompraDetalle == detalle.IdOrdenCompraDetalle);
+
+                    if (renglon == null) continue;
+
+                    if (detalle.CantidadAceptada > 0)
+                    {
+                        var error = await DeshacerCoberturaAsync(renglon, detalle.CantidadAceptada, userId);
+                        if (error != null) return (false, error);
+                    }
+
+                    renglon.CantidadRecibida = Math.Max(0, renglon.CantidadRecibida - detalle.CantidadAceptada);
+                    _unitOfWork.OrdenesCompraDetalle.Update(renglon);
+                }
+
+                if (recepcion.OrdenCompra != null)
+                {
+                    recepcion.OrdenCompra.Estado = CalcularEstadoOrden(recepcion.OrdenCompra);
+                    _unitOfWork.OrdenesCompra.Update(recepcion.OrdenCompra);
+                }
+
+                await _unitOfWork.CompleteAsync();
+
+                // La compra que generó se cancela por el camino de siempre: eso
+                // baja la existencia y deja en el kardex el renglón que revierte
+                // cada entrada.
+                var idCompra = recepcion.IdCompra;
+
+                foreach (var detalle in recepcion.Detalles.ToList())
+                    _unitOfWork.RecepcionesCompraDetalle.Remove(detalle);
+
+                _unitOfWork.RecepcionesCompra.Remove(recepcion);
+                await _unitOfWork.CompleteAsync();
+
+                if (idCompra.HasValue)
+                    await _compraService.DeleteCompraAsync(idCompra.Value, userId);
+
+                await _unitOfWork.CompleteAsync();
+                if (transaccionPropia) await _unitOfWork.CommitTransactionAsync();
+
+                return (true, null);
+            }
+            catch
+            {
+                if (transaccionPropia) await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Suelta lo que esta recepción había apartado, empezando por lo último
+        /// que se repartió: es el orden inverso al que se siguió al recibir.
+        /// </summary>
+        private async Task<string?> DeshacerCoberturaAsync(
+            OrdenCompraDetalle renglon, decimal cantidad, string userId)
+        {
+            var coberturas = (await _unitOfWork.RequisicionesCobertura.FindAsync(
+                    c => c.IdOrdenCompraDetalle == renglon.IdOrdenCompraDetalle,
+                    includeProperties: "RequisicionDetalle.Requisicion"))
+                .Where(c => c.RequisicionDetalle != null && c.CantidadApartada > 0)
+                .OrderByDescending(c => c.RequisicionDetalle!.Requisicion?.FechaSolicitud ?? DateTime.MinValue)
+                .ThenByDescending(c => c.IdRequisicionDetalle)
+                .ToList();
+
+            var porSoltar = cantidad;
+
+            foreach (var cobertura in coberturas)
+            {
+                if (porSoltar <= 0) break;
+
+                var detalle = cobertura.RequisicionDetalle!;
+                var entregado = detalle.CantidadEntregada ?? 0;
+
+                var soltar = Math.Min(porSoltar, cobertura.CantidadApartada);
+
+                // No se puede soltar lo que esa persona ya se llevó.
+                if (cobertura.CantidadApartada - soltar < entregado)
+                    return $"El renglón {detalle.IdRequisicionDetalle} ya recibió material de esta orden. " +
+                           "Deshaga primero esa entrega.";
+
+                var requisicion = detalle.Requisicion;
+
+                await _inventarioService.LiberarReservaAsync(
+                    detalle.IdMaterial,
+                    requisicion?.IdAlmacen ?? renglon.IdAlmacenDestino,
+                    soltar, userId, detalle.IdRequisicion, requisicion?.NumeroRequisicion);
+
+                cobertura.CantidadApartada -= soltar;
+                _unitOfWork.RequisicionesCobertura.Update(cobertura);
+
+                // Sin nada apartado ni entregado, el renglón vuelve a esperar al
+                // proveedor.
+                if (cobertura.CantidadApartada <= 0 && entregado <= 0 &&
+                    detalle.EstadoRenglon == EstadoRenglonRequisicion.Recibido)
+                {
+                    detalle.EstadoRenglon = EstadoRenglonRequisicion.EnOrdenCompra;
+                    _unitOfWork.RequisicionesEPPDetalle.Update(detalle);
+                }
+
+                porSoltar -= soltar;
+            }
+
+            return null;
+        }
+
         public async Task<string> GenerarFolioAsync()
         {
             var anio = DateTime.Now.Year;

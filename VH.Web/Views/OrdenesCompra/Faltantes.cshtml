@@ -29,16 +29,6 @@
         </a>
     </div>
 
-    <partial name="_Avisos" />
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
     <!-- Filtro por obra -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body py-3">

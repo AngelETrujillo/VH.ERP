@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -40,6 +40,20 @@ namespace VH.Services.Interfaces
         /// </summary>
         Task<(RecepcionCompra Recepcion, List<string> Avisos)> RecibirAsync(
             RecibirOrdenRequestDto dto, string userId);
+
+        /// <summary>
+        /// Deshace una recepción que se capturó mal.
+        ///
+        /// Recibir de más, de menos o contra la orden equivocada es un error de
+        /// todos los días, y hasta ahora no había forma de corregirlo desde el
+        /// sistema. Deshacerla devuelve la existencia, suelta lo que se había
+        /// apartado, regresa la orden a lo que estaba y deja en el kardex el
+        /// movimiento que lo explica: el rastro no se borra, se contrapesa.
+        ///
+        /// Sólo se puede deshacer la última recepción de esa orden en ese almacén,
+        /// y sólo si nada de lo que trajo se ha entregado todavía.
+        /// </summary>
+        Task<(bool Exito, string? Error)> CancelarAsync(int idRecepcion, string motivo, string userId);
 
         /// <summary>Folio consecutivo del año: REC-2026-0001.</summary>
         Task<string> GenerarFolioAsync();
