@@ -78,9 +78,10 @@ namespace VH.Services.DTOs
         [Required]
         int IdRequisicionDetalle,
 
-        [Required(ErrorMessage = "Debe seleccionar un lote")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un lote válido")]
-        int IdCompraDetalle,
+        // Lote del que sale el material. Nulo para que el sistema reparta solo,
+        // que es lo normal: una recepción parcial deja el material en varios lotes
+        // y el almacenista no tiene por qué elegir entre ellos.
+        int? IdCompraDetalle,
 
         [Required(ErrorMessage = "La cantidad entregada es obligatoria")]
         [Range(0.01, double.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]

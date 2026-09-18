@@ -1,4 +1,4 @@
-using VH.Services.Entities;
+﻿using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
@@ -44,7 +44,7 @@ namespace VH.Services.Interfaces
             string firmaDigital,
             string? fotoEvidencia,
             string? observaciones,
-            List<(int IdDetalle, int IdCompraDetalle, decimal CantidadEntregada)> detalles);
+            List<(int IdDetalle, int? IdCompraDetalle, decimal CantidadEntregada)> detalles);
 
         Task<bool> CancelarAsync(int id, string userId);
 

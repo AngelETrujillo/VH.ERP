@@ -448,25 +448,36 @@ namespace VH.Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Los lotes con existencia de cada material, ya ordenados como se van a
+        /// consumir: primero lo que caduca, y a igualdad lo más antiguo.
+        ///
+        /// Van completos y no como lista de opciones porque la pantalla necesita
+        /// sumarlos y anticipar de cuáles va a salir el material.
+        /// </summary>
         private async Task CargarLotesDisponibles(RequisicionEPPResponseDto requisicion)
         {
-            var lotesDict = new Dictionary<int, List<SelectListItem>>();
+            var lotesDict = new Dictionary<int, List<CompraEPPSimpleDto>>();
 
             foreach (var detalle in requisicion.Detalles)
             {
-                var response = await _httpClient.GetAsync($"api/comprasepp/lotes-disponibles?idMaterial={detalle.IdMaterial}&idAlmacen={requisicion.IdAlmacen}");
-                if (response.IsSuccessStatusCode)
+                if (lotesDict.ContainsKey(detalle.IdMaterial)) continue;
+
+                try
                 {
-                    var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPSimpleDto>>();
-                    lotesDict[detalle.IdMaterial] = lotes?.Select(l => new SelectListItem
-                    {
-                        Value = l.IdCompraDetalle.ToString(),
-                        Text = $"Lote #{l.IdCompraDetalle} - {l.NombreProveedor} - Disponible: {l.CantidadDisponible}"
-                    }).ToList() ?? new List<SelectListItem>();
+                    var response = await _httpClient.GetAsync(
+                        $"api/comprasepp/lotes-disponibles?idMaterial={detalle.IdMaterial}&idAlmacen={requisicion.IdAlmacen}");
+
+                    var lotes = response.IsSuccessStatusCode
+                        ? await response.Content.ReadFromJsonAsync<List<CompraEPPSimpleDto>>()
+                        : null;
+
+                    lotesDict[detalle.IdMaterial] = lotes ?? new List<CompraEPPSimpleDto>();
                 }
-                else
+                catch (Exception ex)
                 {
-                    lotesDict[detalle.IdMaterial] = new List<SelectListItem>();
+                    _logger.LogError(ex, "Error al cargar lotes del material {Id}", detalle.IdMaterial);
+                    lotesDict[detalle.IdMaterial] = new List<CompraEPPSimpleDto>();
                 }
             }
 

@@ -9,6 +9,7 @@ namespace VH.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEntregaEPPService _entregaService;
         private readonly IInventarioService _inventarioService;
+        private readonly ICompraEPPService _compraService;
 
         /// <summary>
         /// Para listados. Deliberadamente sin Entregas: cada firma es un PNG de
@@ -31,11 +32,13 @@ namespace VH.Services.Services
         public RequisicionEPPService(
             IUnitOfWork unitOfWork,
             IEntregaEPPService entregaService,
-            IInventarioService inventarioService)
+            IInventarioService inventarioService,
+            ICompraEPPService compraService)
         {
             _unitOfWork = unitOfWork;
             _entregaService = entregaService;
             _inventarioService = inventarioService;
+            _compraService = compraService;
         }
 
         public async Task<IEnumerable<RequisicionEPP>> GetAllAsync()
@@ -216,6 +219,59 @@ namespace VH.Services.Services
             }
         }
 
+        /// <summary>
+        /// De qué lotes sale lo que se va a entregar de un renglón.
+        ///
+        /// Una recepción parcial parte el material en varios lotes —llegaron 5 y
+        /// después 3—, así que pedir que el almacenista elija uno solo dejaba
+        /// renglones imposibles de surtir aunque hubiera existencia de sobra. Aquí
+        /// se reparte automáticamente: sale primero lo que caduca antes y, a
+        /// igualdad, lo que lleva más tiempo en la bodega.
+        ///
+        /// Con una talla pedida sólo entran los lotes de esa talla: dar el número
+        /// equivocado no es surtir, es devolver el problema a la obra.
+        /// </summary>
+        private async Task<(List<(CompraEPPDetalle Lote, decimal Cantidad)> Reparto, string? Error)>
+            RepartirEnLotesAsync(RequisicionEPPDetalle detalle, int idAlmacen, decimal cantidad)
+        {
+            var reparto = new List<(CompraEPPDetalle, decimal)>();
+
+            var lotes = (await _compraService.GetLotesDisponiblesAsync(detalle.IdMaterial, idAlmacen)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(detalle.TallaSolicitada))
+            {
+                lotes = lotes
+                    .Where(l => string.Equals(l.Talla, detalle.TallaSolicitada, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            var disponible = lotes.Sum(l => l.CantidadDisponible);
+            if (disponible < cantidad)
+            {
+                var conTalla = string.IsNullOrWhiteSpace(detalle.TallaSolicitada)
+                    ? ""
+                    : $" en talla {detalle.TallaSolicitada}";
+
+                return (reparto,
+                    $"No hay existencia suficiente de '{detalle.Material?.Nombre ?? $"material {detalle.IdMaterial}"}'{conTalla}. " +
+                    $"Disponible: {disponible}, se quiere entregar: {cantidad}.");
+            }
+
+            var porRepartir = cantidad;
+            foreach (var lote in lotes)
+            {
+                if (porRepartir <= 0) break;
+
+                var toma = Math.Min(porRepartir, lote.CantidadDisponible);
+                if (toma <= 0) continue;
+
+                reparto.Add((lote, toma));
+                porRepartir -= toma;
+            }
+
+            return (reparto, null);
+        }
+
         public async Task<(bool Success, string? Error)> EntregarAEmpleadoAsync(
             int id,
             int idEmpleado,
@@ -223,7 +279,7 @@ namespace VH.Services.Services
             string firmaDigital,
             string? fotoEvidencia,
             string? observaciones,
-            List<(int IdDetalle, int IdCompraDetalle, decimal CantidadEntregada)> detalles)
+            List<(int IdDetalle, int? IdCompraDetalle, decimal CantidadEntregada)> detalles)
         {
             var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(
                 id, includeProperties: "Detalles,Entregas");
@@ -246,11 +302,11 @@ namespace VH.Services.Services
             // la persona ya firmó, y lo que le falta se queda en la bodega. Ahora
             // firma cada vez que se lleva algo, y lo que impide entregar dos veces
             // el mismo renglón es el estado del renglón, no la firma.
-            var repetido = detalles
+            // Un renglón puede venir más de una vez cuando el almacenista elige
+            // lotes a mano; lo que no puede es sumar más de lo que se pidió.
+            var porRenglon = detalles
                 .GroupBy(d => d.IdDetalle)
-                .FirstOrDefault(g => g.Count() > 1);
-            if (repetido != null)
-                return (false, $"El renglón {repetido.Key} viene repetido en la entrega.");
+                .ToDictionary(g => g.Key, g => g.Sum(d => d.CantidadEntregada));
 
             // Validación completa antes de mover nada.
             foreach (var entrega in detalles)
@@ -288,25 +344,44 @@ namespace VH.Services.Services
                 if (entrega.CantidadEntregada <= 0)
                     return (false, $"La cantidad entregada del renglón {entrega.IdDetalle} debe ser mayor a 0.");
 
-                if (entrega.CantidadEntregada > detalle.CantidadSolicitada)
+                // Lo entregado antes cuenta: un renglón se puede surtir en varias
+                // vueltas cuando el material llega en partes.
+                var yaEntregado = detalle.CantidadEntregada ?? 0;
+                var totalAhora = porRenglon[entrega.IdDetalle];
+
+                if (yaEntregado + totalAhora > detalle.CantidadSolicitada)
                     return (false,
                         $"No se puede entregar más de lo solicitado. " +
-                        $"Solicitado: {detalle.CantidadSolicitada}, a entregar: {entrega.CantidadEntregada}.");
+                        $"Solicitado: {detalle.CantidadSolicitada}, ya entregado: {yaEntregado}, " +
+                        $"a entregar ahora: {totalAhora}.");
 
-                var lote = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle);
-                if (lote == null)
-                    return (false, $"El lote {entrega.IdCompraDetalle} no existe.");
+                // Sin lote indicado, el sistema reparte solo. Con lote indicado
+                // manda el almacenista: habrá visto algo en el anaquel que el
+                // sistema no sabe.
+                if (entrega.IdCompraDetalle.HasValue)
+                {
+                    var lote = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle.Value);
+                    if (lote == null)
+                        return (false, $"El lote {entrega.IdCompraDetalle} no existe.");
 
-                if (lote.IdMaterial != detalle.IdMaterial)
-                    return (false, $"El lote {entrega.IdCompraDetalle} no corresponde al material solicitado.");
+                    if (lote.IdMaterial != detalle.IdMaterial)
+                        return (false, $"El lote {entrega.IdCompraDetalle} no corresponde al material solicitado.");
 
-                if (lote.IdAlmacen != requisicion.IdAlmacen)
-                    return (false,
-                        $"El lote {entrega.IdCompraDetalle} pertenece a otro almacén y no puede surtir " +
-                        "esta requisición.");
+                    if (lote.IdAlmacen != requisicion.IdAlmacen)
+                        return (false,
+                            $"El lote {entrega.IdCompraDetalle} pertenece a otro almacén y no puede surtir " +
+                            "esta requisición.");
 
-                if (lote.CantidadDisponible < entrega.CantidadEntregada)
-                    return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {lote.CantidadDisponible}");
+                    if (lote.CantidadDisponible < entrega.CantidadEntregada)
+                        return (false, $"El lote {entrega.IdCompraDetalle} no tiene suficiente cantidad. Disponible: {lote.CantidadDisponible}");
+                }
+                else
+                {
+                    var (_, errorReparto) = await RepartirEnLotesAsync(
+                        detalle, requisicion.IdAlmacen, entrega.CantidadEntregada);
+
+                    if (errorReparto != null) return (false, errorReparto);
+                }
             }
 
             var transaccionPropia = await _unitOfWork.BeginTransactionAsync();
@@ -319,30 +394,55 @@ namespace VH.Services.Services
                 {
                     var detalle = requisicion.Detalles.First(d => d.IdRequisicionDetalle == entrega.IdDetalle);
 
-                    var entregaEPP = new EntregaEPP
-                    {
-                        IdEmpleado = idEmpleado,
-                        IdCompraDetalle = entrega.IdCompraDetalle,
-                        FechaEntrega = DateTime.Now,
-                        CantidadEntregada = entrega.CantidadEntregada,
-                        TallaEntregada = detalle.TallaSolicitada ?? string.Empty,
-                        Observaciones = $"Requisición: {requisicion.NumeroRequisicion}"
-                    };
+                    // De dónde sale: del lote que se eligió, o del reparto automático.
+                    List<(CompraEPPDetalle Lote, decimal Cantidad)> reparto;
 
-                    // La reserva se consume: el material sale del anaquel, así que
-                    // deja de estar apartado y de contar en el comprometido.
+                    if (entrega.IdCompraDetalle.HasValue)
+                    {
+                        var elegido = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle.Value);
+                        reparto = new List<(CompraEPPDetalle, decimal)> { (elegido!, entrega.CantidadEntregada) };
+                    }
+                    else
+                    {
+                        (reparto, _) = await RepartirEnLotesAsync(
+                            detalle, requisicion.IdAlmacen, entrega.CantidadEntregada);
+                    }
+
+                    // La reserva se consume por lo que de verdad sale del anaquel y
+                    // no por lo solicitado: si se entrega a medias, lo que falta
+                    // sigue apartado a nombre de esta persona.
                     if (detalle.TieneReserva)
                     {
                         await _inventarioService.ConsumirReservaAsync(
-                            detalle.IdMaterial, requisicion.IdAlmacen, detalle.CantidadSolicitada,
+                            detalle.IdMaterial, requisicion.IdAlmacen, entrega.CantidadEntregada,
                             userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
                     }
 
-                    await _entregaService.CreateEntregaAsync(entregaEPP, userId);
+                    // Una salida por lote: cada una conserva el costo y la factura
+                    // de la que salió ese material.
+                    foreach (var (lote, cantidad) in reparto)
+                    {
+                        await _entregaService.CreateEntregaAsync(new EntregaEPP
+                        {
+                            IdEmpleado = idEmpleado,
+                            IdCompraDetalle = lote.IdCompraDetalle,
+                            FechaEntrega = DateTime.Now,
+                            CantidadEntregada = cantidad,
+                            TallaEntregada = detalle.TallaSolicitada ?? lote.Talla ?? string.Empty,
+                            Observaciones = $"Requisición: {requisicion.NumeroRequisicion}"
+                        }, userId);
 
-                    detalle.IdCompraDetalle = entrega.IdCompraDetalle;
-                    detalle.CantidadEntregada = entrega.CantidadEntregada;
-                    detalle.EstadoRenglon = EstadoRenglonRequisicion.Surtido;
+                        detalle.IdCompraDetalle ??= lote.IdCompraDetalle;
+                    }
+
+                    detalle.CantidadEntregada = (detalle.CantidadEntregada ?? 0) + entrega.CantidadEntregada;
+
+                    // El renglón se cierra sólo cuando se entregó todo lo pedido.
+                    // Antes se marcaba surtido pasara lo que pasara, así que
+                    // entregar de menos lo cerraba y el faltante se perdía sin que
+                    // nadie se enterara.
+                    if (detalle.CantidadEntregada >= detalle.CantidadSolicitada)
+                        detalle.EstadoRenglon = EstadoRenglonRequisicion.Surtido;
                 }
 
                 // La firma de este acto de entrega, que ampara sólo lo que esta

@@ -160,7 +160,12 @@ namespace VH.API.Controllers
 
             try
             {
-                var detalles = dto.Detalles.Select(d => (d.IdRequisicionDetalle, d.IdCompraDetalle, d.CantidadEntregada)).ToList();
+                // Un lote en 0 o ausente significa "repártelo tú".
+                var detalles = dto.Detalles
+                    .Select(d => (d.IdRequisicionDetalle,
+                                  d.IdCompraDetalle is > 0 ? d.IdCompraDetalle : null,
+                                  d.CantidadEntregada))
+                    .ToList();
 
                 var (success, error) = await _requisicionService.EntregarAEmpleadoAsync(
                     id,

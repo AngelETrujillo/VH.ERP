@@ -5,7 +5,7 @@
     ViewData["Title"] = $"Entregar {Model.NumeroRequisicion}";
     var idEmpleado = (int)ViewBag.IdEmpleadoDestino;
     var pendientes = ViewBag.EmpleadosPendientes as List<int> ?? new();
-    var lotes = ViewBag.LotesDisponibles as Dictionary<int, List<SelectListItem>> ?? new();
+    var lotes = ViewBag.LotesDisponibles as Dictionary<int, List<VH.Services.DTOs.CompraEPPSimpleDto>> ?? new();
 
     // Sólo lo que recibe esta persona: cada firma ampara únicamente lo suyo.
     var renglones = Model.Detalles
@@ -96,7 +96,7 @@
                                     <tr>
                                         <th class="ps-3">Material</th>
                                         <th class="text-center">Solicitado</th>
-                                        <th style="min-width:260px;">Lote de salida <span class="text-danger">*</span></th>
+                                        <th style="min-width:280px;">De dónde sale</th>
                                         <th style="width:130px;">A entregar <span class="text-danger">*</span></th>
                                     </tr>
                                 </thead>
@@ -104,7 +104,36 @@
                                     @for (var i = 0; i < renglones.Count; i++)
                                     {
                                         var d = renglones[i];
-                                        var lotesMaterial = lotes.ContainsKey(d.IdMaterial) ? lotes[d.IdMaterial] : new List<SelectListItem>();
+                                        var lotesMaterial = lotes.ContainsKey(d.IdMaterial)
+                                            ? lotes[d.IdMaterial]
+                                            : new List<VH.Services.DTOs.CompraEPPSimpleDto>();
+
+                                        // Con una talla pedida sólo sirven los lotes de esa talla:
+                                        // dar el número equivocado no es surtir.
+                                        var pideTalla = !string.IsNullOrWhiteSpace(d.TallaSolicitada) && d.TallaSolicitada != "-";
+                                        if (pideTalla)
+                                        {
+                                            lotesMaterial = lotesMaterial
+                                                .Where(l => string.Equals(l.Talla, d.TallaSolicitada, StringComparison.OrdinalIgnoreCase))
+                                                .ToList();
+                                        }
+
+                                        var disponibleTotal = lotesMaterial.Sum(l => l.CantidadDisponible);
+                                        var falta = Math.Max(0, d.CantidadSolicitada - (d.CantidadEntregada ?? 0));
+                                        var aEntregar = Math.Min(falta, disponibleTotal);
+
+                                        // De qué lotes va a salir, en el mismo orden en que el
+                                        // servidor los va a consumir.
+                                        var reparto = new List<(VH.Services.DTOs.CompraEPPSimpleDto Lote, decimal Cantidad)>();
+                                        var porRepartir = aEntregar;
+                                        foreach (var l in lotesMaterial)
+                                        {
+                                            if (porRepartir <= 0) break;
+                                            var toma = Math.Min(porRepartir, l.CantidadDisponible);
+                                            if (toma <= 0) continue;
+                                            reparto.Add((l, toma));
+                                            porRepartir -= toma;
+                                        }
                                         <tr>
                                             <td class="ps-3">
                                                 <span class="fw-semibold">@d.NombreMaterial</span>
@@ -122,31 +151,55 @@
                                                 <span class="badge bg-primary fs-6">@d.CantidadSolicitada.FormatoCantidad()</span>
                                             </td>
                                             <td>
-                                                @if (lotesMaterial.Any())
+                                                @if (disponibleTotal <= 0)
                                                 {
-                                                    <select name="Detalles[@i].IdCompraDetalle" class="form-select form-select-sm" required>
-                                                        <option value="">-- Seleccionar lote --</option>
-                                                        @foreach (var l in lotesMaterial)
-                                                        {
-                                                            <option value="@l.Value">@l.Text</option>
-                                                        }
-                                                    </select>
+                                                    <span class="badge bg-danger-subtle text-danger">
+                                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                                        @(pideTalla ? $"Sin existencia en talla {d.TallaSolicitada}" : "Sin existencia en este almacén")
+                                                    </span>
+                                                    <input type="hidden" name="Detalles[@i].IdCompraDetalle" value="" />
                                                 }
                                                 else
                                                 {
-                                                    <span class="badge bg-danger-subtle text-danger">
-                                                        <i class="bi bi-exclamation-triangle me-1"></i>Sin existencia en este almacén
-                                                    </span>
-                                                    <input type="hidden" name="Detalles[@i].IdCompraDetalle" value="0" />
+                                                    <select name="Detalles[@i].IdCompraDetalle" class="form-select form-select-sm">
+                                                        <option value="" selected>Automático · lo que caduca primero</option>
+                                                        @foreach (var l in lotesMaterial)
+                                                        {
+                                                            <option value="@l.IdCompraDetalle">
+                                                                Lote #@l.IdCompraDetalle · @l.NombreProveedor · quedan @l.CantidadDisponible.FormatoCantidad()@(string.IsNullOrWhiteSpace(l.Talla) ? "" : $" · talla {l.Talla}")
+                                                            </option>
+                                                        }
+                                                    </select>
+
+                                                    <small class="text-muted d-block mt-1">
+                                                        @if (reparto.Count > 1)
+                                                        {
+                                                            <i class="bi bi-diagram-2 me-1"></i>
+                                                            <span>Saldrá de @reparto.Count lotes: </span>
+                                                            @string.Join(" + ", reparto.Select(r => $"#{r.Lote.IdCompraDetalle} ({r.Cantidad.FormatoCantidad()})"))
+                                                        }
+                                                        else if (reparto.Count == 1)
+                                                        {
+                                                            <i class="bi bi-box me-1"></i>
+                                                            <span>Saldrá del lote #@reparto[0].Lote.IdCompraDetalle</span>
+                                                        }
+                                                        <span class="d-block">Disponible en bodega: @disponibleTotal.FormatoCantidad()</span>
+                                                    </small>
                                                 }
                                             </td>
                                             <td>
                                                 <input type="number" name="Detalles[@i].CantidadEntregada"
                                                        class="form-control form-control-sm"
                                                        step="0.01" min="0.01"
-                                                       max="@d.CantidadSolicitada.FormatoInput()"
-                                                       value="@d.CantidadSolicitada.FormatoInput()"
-                                                       required @(lotesMaterial.Any() ? "" : "disabled") />
+                                                       max="@aEntregar.FormatoInput()"
+                                                       value="@aEntregar.FormatoInput()"
+                                                       required @(disponibleTotal > 0 ? "" : "disabled") />
+                                                @if (aEntregar < falta)
+                                                {
+                                                    <small class="text-warning d-block mt-1">
+                                                        Faltan @((falta - aEntregar).FormatoCantidad()) por surtir
+                                                    </small>
+                                                }
                                             </td>
                                         </tr>
                                     }
