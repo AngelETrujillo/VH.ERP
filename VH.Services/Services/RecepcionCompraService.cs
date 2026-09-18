@@ -401,7 +401,8 @@ namespace VH.Services.Services
                     Cantidad = detalle.CantidadAceptada,
                     PrecioUnitario = detalle.PrecioUnitarioReal,
                     Talla = detalle.Talla,
-                    FechaCaducidad = detalle.FechaCaducidad
+                    FechaCaducidad = detalle.FechaCaducidad,
+                    LoteProveedor = detalle.LoteProveedor
                 });
             }
 
@@ -524,6 +525,76 @@ namespace VH.Services.Services
                 return EstadoOrdenCompra.ParcialmenteRecibida;
 
             return EstadoOrdenCompra.Emitida;
+        }
+
+        public async Task<IEnumerable<RastreoLoteDto>> RastrearLoteAsync(string loteProveedor)
+        {
+            if (string.IsNullOrWhiteSpace(loteProveedor))
+                return new List<RastreoLoteDto>();
+
+            var buscado = loteProveedor.Trim();
+
+            var lotes = (await _unitOfWork.ComprasEPPDetalle.FindAsync(
+                    d => d.LoteProveedor != null && d.LoteProveedor.Contains(buscado),
+                    includeProperties: "Material.UnidadMedida,Almacen,Compra.Proveedor"))
+                .ToList();
+
+            if (lotes.Count == 0) return new List<RastreoLoteDto>();
+
+            var ids = lotes.Select(l => l.IdCompraDetalle).ToList();
+
+            var entregas = (await _unitOfWork.EntregasEPP.FindAsync(
+                    e => ids.Contains(e.IdCompraDetalle),
+                    includeProperties: "Empleado.Proyecto"))
+                .ToList();
+
+            // El folio de la recepción que lo trajo, para llegar al documento.
+            var recepciones = (await _unitOfWork.RecepcionesCompraDetalle.FindAsync(
+                    r => r.IdCompraDetalle != null && ids.Contains(r.IdCompraDetalle.Value),
+                    includeProperties: "Recepcion"))
+                .ToList();
+
+            var rastro = new List<RastreoLoteDto>();
+
+            foreach (var lote in lotes)
+            {
+                var folio = recepciones
+                    .FirstOrDefault(r => r.IdCompraDetalle == lote.IdCompraDetalle)?.Recepcion?.Folio;
+
+                rastro.Add(new RastreoLoteDto
+                {
+                    LoteProveedor = lote.LoteProveedor ?? "",
+                    IdCompraDetalle = lote.IdCompraDetalle,
+                    NombreMaterial = lote.Material?.Nombre ?? $"Material {lote.IdMaterial}",
+                    UnidadMedida = lote.Material?.UnidadMedida?.Abreviatura ?? "",
+                    NombreAlmacen = lote.Almacen?.Nombre ?? "",
+                    NombreProveedor = lote.Compra?.Proveedor?.Nombre ?? "",
+                    FechaEntrada = lote.Compra?.FechaCompra ?? DateTime.MinValue,
+                    NumeroDocumento = lote.Compra?.NumeroDocumento,
+                    FolioRecepcion = folio,
+                    FechaCaducidad = lote.FechaCaducidad,
+                    Talla = lote.Talla,
+                    CantidadRecibida = lote.Cantidad,
+                    EnAlmacen = lote.CantidadDisponible,
+                    Entregas = entregas
+                        .Where(e => e.IdCompraDetalle == lote.IdCompraDetalle)
+                        .OrderBy(e => e.FechaEntrega)
+                        .Select(e => new RastreoEntregaDto
+                        {
+                            IdEntrega = e.IdEntrega,
+                            Fecha = e.FechaEntrega,
+                            Cantidad = e.CantidadEntregada,
+                            IdEmpleado = e.IdEmpleado,
+                            NombreEmpleado = e.Empleado?.NombreCompleto ?? "",
+                            NumeroNomina = e.Empleado?.NumeroNomina ?? "",
+                            NombreProyecto = e.Empleado?.Proyecto?.Nombre ?? "",
+                            Talla = e.TallaEntregada
+                        })
+                        .ToList()
+                });
+            }
+
+            return rastro.OrderByDescending(r => r.FechaEntrada).ToList();
         }
 
         public async Task<(bool Exito, string? Error)> CancelarAsync(int idRecepcion, string motivo, string userId)

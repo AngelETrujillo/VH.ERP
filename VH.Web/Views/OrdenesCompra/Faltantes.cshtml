@@ -2,8 +2,9 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using VH.Web.Extensions
 @{
-    ViewData["Title"] = "Faltantes por surtir";
+    ViewData["Title"] = "Qué hay que comprar";
     var almacenes = ViewBag.Almacenes as List<SelectListItem> ?? new();
+    var materiales = ViewBag.Materiales as List<SelectListItem> ?? new();
     var proveedores = ViewBag.Proveedores as List<SelectListItem> ?? new();
     var lista = Model?.ToList() ?? new List<VH.Services.DTOs.FaltanteDto>();
     var reposicion = ViewBag.Reposicion as List<VH.Services.DTOs.ReposicionDto>
@@ -20,9 +21,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1 fw-bold text-dark">
-                <i class="bi bi-clipboard-plus text-primary me-2"></i>Faltantes por surtir
+                <i class="bi bi-clipboard-plus text-primary me-2"></i>Qué hay que comprar
             </h2>
-            <p class="text-muted mb-0">Lo que piden las requisiciones autorizadas y no hay en el almacén</p>
+            <p class="text-muted mb-0">Lo que la obra está esperando y lo que hay que reponer, en un solo pedido</p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary">
             <i class="bi bi-list-ul me-2"></i>Órdenes emitidas
@@ -108,7 +109,9 @@
                                     <th>Almacén destino</th>
                                     <th class="text-center">Piden</th>
                                     <th class="text-center">Disponible</th>
-                                    <th class="text-center">En camino</th>
+                                    <th class="text-center" title="Lo que viene en camino y todavía no está prometido a nadie">
+                                        En camino libre
+                                    </th>
                                     <th class="text-center">Faltan</th>
                                     <th class="text-end">Precio ref.</th>
                                     <th class="text-end">Importe</th>
@@ -300,6 +303,72 @@
             </div>
             }
 
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2 text-secondary"></i>Agregar otro material</h5>
+                    <small class="text-muted">
+                        Lo que no cabe en ninguna de las dos listas: una compra puntual, un material
+                        nuevo, algo que pidió el jefe de obra por teléfono.
+                    </small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold mb-1">Material</label>
+                            <select id="libreMaterial" class="form-select form-select-sm">
+                                <option value="">-- Seleccionar --</option>
+                                @foreach (var m in materiales)
+                                {
+                                    <option value="@m.Value" data-nombre="@m.Text">@m.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Almacén destino</label>
+                            <select id="libreAlmacen" class="form-select form-select-sm">
+                                <option value="">-- Seleccionar --</option>
+                                @foreach (var a in almacenes)
+                                {
+                                    <option value="@a.Value" data-nombre="@a.Text">@a.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Cantidad</label>
+                            <input type="number" id="libreCantidad" class="form-control form-control-sm"
+                                   step="0.01" min="0.01" placeholder="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Precio unitario</label>
+                            <input type="number" id="librePrecio" class="form-control form-control-sm"
+                                   step="0.01" min="0.01" placeholder="0.00">
+                        </div>
+                        <div class="col-md-1 d-grid">
+                            <button type="button" id="btnAgregarLibre" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="avisoLibre" class="alert alert-warning py-2 mt-3 mb-0 d-none small"></div>
+
+                    <div class="table-responsive mt-3 d-none" id="tablaLibre">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Material</th>
+                                    <th>Almacén destino</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th style="width:44px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoLibre"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div class="row justify-content-end">
                 <div class="col-lg-5">
                     <div class="card shadow-sm border-0">
@@ -398,5 +467,80 @@
         });
 
         aplicarSeleccion();
+
+        // ---- Línea libre ----
+        // Los renglones que se agregan a mano continúan la numeración donde
+        // terminaron las dos bandejas. Como cada uno emite su propio Lineas.Index,
+        // los huecos que deje desmarcar algo no rompen el enlace de modelo.
+        let siguienteIndice = @(lista.Count + reposicion.Count);
+        const yaEnLaOrden = new Set();
+
+        document.querySelectorAll('input[name$=".IdMaterial"]').forEach(function (inp) {
+            const fila = inp.closest('tr');
+            const alm = fila.querySelector('input[name$=".IdAlmacenDestino"]');
+            if (alm) yaEnLaOrden.add(inp.value + '-' + alm.value);
+        });
+
+        function avisar(texto) {
+            const caja = document.getElementById('avisoLibre');
+            caja.textContent = texto;
+            caja.classList.toggle('d-none', !texto);
+        }
+
+        document.getElementById('btnAgregarLibre')?.addEventListener('click', function () {
+            const selMat = document.getElementById('libreMaterial');
+            const selAlm = document.getElementById('libreAlmacen');
+            const cant = parseFloat(document.getElementById('libreCantidad').value) || 0;
+            const precio = parseFloat(document.getElementById('librePrecio').value) || 0;
+
+            if (!selMat.value || !selAlm.value) { avisar('Elija el material y el almacén destino.'); return; }
+            if (cant <= 0) { avisar('La cantidad debe ser mayor a 0.'); return; }
+            if (precio <= 0) { avisar('El precio debe ser mayor a 0.'); return; }
+
+            const clave = selMat.value + '-' + selAlm.value;
+            if (yaEnLaOrden.has(clave)) {
+                avisar('Ese material ya está en la orden para ese almacén. Cambie la cantidad en su renglón.');
+                return;
+            }
+
+            avisar('');
+            yaEnLaOrden.add(clave);
+
+            const i = siguienteIndice++;
+            const nombreMat = selMat.options[selMat.selectedIndex].dataset.nombre;
+            const nombreAlm = selAlm.options[selAlm.selectedIndex].dataset.nombre;
+
+            const fila = document.createElement('tr');
+            fila.innerHTML =
+                '<td class="ps-3">' + nombreMat +
+                '<input type="hidden" name="Lineas.Index" value="' + i + '">' +
+                '<input type="hidden" name="Lineas[' + i + '].IdMaterial" value="' + selMat.value + '">' +
+                '<input type="hidden" name="Lineas[' + i + '].IdAlmacenDestino" value="' + selAlm.value + '">' +
+                '<input type="hidden" name="Lineas[' + i + '].Cantidad" value="' + cant + '">' +
+                '<input type="hidden" name="Lineas[' + i + '].PrecioUnitario" value="' + precio + '">' +
+                '</td>' +
+                '<td>' + nombreAlm + '</td>' +
+                '<td class="text-center">' + cant + '</td>' +
+                '<td class="text-end">$' + precio.toFixed(2) + '</td>' +
+                '<td><button type="button" class="btn btn-sm btn-outline-danger js-quitar-libre" ' +
+                'data-clave="' + clave + '"><i class="bi bi-x"></i></button></td>';
+
+            document.getElementById('cuerpoLibre').appendChild(fila);
+            document.getElementById('tablaLibre').classList.remove('d-none');
+
+            selMat.value = ''; selAlm.value = '';
+            document.getElementById('libreCantidad').value = '';
+            document.getElementById('librePrecio').value = '';
+        });
+
+        document.getElementById('cuerpoLibre')?.addEventListener('click', function (e) {
+            const boton = e.target.closest('.js-quitar-libre');
+            if (!boton) return;
+            yaEnLaOrden.delete(boton.dataset.clave);
+            boton.closest('tr').remove();
+            if (!document.getElementById('cuerpoLibre').children.length) {
+                document.getElementById('tablaLibre').classList.add('d-none');
+            }
+        });
     </script>
 }

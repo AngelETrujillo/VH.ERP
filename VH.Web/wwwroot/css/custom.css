@@ -459,9 +459,42 @@
 }
 
 /* ===== COLOR DE ACENTO "INFO" =====
-   Bootstrap 5.1 pinta .text-info con rgba(var(--bs-info-rgb), var(--bs-text-opacity)),
-   que resuelve a cian. Aquí se sustituye por el morado de la marca. Los fondos
-   .bg-info se dejan como estaban: sólo cambia el texto. */
-.text-info {
-    color: #ac0cb2 !important;
+   Bootstrap 5.1 resuelve todo lo "info" contra --bs-info-rgb, que de fábrica es
+   cian. Se sustituye por el morado de la marca en la variable para que texto,
+   fondos y bordes queden del mismo color en lugar de pelearse entre ellos.
+
+   Bootstrap 5.1 no define las variantes -subtle ni el botón contra la variable,
+   así que esas van escritas. */
+:root {
+    --bs-info: #ac0cb2;
+    --bs-info-rgb: 172, 12, 178;
+}
+
+.bg-info-subtle {
+    background-color: #f7e3f8 !important;
+}
+
+.alert-info {
+    color: #6b0770;
+    background-color: #f7e3f8;
+    border-color: #e9bcec;
+}
+
+.btn-info {
+    color: #fff;
+    background-color: #ac0cb2;
+    border-color: #ac0cb2;
+}
+
+    .btn-info:hover,
+    .btn-info:focus {
+        color: #fff;
+        background-color: #8d0a92;
+        border-color: #8d0a92;
+    }
+
+/* Sobre el morado sólido, el texto va en blanco. */
+.bg-info.text-info,
+.bg-info .text-info {
+    color: #fff !important;
 }

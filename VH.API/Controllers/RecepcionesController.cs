@@ -80,6 +80,13 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<RecepcionCompraResponseDto>(recepcion));
         }
 
+        // GET: api/recepciones/rastreo?lote=LP-8891
+        [HttpGet("rastreo")]
+        public async Task<ActionResult<IEnumerable<RastreoLoteDto>>> Rastrear([FromQuery] string? lote)
+        {
+            return Ok(await _recepcionService.RastrearLoteAsync(lote ?? ""));
+        }
+
         // POST: api/recepciones/5/cancelar
         [HttpPost("{id}/cancelar")]
         [RequierePermisoApi("RECEPCIONES", "Eliminar")]

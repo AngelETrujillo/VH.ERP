@@ -96,7 +96,9 @@
 
                                         // Con una talla pedida sólo sirven los lotes de esa talla:
                                         // dar el número equivocado no es surtir.
-                                        var pideTalla = !string.IsNullOrWhiteSpace(d.TallaSolicitada) && d.TallaSolicitada != "-";
+                                        var pideTalla = d.RequiereTalla
+                                            && !string.IsNullOrWhiteSpace(d.TallaSolicitada)
+                                            && d.TallaSolicitada != "-";
                                         if (pideTalla)
                                         {
                                             lotesMaterial = lotesMaterial

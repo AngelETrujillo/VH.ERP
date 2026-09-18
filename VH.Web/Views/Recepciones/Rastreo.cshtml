@@ -1,0 +1,199 @@
+@model IEnumerable<VH.Services.DTOs.RastreoLoteDto>
+@{
+    ViewData["Title"] = "Rastrear lote del proveedor";
+    var lotes = Model?.ToList() ?? new List<VH.Services.DTOs.RastreoLoteDto>();
+    var buscado = ViewBag.Lote as string;
+    var buscó = !string.IsNullOrWhiteSpace(buscado);
+
+    var enAlmacen = lotes.Sum(l => l.EnAlmacen);
+    var entregado = lotes.Sum(l => l.Entregado);
+    var personas = lotes.SelectMany(l => l.Entregas).Select(e => e.IdEmpleado).Distinct().Count();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-upc-scan text-primary me-2"></i>Rastrear lote del proveedor
+            </h2>
+            <p class="text-muted mb-0">
+                Dónde terminó cada pieza de un lote de fábrica
+            </p>
+        </div>
+        <a asp-action="Historial" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-clock-history me-2"></i>Recepciones
+        </a>
+    </div>
+
+    <div class="alert alert-secondary d-flex align-items-start">
+        <i class="bi bi-info-circle me-2 fs-5"></i>
+        <div>
+            Cuando el proveedor avisa de un defecto lo hace por número de lote.
+            Aquí se escribe ese número y el sistema dice cuánto queda en el anaquel
+            —que se puede retirar hoy mismo— y quién se llevó el resto.
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold mb-1">Número de lote del proveedor</label>
+                    <input type="text" name="lote" value="@buscado" class="form-control form-control-lg"
+                           placeholder="LP-8891, MSA-2211…" autofocus>
+                    <small class="text-muted">Busca coincidencias parciales.</small>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-search me-2"></i>Rastrear
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!buscó)
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-upc-scan text-muted" style="font-size:3rem;"></i>
+                <h5 class="mt-3 text-muted">Escriba un número de lote</h5>
+                <p class="text-muted mb-0">
+                    El lote se captura al recibir el material, en la columna
+                    <strong>Datos del lote</strong>.
+                </p>
+            </div>
+        </div>
+    }
+    else if (!lotes.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-question-circle text-warning" style="font-size:3rem;"></i>
+                <h5 class="mt-3">No hay material con el lote «@buscado»</h5>
+                <p class="text-muted mb-0">
+                    Puede que se haya capturado distinto, o que esa entrada no traiga lote.
+                    El campo es opcional al recibir.
+                </p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Todavía en el almacén</div>
+                        <div class="fs-2 fw-bold text-success">@enAlmacen.FormatoCantidad()</div>
+                        <div class="small text-muted">Se puede retirar hoy mismo</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Ya entregado</div>
+                        <div class="fs-2 fw-bold @(entregado > 0 ? "text-danger" : "")">@entregado.FormatoCantidad()</div>
+                        <div class="small text-muted">Está en la obra, hay que ir por ello</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Personas</div>
+                        <div class="fs-2 fw-bold">@personas</div>
+                        <div class="small text-muted">A quienes hay que avisar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @foreach (var l in lotes)
+        {
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0 fw-bold">@l.NombreMaterial</h5>
+                        <small class="text-muted">
+                            Lote <span class="badge bg-info-subtle text-info">@l.LoteProveedor</span>
+                            &middot; @l.NombreProveedor
+                            &middot; entró el @l.FechaEntrada.ToString("dd/MM/yyyy")
+                            @if (!string.IsNullOrWhiteSpace(l.FolioRecepcion))
+                            {
+                                <span>&middot; @l.FolioRecepcion</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(l.NumeroDocumento))
+                            {
+                                <span>&middot; factura @l.NumeroDocumento</span>
+                            }
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">@l.NombreAlmacen</div>
+                        <span class="badge bg-secondary">Lote interno #@l.IdCompraDetalle</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-auto"><span class="text-muted small">Entraron</span><br /><strong>@l.CantidadRecibida.FormatoCantidad() @l.UnidadMedida</strong></div>
+                        <div class="col-auto"><span class="text-muted small">En almacén</span><br /><strong class="text-success">@l.EnAlmacen.FormatoCantidad()</strong></div>
+                        <div class="col-auto"><span class="text-muted small">Entregado</span><br /><strong class="@(l.Entregado > 0 ? "text-danger" : "")">@l.Entregado.FormatoCantidad()</strong></div>
+                        @if (!string.IsNullOrWhiteSpace(l.Talla))
+                        {
+                            <div class="col-auto"><span class="text-muted small">Talla</span><br /><strong>@l.Talla</strong></div>
+                        }
+                        @if (l.FechaCaducidad.HasValue)
+                        {
+                            <div class="col-auto"><span class="text-muted small">Caduca</span><br /><strong>@l.FechaCaducidad.Value.ToString("dd/MM/yyyy")</strong></div>
+                        }
+                    </div>
+
+                    @if (!l.Entregas.Any())
+                    {
+                        <div class="alert alert-success mb-0 py-2">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Nada de este lote salió del almacén. Se retira completo sin avisar a nadie.
+                        </div>
+                    }
+                    else
+                    {
+                        <h6 class="fw-bold small text-uppercase text-muted">Quién se lo llevó</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">Trabajador</th>
+                                        <th>Obra</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center">Talla</th>
+                                        <th class="text-center">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var e in l.Entregas)
+                                    {
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="fw-semibold">@e.NombreEmpleado</span>
+                                                @if (!string.IsNullOrWhiteSpace(e.NumeroNomina))
+                                                {
+                                                    <br /><small class="text-muted">@e.NumeroNomina</small>
+                                                }
+                                            </td>
+                                            <td><small>@e.NombreProyecto</small></td>
+                                            <td class="text-center fw-semibold">@e.Cantidad.FormatoCantidad()</td>
+                                            <td class="text-center">@(string.IsNullOrWhiteSpace(e.Talla) ? "—" : e.Talla)</td>
+                                            <td class="text-center"><small>@e.Fecha.ToString("dd/MM/yyyy")</small></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

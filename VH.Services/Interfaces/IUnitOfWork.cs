@@ -34,6 +34,7 @@ namespace VH.Services.Interfaces
         IGenericRepository<MovimientoInventario> MovimientosInventario { get; }
         IGenericRepository<RecepcionCompra> RecepcionesCompra { get; }
         IGenericRepository<RecepcionCompraDetalle> RecepcionesCompraDetalle { get; }
+        IGenericRepository<DevolucionEPP> DevolucionesEPP { get; }
 
         // ===== REPOSITORIOS DE ANALYTICS =====
         IGenericRepository<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; }

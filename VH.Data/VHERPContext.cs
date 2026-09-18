@@ -36,6 +36,7 @@ namespace VH.Data
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
         public DbSet<RecepcionCompra> RecepcionesCompra { get; set; }
         public DbSet<RecepcionCompraDetalle> RecepcionesCompraDetalle { get; set; }
+        public DbSet<DevolucionEPP> DevolucionesEPP { get; set; }
 
         // Analytics
         public DbSet<ConfiguracionMaterialEPP> ConfiguracionesMaterialEPP { get; set; }
@@ -71,6 +72,7 @@ namespace VH.Data
             ConfigurarMovimientoInventario(modelBuilder);
             ConfigurarRecepcionCompra(modelBuilder);
             ConfigurarRecepcionCompraDetalle(modelBuilder);
+            ConfigurarDevolucionEPP(modelBuilder);
             ConfigurarConfiguracionMaterialEPP(modelBuilder);
             ConfigurarAlertaConsumo(modelBuilder);
             ConfigurarEstadisticaEmpleadoMensual(modelBuilder);
@@ -270,6 +272,10 @@ namespace VH.Data
                 entity.Property(d => d.CantidadDisponible).IsRequired().HasPrecision(18, 4);
                 entity.Property(d => d.PrecioUnitario).IsRequired().HasPrecision(18, 2);
                 entity.Property(d => d.Talla).HasMaxLength(20);
+                entity.Property(d => d.LoteProveedor).HasMaxLength(50);
+
+                // Una retirada empieza por aquí: "el lote 8891 salió defectuoso".
+                entity.HasIndex(d => d.LoteProveedor);
                 entity.Property(d => d.RowVersion).IsRowVersion();
 
                 // La búsqueda de lotes disponibles al surtir va siempre por este par.
@@ -534,6 +540,33 @@ namespace VH.Data
                     .WithMany()
                     .HasForeignKey(d => d.IdCompraDetalle)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+        }
+
+        private void ConfigurarDevolucionEPP(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<DevolucionEPP>(entity =>
+            {
+                entity.HasKey(d => d.IdDevolucion);
+                entity.Property(d => d.Cantidad).IsRequired().HasPrecision(18, 4);
+                entity.Property(d => d.FechaDevolucion).IsRequired();
+                entity.Property(d => d.Estado).IsRequired();
+                entity.Property(d => d.Observaciones).HasMaxLength(500);
+
+                entity.HasIndex(d => d.IdEntrega);
+                entity.HasIndex(d => d.FechaDevolucion);
+
+                // Borrar una entrega con devoluciones dejaría herramientas
+                // devueltas sin constancia de a quién se le habían prestado.
+                entity.HasOne(d => d.Entrega)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdEntrega)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.UsuarioRecibe)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdUsuarioRecibe)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 

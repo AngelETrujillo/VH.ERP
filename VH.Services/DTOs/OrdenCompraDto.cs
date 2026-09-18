@@ -257,6 +257,19 @@ namespace VH.Services.DTOs
         public decimal PrecioUnitarioPactado { get; set; }
         public string? Observaciones { get; set; }
 
+        /// <summary>
+        /// Lo que se pidió para alguien en concreto. El resto entra al almacén
+        /// como existencia libre: o se compró para reponer el mínimo, o se pidió
+        /// de más a propósito.
+        /// </summary>
+        public decimal CantidadComprometida => Coberturas?.Sum(c => c.Cantidad) ?? 0;
+
+        /// <summary>Nadie lo estaba esperando: es compra para tener en existencia.</summary>
+        public bool EsParaStock => CantidadComprometida <= 0;
+
+        /// <summary>Parte para alguien y parte para el anaquel.</summary>
+        public bool EsMixto => CantidadComprometida > 0 && CantidadComprometida < CantidadPedida;
+
         /// <summary>Requisiciones que este renglón viene a cubrir.</summary>
         public List<CoberturaResponseDto> Coberturas { get; set; } = new();
 

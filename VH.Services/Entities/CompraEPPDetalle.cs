@@ -41,6 +41,16 @@ namespace VH.Services.Entities
         [MaxLength(20)]
         public string? Talla { get; set; }
 
+        /// <summary>
+        /// Lote de fabricación del proveedor, cuando se capturó al recibir.
+        ///
+        /// Vive aquí y no sólo en la recepción porque es el dato que sirve en una
+        /// retirada: el proveedor avisa por número de lote, y desde aquí se llega
+        /// a las entregas y a las personas que se lo llevaron.
+        /// </summary>
+        [MaxLength(50)]
+        public string? LoteProveedor { get; set; }
+
         /// <summary>Caducidad impresa del lote, cuando el material la controla.</summary>
         public DateTime? FechaCaducidad { get; set; }
 

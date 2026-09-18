@@ -76,6 +76,53 @@ namespace VH.Services.DTOs
         string Motivo
     );
 
+    /// <summary>
+    /// Un lote de fábrica y dónde terminó cada pieza.
+    ///
+    /// Es lo que se necesita cuando el proveedor avisa de un defecto: él da un
+    /// número de lote, y hay que poder decir cuántas piezas entraron, cuántas
+    /// quedan en el anaquel y quién se llevó el resto.
+    /// </summary>
+    public class RastreoLoteDto
+    {
+        public string LoteProveedor { get; set; } = string.Empty;
+
+        public int IdCompraDetalle { get; set; }
+        public string NombreMaterial { get; set; } = string.Empty;
+        public string UnidadMedida { get; set; } = string.Empty;
+        public string NombreAlmacen { get; set; } = string.Empty;
+        public string NombreProveedor { get; set; } = string.Empty;
+
+        public DateTime FechaEntrada { get; set; }
+        public string? NumeroDocumento { get; set; }
+        public string? FolioRecepcion { get; set; }
+        public DateTime? FechaCaducidad { get; set; }
+        public string? Talla { get; set; }
+
+        public decimal CantidadRecibida { get; set; }
+
+        /// <summary>Lo que sigue en el anaquel y puede retirarse hoy mismo.</summary>
+        public decimal EnAlmacen { get; set; }
+
+        public List<RastreoEntregaDto> Entregas { get; set; } = new();
+
+        public decimal Entregado => Entregas.Sum(e => e.Cantidad);
+        public bool SigueEnCirculacion => Entregado > 0;
+    }
+
+    /// <summary>A quién le tocó una pieza de ese lote.</summary>
+    public class RastreoEntregaDto
+    {
+        public int IdEntrega { get; set; }
+        public DateTime Fecha { get; set; }
+        public decimal Cantidad { get; set; }
+        public int IdEmpleado { get; set; }
+        public string NombreEmpleado { get; set; } = string.Empty;
+        public string NumeroNomina { get; set; } = string.Empty;
+        public string NombreProyecto { get; set; } = string.Empty;
+        public string? Talla { get; set; }
+    }
+
     // ===== PREPARACIÓN DE LA PANTALLA =====
 
     /// <summary>

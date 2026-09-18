@@ -265,7 +265,13 @@ namespace VH.Services.Services
 
             var lotes = (await _compraService.GetLotesDisponiblesAsync(detalle.IdMaterial, idAlmacen)).ToList();
 
-            if (!string.IsNullOrWhiteSpace(detalle.TallaSolicitada))
+            // Sólo se filtra por talla donde la talla significa algo. Un consumible
+            // puede traer una talla capturada por descuido, y exigir que el lote la
+            // repita dejaba sin surtir material que estaba ahí, en el anaquel.
+            var importaLaTalla = detalle.Material?.RequiereTalla == true
+                                 && !string.IsNullOrWhiteSpace(detalle.TallaSolicitada);
+
+            if (importaLaTalla)
             {
                 lotes = lotes
                     .Where(l => string.Equals(l.Talla, detalle.TallaSolicitada, StringComparison.OrdinalIgnoreCase))
@@ -275,9 +281,7 @@ namespace VH.Services.Services
             var disponible = lotes.Sum(l => l.CantidadDisponible);
             if (disponible < cantidad)
             {
-                var conTalla = string.IsNullOrWhiteSpace(detalle.TallaSolicitada)
-                    ? ""
-                    : $" en talla {detalle.TallaSolicitada}";
+                var conTalla = importaLaTalla ? $" en talla {detalle.TallaSolicitada}" : "";
 
                 return (reparto,
                     $"No hay existencia suficiente de '{detalle.Material?.Nombre ?? $"material {detalle.IdMaterial}"}'{conTalla}. " +
@@ -309,7 +313,7 @@ namespace VH.Services.Services
             List<(int IdDetalle, int? IdCompraDetalle, decimal CantidadEntregada)> detalles)
         {
             var requisicion = await _unitOfWork.RequisicionesEPP.GetByIdAsync(
-                id, includeProperties: "Detalles,Entregas");
+                id, includeProperties: "Detalles.Material,Entregas");
 
             if (requisicion == null)
                 return (false, "Requisición no encontrada.");

@@ -264,6 +264,9 @@ namespace VH.Services.DTOs
         /// </summary>
         public decimal CantidadApartada { get; set; }
 
+        /// <summary>Si el material usa tallas. Si no, lo capturado en talla se ignora.</summary>
+        public bool RequiereTalla { get; set; }
+
         public int? IdCompraDetalle { get; set; }
         public string? DescripcionLote { get; set; }
         public decimal? CantidadEntregada { get; set; }

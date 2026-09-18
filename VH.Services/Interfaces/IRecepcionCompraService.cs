@@ -55,6 +55,16 @@ namespace VH.Services.Interfaces
         /// </summary>
         Task<(bool Exito, string? Error)> CancelarAsync(int idRecepcion, string motivo, string userId);
 
+        /// <summary>
+        /// Dónde terminó cada pieza de un lote de fábrica: lo que queda en el
+        /// anaquel y quién se llevó el resto.
+        ///
+        /// Es lo que hace útil capturar el lote del proveedor. Sin esto el dato se
+        /// guarda y no sirve para nada: cuando avisan de un defecto, la única
+        /// salida es recoger todo y revisar a ojo.
+        /// </summary>
+        Task<IEnumerable<RastreoLoteDto>> RastrearLoteAsync(string loteProveedor);
+
         /// <summary>Folio consecutivo del año: REC-2026-0001.</summary>
         Task<string> GenerarFolioAsync();
     }

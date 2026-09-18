@@ -191,6 +191,14 @@ namespace VH.Web.Controllers
                     Text = a.Nombre
                 }).ToList() ?? new List<SelectListItem>();
 
+                // Para la línea libre: cualquier material, esté o no en las bandejas.
+                var materiales = await _httpClient.GetFromJsonAsync<IEnumerable<MaterialResponseDto>>("api/materiales");
+                ViewBag.Materiales = materiales?
+                    .Where(m => m.Activo)
+                    .OrderBy(m => m.Nombre)
+                    .Select(m => new SelectListItem { Value = m.IdMaterial.ToString(), Text = m.Nombre })
+                    .ToList() ?? new List<SelectListItem>();
+
                 var proveedores = await _httpClient.GetFromJsonAsync<IEnumerable<ProveedorResponseDto>>("api/proveedores");
                 ViewBag.Proveedores = proveedores?.Select(p => new SelectListItem
                 {
@@ -202,6 +210,7 @@ namespace VH.Web.Controllers
             {
                 ViewBag.Almacenes = new List<SelectListItem>();
                 ViewBag.Proveedores = new List<SelectListItem>();
+                ViewBag.Materiales = new List<SelectListItem>();
             }
         }
     }

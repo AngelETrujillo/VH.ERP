@@ -55,9 +55,29 @@
                         <div class="border-bottom p-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h6 class="mb-0 fw-bold">@d.NombreMaterial</h6>
+                                    <h6 class="mb-0 fw-bold">
+                                        @d.NombreMaterial
+                                        @if (d.EsParaStock)
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning ms-1"
+                                                  title="Nadie lo pidió: entra al almacén como existencia libre">
+                                                <i class="bi bi-arrow-repeat me-1"></i>Para stock
+                                            </span>
+                                        }
+                                        else if (d.EsMixto)
+                                        {
+                                            <span class="badge bg-info-subtle text-info ms-1"
+                                                  title="Parte para quien lo pidió, parte para el almacén">
+                                                <i class="bi bi-diagram-2 me-1"></i>Mixto
+                                            </span>
+                                        }
+                                    </h6>
                                     <small class="text-muted">
                                         <i class="bi bi-box-seam me-1"></i>@d.NombreAlmacenDestino
+                                        @if (d.EsMixto)
+                                        {
+                                            <span>&middot; @d.CantidadComprometida.FormatoCantidad() para alguien, @((d.CantidadPedida - d.CantidadComprometida).FormatoCantidad()) al anaquel</span>
+                                        }
                                     </small>
                                 </div>
                                 <div class="text-end">
@@ -76,7 +96,17 @@
                                 <small class="text-success">Recibido: @d.CantidadRecibida.FormatoCantidad() de @d.CantidadPedida.FormatoCantidad()</small>
                             }
 
-                            @if (d.Coberturas.Any())
+                            @if (d.EsParaStock)
+                            {
+                                <div class="bg-light rounded p-2 mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Ninguna requisición lo está esperando. Al recibirlo entra como
+                                        existencia libre y queda disponible para quien lo pida después.
+                                    </small>
+                                </div>
+                            }
+                            else if (d.Coberturas.Any())
                             {
                                 <div class="bg-light rounded p-2 mt-2">
                                     <small class="text-muted d-block mb-1 fw-semibold">

@@ -161,6 +161,35 @@ namespace VH.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // GET: Recepciones/Rastreo?lote=LP-8891
+        public async Task<IActionResult> Rastreo(string? lote)
+        {
+            ViewBag.Lote = lote;
+
+            if (string.IsNullOrWhiteSpace(lote))
+                return View(new List<RastreoLoteDto>());
+
+            try
+            {
+                var url = $"api/recepciones/rastreo?lote={Uri.EscapeDataString(lote)}";
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
+                response.EnsureSuccessStatusCode();
+                var rastro = await response.Content.ReadFromJsonAsync<List<RastreoLoteDto>>();
+
+                return View(rastro ?? new List<RastreoLoteDto>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al rastrear el lote {Lote}", lote);
+                ViewBag.ErrorMessage = "Error al rastrear el lote";
+                return View(new List<RastreoLoteDto>());
+            }
+        }
+
         // GET: Recepciones/Historial
         public async Task<IActionResult> Historial()
         {

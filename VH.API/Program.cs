@@ -115,6 +115,7 @@ builder.Services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService
 builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 builder.Services.AddScoped<IMovimientoInventarioService, MovimientoInventarioService>();
 builder.Services.AddScoped<IRecepcionCompraService, RecepcionCompraService>();
+builder.Services.AddScoped<IDevolucionEPPService, DevolucionEPPService>();
 
 // 10. CORS CONFIGURADO PARA RED
 builder.Services.AddCors(options =>

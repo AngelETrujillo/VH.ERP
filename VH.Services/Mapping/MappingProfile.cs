@@ -261,6 +261,8 @@ namespace VH.Services.Mapping
                 // Lo apartado: si el renglón nació de una orden de compra, lo que de
                 // esa cobertura ya llegó; si se reservó de la existencia que había,
                 // todo lo solicitado.
+                .ForMember(dest => dest.RequiereTalla, opt => opt.MapFrom(src =>
+                    src.Material != null && src.Material.RequiereTalla))
                 .ForMember(dest => dest.CantidadApartada, opt => opt.MapFrom(src =>
                     src.Coberturas != null && src.Coberturas.Count > 0
                         ? src.Coberturas.Sum(c => c.CantidadApartada)
@@ -297,6 +299,25 @@ namespace VH.Services.Mapping
                         : string.Empty))
                 .ForMember(dest => dest.PrecioUnitarioPactado, opt => opt.MapFrom(src =>
                     src.OrdenCompraDetalle != null ? src.OrdenCompraDetalle.PrecioUnitarioPactado : 0));
+
+            // ===== DEVOLUCIONES =====
+            CreateMap<DevolucionEPP, DevolucionResponseDto>()
+                .ForMember(dest => dest.NombreUsuarioRecibe, opt => opt.MapFrom(src =>
+                    src.UsuarioRecibe != null ? src.UsuarioRecibe.NombreCompleto : string.Empty))
+                .ForMember(dest => dest.NombreEmpleado, opt => opt.MapFrom(src =>
+                    src.Entrega != null && src.Entrega.Empleado != null
+                        ? src.Entrega.Empleado.NombreCompleto
+                        : string.Empty))
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.Entrega != null && src.Entrega.CompraDetalle != null && src.Entrega.CompraDetalle.Material != null
+                        ? src.Entrega.CompraDetalle.Material.Nombre
+                        : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.Entrega != null && src.Entrega.CompraDetalle != null
+                        && src.Entrega.CompraDetalle.Material != null
+                        && src.Entrega.CompraDetalle.Material.UnidadMedida != null
+                        ? src.Entrega.CompraDetalle.Material.UnidadMedida.Abreviatura
+                        : string.Empty));
 
             // ===== KARDEX =====
             CreateMap<MovimientoInventario, MovimientoInventarioResponseDto>()

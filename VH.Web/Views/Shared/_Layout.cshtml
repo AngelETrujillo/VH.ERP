@@ -350,6 +350,7 @@
         var puedeVerEntregas = PermisoHelper.PuedeVer(session, "ENTREGAS_EPP", esSuperAdmin);
         var puedeVerInventarios = PermisoHelper.PuedeVer(session, "INVENTARIOS", esSuperAdmin);
         var puedeVerRecepciones = PermisoHelper.PuedeVer(session, "RECEPCIONES", esSuperAdmin);
+        var puedeVerDevoluciones = PermisoHelper.PuedeVer(session, "DEVOLUCIONES", esSuperAdmin);
         var puedeVerKardex = PermisoHelper.PuedeVer(session, "KARDEX", esSuperAdmin);
         var puedeVerDashboardAnalytics = PermisoHelper.PuedeVer(session, "DASHBOARD_ANALYTICS", esSuperAdmin);
         var puedeVerAlertasConsumo = PermisoHelper.PuedeVer(session, "ALERTAS_CONSUMO", esSuperAdmin);
@@ -360,7 +361,7 @@
         var mostrarCatalogosBase = puedeVerProyectos || puedeVerUnidadesMedida;
         var mostrarRecursos = puedeVerEmpleados || puedeVerProveedores || puedeVerPuestos;
         var mostrarAlmacenesMenu = puedeVerAlmacenes || puedeVerMateriales;
-        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios || puedeVerRecepciones || puedeVerKardex;
+        var mostrarOperaciones = puedeVerRequisiciones || puedeVerCompras || puedeVerEntregas || puedeVerInventarios || puedeVerRecepciones || puedeVerDevoluciones || puedeVerKardex;
         var mostrarCatalogos = mostrarCatalogosBase || mostrarRecursos || mostrarAlmacenesMenu;
     }
 
@@ -541,6 +542,15 @@
                         <a asp-controller="Recepciones" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Recepciones" ? "active" : "")">
                             <i class="bi bi-truck"></i>
                             <span class="menu-text">Recepción de Material</span>
+                        </a>
+                    </li>
+                }
+                @if (puedeVerDevoluciones)
+                {
+                    <li>
+                        <a asp-controller="Devoluciones" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Devoluciones" ? "active" : "")">
+                            <i class="bi bi-arrow-return-left"></i>
+                            <span class="menu-text">Devoluciones</span>
                         </a>
                     </li>
                 }
