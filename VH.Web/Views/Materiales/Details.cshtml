@@ -1,4 +1,4 @@
-﻿@model VH.Services.DTOs.MaterialEPPResponseDto
+﻿@model VH.Services.DTOs.MaterialResponseDto
 @{
     ViewData["Title"] = "Detalles del Material";
 }
@@ -120,12 +120,18 @@
                     <i class="bi bi-arrow-left me-2"></i>Volver al Listado
                 </a>
                 <div class="d-flex gap-2">
-                    <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning btn-lg px-4">
+                    @if (Html.PuedeEditar("MATERIALES_EPP"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.IdMaterial" class="btn btn-warning btn-lg px-4">
                         <i class="bi bi-pencil me-2"></i>Editar
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.IdMaterial" class="btn btn-outline-danger btn-lg px-4">
+                        </a>
+                    }
+                    @if (Html.PuedeEliminar("MATERIALES_EPP"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.IdMaterial" class="btn btn-outline-danger btn-lg px-4">
                         <i class="bi bi-trash me-2"></i>Eliminar
-                    </a>
+                        </a>
+                    }
                 </div>
             </div>
         </div>

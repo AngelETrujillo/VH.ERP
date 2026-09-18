@@ -1,4 +1,4 @@
-@using VH.Services.DTOs.Analytics
+﻿@using VH.Services.DTOs.Analytics
 @{
     ViewData["Title"] = "Alertas de Consumo";
     var alertas = ViewBag.Alertas as IEnumerable<AlertaConsumoResponseDto>;
@@ -62,7 +62,7 @@
         <div class="col-md-2">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h3 class="mb-0 text-primary">@(resumen?.CostoPotencialTotal.ToString("C") ?? "$0")</h3>
+                    <h3 class="mb-0 text-primary">@(resumen?.CostoPotencialTotal.ToString("C2") ?? "$0")</h3>
                     <small class="text-muted">Pérdida Potencial</small>
                 </div>
             </div>
@@ -188,7 +188,7 @@
                                             <span class="badge bg-@alerta.ColorEstado">@alerta.EstadoTexto</span>
                                         </td>
                                         <td class="text-end">
-                                            <strong>@(alerta.CostoEstimado?.ToString("C") ?? "-")</strong>
+                                            <strong>@(alerta.CostoEstimado?.ToString("C2") ?? "-")</strong>
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">

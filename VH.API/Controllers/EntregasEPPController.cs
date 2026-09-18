@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -8,10 +11,14 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("ENTREGAS_EPP")]
     public class EntregasEPPController : ControllerBase
     {
         private readonly IEntregaEPPService _entregaService;
         private readonly IMapper _mapper;
+
+        private string? GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         public EntregasEPPController(IEntregaEPPService entregaService, IMapper mapper)
         {
@@ -35,6 +42,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("ENTREGAS_EPP", "crear")]
         public async Task<ActionResult<object>> Create([FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -42,8 +50,12 @@ namespace VH.API.Controllers
             try
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
-                var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega);
-                var response = _mapper.Map<EntregaEPPResponseDto>(created);
+                var (created, alerta) = await _entregaService.CreateEntregaAsync(entrega, GetUserId());
+
+                // La entidad recién creada no trae cargadas sus navegaciones, así que
+                // se relee para que la respuesta incluya material, proveedor y almacén.
+                var completa = await _entregaService.GetEntregaByIdAsync(created.IdEntrega) ?? created;
+                var response = _mapper.Map<EntregaEPPResponseDto>(completa);
 
                 return CreatedAtAction(nameof(GetById), new { id = response.IdEntrega }, new
                 {
@@ -62,6 +74,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("ENTREGAS_EPP", "editar")]
         public async Task<ActionResult<object>> Update(int id, [FromBody] EntregaEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -70,7 +83,7 @@ namespace VH.API.Controllers
             {
                 var entrega = _mapper.Map<EntregaEPP>(dto);
                 entrega.IdEntrega = id;
-                var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega);
+                var (success, alerta) = await _entregaService.UpdateEntregaAsync(entrega, GetUserId());
                 if (!success) return NotFound();
                 return Ok(new { alerta = alerta });
             }
@@ -81,9 +94,10 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("ENTREGAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _entregaService.DeleteEntregaAsync(id);
+            var result = await _entregaService.DeleteEntregaAsync(id, GetUserId());
             if (!result) return NotFound();
             return NoContent();
         }

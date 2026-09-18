@@ -18,9 +18,12 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("PROVEEDORES"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
-            </a>
+                </a>
+            }
         }
     </div>
 
@@ -29,13 +32,6 @@
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -138,17 +134,23 @@
                                             </a>
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdProveedor"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("PROVEEDORES"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdProveedor"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdProveedor"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("PROVEEDORES"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdProveedor"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
                                     </td>
@@ -163,9 +165,12 @@
                                         <i class="bi bi-truck display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay proveedores registrados</h5>
                                         <p class="text-muted">Comienza agregando tu primer proveedor</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("PROVEEDORES"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Agregar Proveedor
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>

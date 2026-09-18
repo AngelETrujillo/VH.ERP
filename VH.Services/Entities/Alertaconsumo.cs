@@ -43,7 +43,7 @@ namespace VH.Services.Entities
         public virtual Empleado? Empleado { get; set; }
 
         [ForeignKey("IdMaterial")]
-        public virtual MaterialEPP? Material { get; set; }
+        public virtual Material? Material { get; set; }
 
         [ForeignKey("IdProyecto")]
         public virtual Proyecto? Proyecto { get; set; }

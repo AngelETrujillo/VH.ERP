@@ -30,17 +30,17 @@ namespace VH.Services.Interfaces
         /// - Actualiza el inventario (resta existencia)
         /// - Retorna alerta si se llega al stock mínimo
         /// </summary>
-        Task<(EntregaEPP Entrega, string? Alerta)> CreateEntregaAsync(EntregaEPP entrega);
+        Task<(EntregaEPP Entrega, string? Alerta)> CreateEntregaAsync(EntregaEPP entrega, string? userId = null);
 
         /// <summary>
         /// Actualiza una entrega existente.
         /// Si cambia la cantidad, ajusta el inventario correspondiente.
         /// </summary>
-        Task<(bool Success, string? Alerta)> UpdateEntregaAsync(EntregaEPP entrega);
+        Task<(bool Success, string? Alerta)> UpdateEntregaAsync(EntregaEPP entrega, string? userId = null);
 
         /// <summary>
         /// Elimina una entrega y devuelve la cantidad al inventario
         /// </summary>
-        Task<bool> DeleteEntregaAsync(int id);
+        Task<bool> DeleteEntregaAsync(int id, string? userId = null);
     }
 }

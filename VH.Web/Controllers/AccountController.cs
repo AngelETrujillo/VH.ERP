@@ -18,12 +18,18 @@ namespace VH.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login(string? returnUrl = null)
+        public IActionResult Login(string? returnUrl = null, bool sesionExpirada = false)
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
             ViewBag.ReturnUrl = returnUrl;
+
+            // Llegar aquí por un reinicio del sitio no es un error del usuario:
+            // conviene decírselo para que no crea que perdió su trabajo.
+            if (sesionExpirada)
+                ViewBag.SesionExpirada = "Su sesión terminó. Vuelva a iniciar sesión para continuar.";
+
             return View();
         }
 

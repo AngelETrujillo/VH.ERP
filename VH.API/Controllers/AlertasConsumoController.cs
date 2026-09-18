@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -10,6 +11,7 @@ namespace VH.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [RequierePermisoApi("ALERTAS_CONSUMO")]
     public class AlertasConsumoController : ControllerBase
     {
         private readonly IAlertaConsumoService _alertaService;
@@ -56,6 +58,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}/revisar")]
+        [RequierePermisoApi("ALERTAS_CONSUMO", "editar")]
         public async Task<IActionResult> RevisarAlerta(int id, [FromBody] RevisarAlertaRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -70,6 +73,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("revisar-masivo")]
+        [RequierePermisoApi("ALERTAS_CONSUMO", "editar")]
         public async Task<IActionResult> RevisarAlertasMasivo([FromBody] RevisarAlertasMasivoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -97,6 +101,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost("configuracion")]
+        [RequierePermisoApi("CONFIG_MATERIALES", "editar")]
         public async Task<IActionResult> GuardarConfiguracion([FromBody] ConfiguracionMaterialRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

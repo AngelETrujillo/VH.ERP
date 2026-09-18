@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs.Analytics;
@@ -40,12 +40,25 @@ namespace VH.Web.Controllers
                 var alertasTask = _httpClient.GetFromJsonAsync<ResumenAlertasDto>($"api/alertasconsumo/resumen?idProyecto={idProyecto}");
                 var tendenciaTask = _httpClient.GetFromJsonAsync<TendenciaConsumoDto>($"api/dashboardanalytics/tendencia-consumo?meses=6&idProyecto={idProyecto}");
 
-                await Task.WhenAll(kpisTask, rankingTask, alertasTask, tendenciaTask);
+                // Cada tarjeta del tablero viene de una consulta distinta. Se
+                // esperan por separado a proposito: con Task.WhenAll, si una
+                // sola falla se pierden las cuatro y el tablero se pinta en
+                // ceros — que un jefe de obra lee como "mi obra no consumio
+                // nada", no como "no se pudo consultar".
+                async Task Intentar(string nombre, Task tarea)
+                {
+                    try { await tarea; }
+                    catch (Exception e) { _logger.LogError(e, "Fallo la consulta {Consulta} del dashboard", nombre); }
+                }
+                await Intentar("kpis", kpisTask);
+                await Intentar("ranking", rankingTask);
+                await Intentar("alertas", alertasTask);
+                await Intentar("tendencia", tendenciaTask);
 
-                ViewBag.KPIs = await kpisTask;
-                ViewBag.Ranking = await rankingTask;
-                ViewBag.ResumenAlertas = await alertasTask;
-                ViewBag.Tendencia = await tendenciaTask;
+                ViewBag.KPIs = kpisTask.IsCompletedSuccessfully ? kpisTask.Result : null;
+                ViewBag.Ranking = rankingTask.IsCompletedSuccessfully ? rankingTask.Result : null;
+                ViewBag.ResumenAlertas = alertasTask.IsCompletedSuccessfully ? alertasTask.Result : null;
+                ViewBag.Tendencia = tendenciaTask.IsCompletedSuccessfully ? tendenciaTask.Result : null;
                 ViewBag.Anio = anio;
                 ViewBag.Mes = mes;
 

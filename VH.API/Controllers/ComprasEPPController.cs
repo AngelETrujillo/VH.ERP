@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -8,10 +11,14 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("COMPRAS_EPP")]
     public class ComprasEPPController : ControllerBase
     {
         private readonly ICompraEPPService _compraService;
         private readonly IMapper _mapper;
+
+        private string? GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         public ComprasEPPController(ICompraEPPService compraService, IMapper mapper)
         {
@@ -51,16 +58,17 @@ namespace VH.API.Controllers
 
         // GET: api/comprasepp/historial-precios/5?idProveedor=2
         [HttpGet("historial-precios/{idMaterial}")]
-        public async Task<ActionResult<IEnumerable<CompraEPPResponseDto>>> GetHistorialPrecios(
+        public async Task<ActionResult<IEnumerable<HistorialPrecioDto>>> GetHistorialPrecios(
             int idMaterial,
             [FromQuery] int? idProveedor = null)
         {
             var historial = await _compraService.GetHistorialPreciosAsync(idMaterial, idProveedor);
-            return Ok(_mapper.Map<IEnumerable<CompraEPPResponseDto>>(historial));
+            return Ok(_mapper.Map<IEnumerable<HistorialPrecioDto>>(historial));
         }
 
         // POST: api/comprasepp
         [HttpPost]
+        [RequierePermisoApi("COMPRAS_EPP", "crear")]
         public async Task<ActionResult<object>> Create([FromBody] CompraEPPRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -68,13 +76,13 @@ namespace VH.API.Controllers
             try
             {
                 var compra = _mapper.Map<CompraEPP>(dto);
-                var (created, alerta) = await _compraService.CreateCompraAsync(compra);
+                var (created, alertas) = await _compraService.CreateCompraAsync(compra, GetUserId());
                 var response = _mapper.Map<CompraEPPResponseDto>(created);
 
                 return CreatedAtAction(nameof(GetById), new { id = response.IdCompra }, new
                 {
                     data = response,
-                    alerta = alerta
+                    alertas = alertas
                 });
             }
             catch (ArgumentException ex)
@@ -88,16 +96,19 @@ namespace VH.API.Controllers
         }
 
         // PUT: api/comprasepp/5
+        // Sólo los datos del documento. Los renglones no se editan: cambiar el
+        // precio de un lote ya consumido reescribiría el costo de entregas pasadas.
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CompraEPPRequestDto dto)
+        [RequierePermisoApi("COMPRAS_EPP", "editar")]
+        public async Task<IActionResult> Update(int id, [FromBody] CompraEPPUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var compra = _mapper.Map<CompraEPP>(dto);
-                compra.IdCompra = id;
-                var result = await _compraService.UpdateCompraAsync(compra);
+                var result = await _compraService.UpdateCompraAsync(
+                    id, dto.FechaCompra, dto.NumeroDocumento, dto.UuidCFDI, dto.Iva, dto.Observaciones);
+
                 if (!result) return NotFound();
                 return NoContent();
             }
@@ -109,11 +120,12 @@ namespace VH.API.Controllers
 
         // DELETE: api/comprasepp/5
         [HttpDelete("{id}")]
+        [RequierePermisoApi("COMPRAS_EPP", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var result = await _compraService.DeleteCompraAsync(id);
+                var result = await _compraService.DeleteCompraAsync(id, GetUserId());
                 if (!result) return NotFound();
                 return NoContent();
             }

@@ -23,7 +23,7 @@ namespace VH.Services.Services
             var alertas = new List<AlertaConsumo>();
 
             // Obtener el material desde la compra
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, "Material");
+            var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, "Material");
             if (compra == null) return alertas;
 
             var idMaterial = compra.IdMaterial;
@@ -53,9 +53,13 @@ namespace VH.Services.Services
 
             foreach (var detalle in detalles)
             {
-                // Evaluar cada material solicitado
+                // El destino vive en el renglón: cada uno puede ir a una persona
+                // distinta. Lo que se carga a la obra no se evalúa, porque el
+                // consumo prematuro se mide contra el historial de una persona.
+                if (!detalle.IdEmpleadoDestino.HasValue) continue;
+
                 var alertaPrematura = await EvaluarSolicitudPrematuraAsync(
-                    requisicion.IdEmpleadoRecibe,
+                    detalle.IdEmpleadoDestino.Value,
                     detalle.IdMaterial,
                     idRequisicion: requisicion.IdRequisicion);
 
@@ -74,10 +78,10 @@ namespace VH.Services.Services
             // Obtener última entrega del mismo material al mismo empleado
             var todasEntregasEmpleado = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
-                "Compra");
+                "CompraDetalle");
 
             var entregasAnteriores = todasEntregasEmpleado
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var ultimaEntrega = entregasAnteriores
                 .Where(e => idEntrega == null || e.IdEntrega != idEntrega)
@@ -104,7 +108,7 @@ namespace VH.Services.Services
 
             // Obtener datos del empleado y material
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             // Calcular costo estimado
             var costoEstimado = material?.CostoUnitarioEstimado ?? 0;
@@ -143,7 +147,7 @@ namespace VH.Services.Services
             if (cantidad <= config.CantidadMaximaPorEntrega) return null;
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((cantidad - config.CantidadMaximaPorEntrega.Value) / config.CantidadMaximaPorEntrega.Value) * 100;
             var costoExceso = (cantidad - config.CantidadMaximaPorEntrega.Value) * (material?.CostoUnitarioEstimado ?? 0);
@@ -181,10 +185,10 @@ namespace VH.Services.Services
             var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             var todasEntregasMes = await _unitOfWork.EntregasEPP.FindAsync(
             e => e.IdEmpleado == idEmpleado && e.FechaEntrega >= inicioMes,
-            "Compra");
+            "CompraDetalle");
 
             var entregasMes = todasEntregasMes
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var totalMes = entregasMes.Sum(e => e.CantidadEntregada);
 
@@ -200,7 +204,7 @@ namespace VH.Services.Services
             if (alertaExistente.Any()) return null; // Ya se generó alerta este mes
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((totalMes - config.CantidadMaximaMensual.Value) / config.CantidadMaximaMensual.Value) * 100;
 
@@ -350,6 +354,18 @@ namespace VH.Services.Services
 
         public async Task<ConfiguracionMaterialEPP> GuardarConfiguracionMaterialAsync(ConfiguracionMaterialRequestDto dto)
         {
+            // Vida útil, frecuencia y solicitud prematura describen el desgaste de un
+            // equipo de protección asignado a una persona. Sobre un consumible o una
+            // herramienta no significan nada, y generarían alertas sin sentido.
+            var material = await _unitOfWork.Materiales.GetByIdAsync(dto.IdMaterial);
+            if (material == null)
+                throw new ArgumentException($"El material con ID {dto.IdMaterial} no existe.");
+
+            if (material.TipoMaterial != TipoMaterial.EPP)
+                throw new InvalidOperationException(
+                    $"'{material.Nombre}' es {material.TipoMaterial.ToString().ToLowerInvariant()}, " +
+                    "y el control de consumo sólo aplica a equipo de protección personal.");
+
             var existente = await GetConfiguracionMaterialAsync(dto.IdMaterial);
 
             if (existente != null)

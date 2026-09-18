@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/ProyectosController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 
@@ -8,6 +10,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("PROYECTOS")]
     public class ProyectosController : ControllerBase
     {
         private readonly IProyectoService _proyectoService;
@@ -38,6 +42,7 @@ namespace VH.API.Controllers
 
         // POST: api/proyectos
         [HttpPost]
+        [RequierePermisoApi("PROYECTOS", "crear")]
         public async Task<ActionResult<ProyectoResponseDto>> Create([FromBody] ProyectoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -57,6 +62,7 @@ namespace VH.API.Controllers
 
         // PUT: api/proyectos/5
         [HttpPut("{id}")]
+        [RequierePermisoApi("PROYECTOS", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] ProyectoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -77,6 +83,7 @@ namespace VH.API.Controllers
 
         // DELETE: api/proyectos/5
         [HttpDelete("{id}")]
+        [RequierePermisoApi("PROYECTOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

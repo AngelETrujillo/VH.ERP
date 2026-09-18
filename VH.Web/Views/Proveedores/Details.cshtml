@@ -119,12 +119,18 @@
                     <i class="bi bi-arrow-left me-2"></i>Volver al Listado
                 </a>
                 <div class="d-flex gap-2">
-                    <a asp-action="Edit" asp-route-id="@Model.IdProveedor" class="btn btn-warning btn-lg px-4">
+                    @if (Html.PuedeEditar("PROVEEDORES"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.IdProveedor" class="btn btn-warning btn-lg px-4">
                         <i class="bi bi-pencil me-2"></i>Editar
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.IdProveedor" class="btn btn-outline-danger btn-lg px-4">
+                        </a>
+                    }
+                    @if (Html.PuedeEliminar("PROVEEDORES"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.IdProveedor" class="btn btn-outline-danger btn-lg px-4">
                         <i class="bi bi-trash me-2"></i>Eliminar
-                    </a>
+                        </a>
+                    }
                 </div>
             </div>
         </div>

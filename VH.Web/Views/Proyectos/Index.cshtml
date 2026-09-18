@@ -18,9 +18,12 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("PROYECTOS"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Proyecto
-            </a>
+                </a>
+            }
         }
     </div>
 
@@ -107,15 +110,21 @@
                                     }
                                 </td>
                                 <td>
-                                    <a asp-action="Edit" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-warning" title="Editar">
+                                    @if (Html.PuedeEditar("PROYECTOS"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-warning" title="Editar">
                                         <i class="bi bi-pencil"></i>
-                                    </a>
+                                        </a>
+                                    }
                                     <a asp-action="Details" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-info" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    @if (Html.PuedeEliminar("PROYECTOS"))
+                                    {
+                                        <a asp-action="Delete" asp-route-id="@item.IdProyecto" class="btn btn-sm btn-outline-danger" title="Eliminar">
                                         <i class="bi bi-trash"></i>
-                                    </a>
+                                        </a>
+                                    }
                                 </td>
                             </tr>
                         }

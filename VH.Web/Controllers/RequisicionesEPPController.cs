@@ -20,6 +20,10 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
+        /// <summary>Identificador del usuario conectado, tal como lo ve el API.</summary>
+        private string? UsuarioActual() =>
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         private void SetAuthHeader()
         {
             var token = HttpContext.Session.GetString("JwtToken");
@@ -141,11 +145,22 @@ namespace VH.Web.Controllers
 
             var requisicion = await response.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
 
-            if (requisicion?.EstadoRequisicion != EstadoRequisicion.Pendiente)
+            // La autorización es por renglón: mientras quede alguno sin decidir, la
+            // página debe abrir aunque el documento ya tenga renglones autorizados.
+            // Antes sólo abría con el documento completo pendiente, y tras la primera
+            // decisión el resto de los renglones se quedaba sin forma de resolverse.
+            if (requisicion == null || !requisicion.TieneRenglonesPorDecidir)
             {
-                TempData["Error"] = "Solo se pueden aprobar requisiciones pendientes";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "Esta requisición no tiene renglones pendientes de autorizar.";
+                return RedirectToAction(nameof(Details), new { id });
             }
+
+            // Nadie autoriza lo que él mismo pidió. El API ya lo rechaza, pero
+            // dejar los botones a la vista hace que el usuario marque renglones,
+            // confirme y sólo entonces se entere de que no podía: más vale decirlo
+            // antes y no ofrecer el botón.
+            ViewBag.EsSolicitante = !string.IsNullOrEmpty(requisicion.IdUsuarioSolicita)
+                                    && requisicion.IdUsuarioSolicita == UsuarioActual();
 
             return View(requisicion);
         }
@@ -162,12 +177,18 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsJsonAsync($"api/requisicionesepp/{id}/aprobar", dto);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = dto.Aprobada ? "Requisición aprobada" : "Requisición rechazada";
-                    return RedirectToAction(nameof(Index));
+                    var cuantos = dto.IdsRenglones?.Count ?? 0;
+                    var accion = dto.Aprobada ? "autorizado(s)" : "rechazado(s)";
+                    TempData["Mensaje"] = cuantos > 0
+                        ? $"{cuantos} renglón(es) {accion}."
+                        : $"Renglones pendientes {accion}.";
+
+                    // A la ficha y no al listado: ahí se ve cómo quedó cada renglón, y
+                    // desde ahí se decide lo que falte.
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -178,9 +199,34 @@ namespace VH.Web.Controllers
             return RedirectToAction(nameof(Aprobar), new { id });
         }
 
-        // GET: RequisicionesEPP/Entregar/5
+        /// <summary>
+        /// El API responde los errores como JSON; al usuario se le muestra sólo el
+        /// mensaje, no el cuerpo crudo.
+        /// </summary>
+        private static string ExtraerMensaje(string cuerpo)
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(cuerpo);
+                foreach (var nombre in new[] { "mensaje", "message" })
+                {
+                    if (doc.RootElement.TryGetProperty(nombre, out var valor) &&
+                        valor.ValueKind == System.Text.Json.JsonValueKind.String)
+                        return valor.GetString() ?? cuerpo;
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // No era JSON: se muestra tal cual.
+            }
+
+            return cuerpo;
+        }
+
+        // GET: RequisicionesEPP/Entregar/5?idEmpleado=7
+        // Se surte de persona en persona: cada trabajador firma lo suyo.
         [RequierePermiso("REQUISICIONES_EPP", "editar")]
-        public async Task<IActionResult> Entregar(int id)
+        public async Task<IActionResult> Entregar(int id, int? idEmpleado = null)
         {
             SetAuthHeader();
             var response = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
@@ -188,14 +234,42 @@ namespace VH.Web.Controllers
                 return NotFound();
 
             var requisicion = await response.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+            if (requisicion == null)
+                return NotFound();
 
-            if (requisicion?.EstadoRequisicion != EstadoRequisicion.Aprobada)
+            if (requisicion.EstadoRequisicion != EstadoRequisicion.Aprobada &&
+                requisicion.EstadoRequisicion != EstadoRequisicion.Parcial)
             {
-                TempData["Error"] = "Solo se pueden entregar requisiciones aprobadas";
+                TempData["Error"] = "Solo se puede surtir material de requisiciones autorizadas";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Cargar lotes disponibles para cada material
+            var pendientes = requisicion.EmpleadosPorSurtir;
+            if (pendientes.Count == 0)
+            {
+                // Distinguir por qué no hay nada que entregar: no es lo mismo un documento
+                // ya surtido que uno cuyo material todavía no llega.
+                var esperando = requisicion.Detalles.Count(d =>
+                    d.EstadoRenglon == EstadoRenglonRequisicion.PorComprar ||
+                    d.EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra);
+
+                TempData["Error"] = esperando > 0
+                    ? $"Todavía no hay material listo para entregar: {esperando} renglón(es) esperan compra o recepción."
+                    : "Esta requisición ya no tiene material por surtir a trabajadores.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Sin empleado en la URL se atiende al primero que quede por recibir.
+            var destino = idEmpleado ?? pendientes.First();
+            if (!pendientes.Contains(destino))
+            {
+                TempData["Error"] = "Ese trabajador no tiene material pendiente en esta requisición";
+                return RedirectToAction(nameof(Entregar), new { id });
+            }
+
+            ViewBag.IdEmpleadoDestino = destino;
+            ViewBag.EmpleadosPendientes = pendientes;
+
             await CargarLotesDisponibles(requisicion);
 
             return View(requisicion);
@@ -213,12 +287,26 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsJsonAsync($"api/requisicionesepp/{id}/entregar", dto);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = "Requisición entregada exitosamente";
-                    return RedirectToAction(nameof(Index));
+                    // Si quedan trabajadores por recibir, se sigue con el siguiente
+                    // en lugar de volver al listado.
+                    var actual = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
+                    if (actual.IsSuccessStatusCode)
+                    {
+                        var req = await actual.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+                        var pendientes = req?.EmpleadosPorSurtir ?? new List<int>();
+
+                        if (pendientes.Count > 0)
+                        {
+                            TempData["Mensaje"] = "Entrega firmada. Continúe con el siguiente trabajador.";
+                            return RedirectToAction(nameof(Entregar), new { id, idEmpleado = pendientes.First() });
+                        }
+                    }
+
+                    TempData["Mensaje"] = "Entrega firmada. La requisición quedó surtida por completo.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -240,12 +328,13 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.PostAsync($"api/requisicionesepp/{id}/cancelar", null);
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Mensaje"] = "Requisición cancelada";
-                    return RedirectToAction(nameof(Index));
+                    TempData["Mensaje"] = "Requisición cancelada. Si tenía material apartado, volvió a quedar disponible.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = error;
+                // El motivo real, por ejemplo que sólo el solicitante puede cancelar,
+                // viene en el cuerpo de la respuesta: se muestra como texto, no como JSON.
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
             {
@@ -253,7 +342,9 @@ namespace VH.Web.Controllers
                 TempData["Error"] = "Error al cancelar la requisición";
             }
 
-            return RedirectToAction(nameof(Index));
+            // A la ficha y no al listado: ahí se muestran los mensajes y se ve cómo
+            // quedó cada renglón.
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         // POST: RequisicionesEPP/SubirFoto
@@ -296,7 +387,7 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode)
                 return Json(new List<object>());
 
-            var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+            var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
             return Json(materiales?.Select(m => new { m.IdMaterial, m.Nombre, UnidadMedida = m.AbreviaturaUnidadMedida }));
         }
 
@@ -309,12 +400,12 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode)
                 return Json(new List<object>());
 
-            var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+            var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPSimpleDto>>();
             return Json(lotes?.Select(l => new
             {
-                l.IdCompra,
+                l.IdCompraDetalle,
                 l.CantidadDisponible,
-                Descripcion = $"Lote #{l.IdCompra} - {l.NombreProveedor} - Disp: {l.CantidadDisponible}"
+                Descripcion = $"Lote #{l.IdCompraDetalle} - {l.NombreProveedor} - Disp: {l.CantidadDisponible}"
             }));
         }
 
@@ -348,7 +439,7 @@ namespace VH.Web.Controllers
             var matResponse = await _httpClient.GetAsync("api/materiales");
             if (matResponse.IsSuccessStatusCode)
             {
-                var materiales = await matResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                var materiales = await matResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                 ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                 {
                     Value = m.IdMaterial.ToString(),
@@ -357,25 +448,36 @@ namespace VH.Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Los lotes con existencia de cada material, ya ordenados como se van a
+        /// consumir: primero lo que caduca, y a igualdad lo más antiguo.
+        ///
+        /// Van completos y no como lista de opciones porque la pantalla necesita
+        /// sumarlos y anticipar de cuáles va a salir el material.
+        /// </summary>
         private async Task CargarLotesDisponibles(RequisicionEPPResponseDto requisicion)
         {
-            var lotesDict = new Dictionary<int, List<SelectListItem>>();
+            var lotesDict = new Dictionary<int, List<CompraEPPSimpleDto>>();
 
             foreach (var detalle in requisicion.Detalles)
             {
-                var response = await _httpClient.GetAsync($"api/comprasepp/lotes-disponibles?idMaterial={detalle.IdMaterial}&idAlmacen={requisicion.IdAlmacen}");
-                if (response.IsSuccessStatusCode)
+                if (lotesDict.ContainsKey(detalle.IdMaterial)) continue;
+
+                try
                 {
-                    var lotes = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
-                    lotesDict[detalle.IdMaterial] = lotes?.Select(l => new SelectListItem
-                    {
-                        Value = l.IdCompra.ToString(),
-                        Text = $"Lote #{l.IdCompra} - {l.NombreProveedor} - Disponible: {l.CantidadDisponible}"
-                    }).ToList() ?? new List<SelectListItem>();
+                    var response = await _httpClient.GetAsync(
+                        $"api/comprasepp/lotes-disponibles?idMaterial={detalle.IdMaterial}&idAlmacen={requisicion.IdAlmacen}");
+
+                    var lotes = response.IsSuccessStatusCode
+                        ? await response.Content.ReadFromJsonAsync<List<CompraEPPSimpleDto>>()
+                        : null;
+
+                    lotesDict[detalle.IdMaterial] = lotes ?? new List<CompraEPPSimpleDto>();
                 }
-                else
+                catch (Exception ex)
                 {
-                    lotesDict[detalle.IdMaterial] = new List<SelectListItem>();
+                    _logger.LogError(ex, "Error al cargar lotes del material {Id}", detalle.IdMaterial);
+                    lotesDict[detalle.IdMaterial] = new List<CompraEPPSimpleDto>();
                 }
             }
 

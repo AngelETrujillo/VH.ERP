@@ -46,6 +46,13 @@ namespace VH.Services.DTOs
 
         // Datos de Inventario
         public decimal Existencia { get; set; }
+
+        /// <summary>Parte de la existencia ya apartada para requisiciones autorizadas.</summary>
+        public decimal Comprometido { get; set; }
+
+        /// <summary>Lo que todavía puede prometerse: existencia menos lo apartado.</summary>
+        public decimal Disponible => Existencia - Comprometido;
+
         public decimal StockMinimo { get; set; }
         public decimal StockMaximo { get; set; }
         public string UbicacionPasillo { get; set; } = string.Empty;

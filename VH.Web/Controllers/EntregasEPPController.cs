@@ -202,7 +202,7 @@ namespace VH.Web.Controllers
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
-                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                     ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                     {
                         Value = m.IdMaterial.ToString(),

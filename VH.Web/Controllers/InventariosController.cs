@@ -84,6 +84,7 @@ namespace VH.Web.Controllers
                     if (response.IsSuccessStatusCode)
                     {
                         TempData["Mensaje"] = "Inventario creado exitosamente";
+                        AvisarSiFaltaMinimo(dto.StockMinimo);
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
@@ -97,6 +98,19 @@ namespace VH.Web.Controllers
             }
             await CargarListasEnViewBag();
             return View(dto);
+        }
+
+        /// <summary>
+        /// Un registro de inventario sin mínimo queda fuera de la vigilancia: por
+        /// vacío que esté el anaquel, nadie va a proponer reponerlo.
+        /// </summary>
+        private void AvisarSiFaltaMinimo(decimal stockMinimo)
+        {
+            if (stockMinimo > 0) return;
+
+            TempData["WarningMessage"] =
+                "Este registro quedó sin stock mínimo. Mientras siga en cero no se vigila: " +
+                "no aparecerá en la reposición de compras aunque el almacén se quede vacío.";
         }
 
         // GET: Inventarios/Edit/5
@@ -135,6 +149,7 @@ namespace VH.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Mensaje"] = "Inventario actualizado exitosamente";
+                    AvisarSiFaltaMinimo(dto.StockMinimo);
                     return RedirectToAction(nameof(Index));
                 }
                 ModelState.AddModelError("", "Error al actualizar");
@@ -193,7 +208,7 @@ namespace VH.Web.Controllers
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
-                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                     ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                     {
                         Value = m.IdMaterial.ToString(),

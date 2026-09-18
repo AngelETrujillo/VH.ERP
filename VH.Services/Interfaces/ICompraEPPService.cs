@@ -1,55 +1,56 @@
-﻿using VH.Services.Entities;
+using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
     /// <summary>
-    /// Servicio para gestionar compras/lotes de materiales EPP.
-    /// Maneja el registro de compras y actualización automática de inventario.
+    /// Compras de material. Una compra es el documento del proveedor y cada uno de
+    /// sus renglones es un lote de inventario, del que después salen las entregas.
     /// </summary>
     public interface ICompraEPPService
     {
         /// <summary>
-        /// Obtiene todas las compras, opcionalmente filtradas
+        /// Compras filtradas. Los filtros de material y almacén miran los renglones:
+        /// devuelven la compra si alguno de ellos coincide.
         /// </summary>
         Task<IEnumerable<CompraEPP>> GetComprasAsync(
             int? idMaterial = null,
             int? idProveedor = null,
             int? idAlmacen = null);
 
-        /// <summary>
-        /// Obtiene una compra por su ID
-        /// </summary>
         Task<CompraEPP?> GetCompraByIdAsync(int id);
 
-        /// <summary>
-        /// Obtiene los lotes con disponibilidad para un material en un almacén específico.
-        /// Usado para seleccionar de qué lote hacer entregas.
-        /// </summary>
-        Task<IEnumerable<CompraEPP>> GetLotesDisponiblesAsync(int idMaterial, int idAlmacen);
+        /// <summary>Un renglón concreto, que es un lote.</summary>
+        Task<CompraEPPDetalle?> GetLoteByIdAsync(int idCompraDetalle);
 
         /// <summary>
-        /// Registra una nueva compra de material.
-        /// - Crea el registro de compra
-        /// - Actualiza el inventario (suma existencia)
-        /// - Actualiza el precio del material (último precio)
-        /// - Retorna alerta si se excede el stock máximo
+        /// Lotes con existencia de un material en un almacén, para elegir de cuál
+        /// surtir. Ordenados por caducidad y luego por antigüedad, de modo que lo
+        /// primero de la lista sea lo primero que conviene sacar.
         /// </summary>
-        Task<(CompraEPP Compra, string? Alerta)> CreateCompraAsync(CompraEPP compra);
+        Task<IEnumerable<CompraEPPDetalle>> GetLotesDisponiblesAsync(int idMaterial, int idAlmacen);
 
         /// <summary>
-        /// Actualiza una compra existente (solo datos básicos, no cantidades)
+        /// Registra la compra completa con todos sus renglones, en una transacción:
+        /// crea los lotes, suma las existencias y actualiza el costo de referencia
+        /// de cada material. Devuelve las alertas de stock que se hayan disparado.
         /// </summary>
-        Task<bool> UpdateCompraAsync(CompraEPP compra);
+        Task<(CompraEPP Compra, List<string> Alertas)> CreateCompraAsync(CompraEPP compra, string? userId = null);
 
         /// <summary>
-        /// Elimina una compra (solo si no tiene entregas asociadas y tiene toda la cantidad disponible)
+        /// Actualiza los datos del documento (fecha, folio, CFDI, IVA, notas).
+        /// Ni los renglones ni sus precios se tocan aquí: cambiar el precio de un
+        /// lote ya consumido reescribiría el costo de entregas pasadas.
         /// </summary>
-        Task<bool> DeleteCompraAsync(int id);
+        Task<bool> UpdateCompraAsync(int idCompra, DateTime fechaCompra, string? numeroDocumento,
+            string? uuidCFDI, decimal iva, string? observaciones);
 
         /// <summary>
-        /// Obtiene el historial de precios de un material por proveedor
-        /// Para análisis y negociación
+        /// Cancela la compra completa con sus renglones y revierte las existencias.
+        /// Sólo si ningún renglón se ha consumido.
         /// </summary>
-        Task<IEnumerable<CompraEPP>> GetHistorialPreciosAsync(int idMaterial, int? idProveedor = null);
+        Task<bool> DeleteCompraAsync(int id, string? userId = null);
+
+        /// <summary>Precios pagados por un material, para comparar y negociar.</summary>
+        Task<IEnumerable<CompraEPPDetalle>> GetHistorialPreciosAsync(int idMaterial, int? idProveedor = null);
     }
 }

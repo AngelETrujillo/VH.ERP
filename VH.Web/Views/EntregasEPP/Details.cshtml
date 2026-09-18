@@ -36,7 +36,7 @@
                                 </p>
                             </div>
                             <div class="text-end">
-                                <div class="fs-2 fw-bold">@Model.CantidadEntregada</div>
+                                <div class="fs-2 fw-bold">@Model.CantidadEntregada.FormatoCantidad()</div>
                                 <small class="opacity-75">@Model.UnidadMedidaMaterial</small>
                             </div>
                         </div>
@@ -83,7 +83,7 @@
                             <div class="col-md-3">
                                 <div class="detail-item text-center">
                                     <label class="text-muted small text-uppercase fw-semibold">Cantidad</label>
-                                    <p class="fs-3 mb-0 fw-bold text-success">@Model.CantidadEntregada</p>
+                                    <p class="fs-3 mb-0 fw-bold text-success">@Model.CantidadEntregada.FormatoCantidad()</p>
                                     <small class="text-muted">@Model.UnidadMedidaMaterial</small>
                                 </div>
                             </div>
@@ -146,12 +146,18 @@
                     <i class="bi bi-arrow-left me-2"></i>Volver al Listado
                 </a>
                 <div class="d-flex gap-2">
-                    <a asp-action="Edit" asp-route-id="@Model.IdEntrega" class="btn btn-warning btn-lg px-4">
+                    @if (Html.PuedeEditar("ENTREGAS_EPP"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.IdEntrega" class="btn btn-warning btn-lg px-4">
                         <i class="bi bi-pencil me-2"></i>Editar
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.IdEntrega" class="btn btn-outline-danger btn-lg px-4">
+                        </a>
+                    }
+                    @if (Html.PuedeEliminar("ENTREGAS_EPP"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.IdEntrega" class="btn btn-outline-danger btn-lg px-4">
                         <i class="bi bi-trash me-2"></i>Eliminar
-                    </a>
+                        </a>
+                    }
                 </div>
             </div>
         </div>

@@ -21,10 +21,13 @@
 
         @if (puedeCrear)
         {
-            <a asp-action="Create"
-               class="btn btn-primary w-100 w-md-auto">
+            @if (Html.PuedeCrear("EMPLEADOS"))
+            {
+                <a asp-action="Create"
+                class="btn btn-primary w-100 w-md-auto">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Empleado
-            </a>
+                </a>
+            }
         }
 
     </div>
@@ -157,18 +160,24 @@
 
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("EMPLEADOS"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
 
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("EMPLEADOS"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
 
@@ -182,18 +191,24 @@
 
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
-                                                   class="btn btn-outline-warning btn-sm">
+                                                @if (Html.PuedeEditar("EMPLEADOS"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdEmpleado"
+                                                    class="btn btn-outline-warning btn-sm">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
 
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
-                                                   class="btn btn-outline-danger btn-sm">
+                                                @if (Html.PuedeEliminar("EMPLEADOS"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdEmpleado"
+                                                    class="btn btn-outline-danger btn-sm">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
 
                                         </div>
@@ -211,9 +226,12 @@
                                         <i class="bi bi-people display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay empleados registrados</h5>
                                         <p class="text-muted">Comienza agregando tu primer empleado</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("EMPLEADOS"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Agregar Empleado
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
