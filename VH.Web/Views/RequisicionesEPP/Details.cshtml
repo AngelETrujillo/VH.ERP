@@ -258,18 +258,31 @@
                                     </div>
                                 </div>
 
-                                <!-- Lo que ampara esta firma -->
+                                @* Lo que ampara esta firma: las salidas de almacén que
+                                   nacieron con ella. Antes se deducía agrupando los
+                                   renglones por trabajador, y con dos entregas a la
+                                   misma persona ambas firmas mostraban el acumulado
+                                   del renglón y un solo lote. *@
                                 <ul class="list-unstyled small mb-2">
-                                    @foreach (var d in Model.Detalles.Where(x => x.IdEmpleadoDestino == entrega.IdEmpleado && x.Entregado))
+                                    @foreach (var c in entrega.Conceptos)
                                     {
                                         <li>
                                             <i class="bi bi-check2 text-success me-1"></i>
-                                            @d.NombreMaterial —
-                                            <span class="fw-semibold">@d.CantidadEntregada.FormatoCantidad() @d.UnidadMedida</span>
-                                            @if (!string.IsNullOrEmpty(d.DescripcionLote))
+                                            @c.NombreMaterial —
+                                            <span class="fw-semibold">@c.Cantidad.FormatoCantidad() @c.UnidadMedida</span>
+                                            @if (!string.IsNullOrWhiteSpace(c.Talla))
                                             {
-                                                <span class="text-muted">· @d.DescripcionLote</span>
+                                                <span class="text-muted">· talla @c.Talla</span>
                                             }
+                                            <span class="text-muted">· @c.DescripcionLote</span>
+                                        </li>
+                                    }
+                                    @if (!entrega.Conceptos.Any())
+                                    {
+                                        <li class="text-muted fst-italic">
+                                            <i class="bi bi-dash me-1"></i>
+                                            Entrega anterior al registro por acto de firma: el detalle
+                                            de esta salida está en el kardex del material.
                                         </li>
                                     }
                                 </ul>

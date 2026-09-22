@@ -322,9 +322,19 @@ namespace VH.Data
 
                 entity.HasIndex(e => e.FechaEntrega);
 
+                // La ficha de la requisición agrupa las salidas por firma.
+                entity.HasIndex(e => e.IdRequisicionEntrega);
+
                 entity.HasOne(e => e.CompraDetalle)
                     .WithMany()
                     .HasForeignKey(e => e.IdCompraDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Borrar una firma no se lleva por delante las salidas de almacén:
+                // el material salió del anaquel y el kardex ya lo registró.
+                entity.HasOne(e => e.RequisicionEntrega)
+                    .WithMany(f => f.Salidas)
+                    .HasForeignKey(e => e.IdRequisicionEntrega)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }

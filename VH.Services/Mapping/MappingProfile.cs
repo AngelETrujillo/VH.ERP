@@ -238,7 +238,24 @@ namespace VH.Services.Mapping
                 .ForMember(dest => dest.NumeroNomina, opt => opt.MapFrom(src =>
                     src.Empleado != null ? src.Empleado.NumeroNomina : string.Empty))
                 .ForMember(dest => dest.NombreUsuarioEntrega, opt => opt.MapFrom(src =>
-                    src.UsuarioEntrega != null ? src.UsuarioEntrega.NombreCompleto : string.Empty));
+                    src.UsuarioEntrega != null ? src.UsuarioEntrega.NombreCompleto : string.Empty))
+                // Lo que ampara la firma sale de las salidas de almacén que nacieron
+                // con ella, no de los renglones de la requisición: un renglón
+                // entregado en dos actos guarda un solo acumulado.
+                .ForMember(dest => dest.Conceptos, opt => opt.MapFrom(src => src.Salidas));
+
+            CreateMap<EntregaEPP, ConceptoFirmadoDto>()
+                .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.CantidadEntregada))
+                .ForMember(dest => dest.Talla, opt => opt.MapFrom(src => src.TallaEntregada))
+                .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>
+                    src.CompraDetalle != null && src.CompraDetalle.Material != null
+                        ? src.CompraDetalle.Material.Nombre
+                        : string.Empty))
+                .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
+                    src.CompraDetalle != null && src.CompraDetalle.Material != null
+                        && src.CompraDetalle.Material.UnidadMedida != null
+                        ? src.CompraDetalle.Material.UnidadMedida.Abreviatura
+                        : string.Empty));
 
             CreateMap<RequisicionEPPDetalle, RequisicionEPPDetalleResponseDto>()
                 .ForMember(dest => dest.NombreMaterial, opt => opt.MapFrom(src =>

@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -59,5 +60,11 @@ namespace VH.Services.Entities
 
         [ForeignKey("IdUsuarioEntrega")]
         public virtual Usuario? UsuarioEntrega { get; set; }
+
+        /// <summary>
+        /// Lo que esta firma ampara: una salida por cada lote del que se tomó
+        /// material. Es lo que se imprime debajo de la firma.
+        /// </summary>
+        public virtual ICollection<EntregaEPP> Salidas { get; set; } = new List<EntregaEPP>();
     }
 }

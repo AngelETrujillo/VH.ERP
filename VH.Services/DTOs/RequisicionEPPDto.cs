@@ -315,5 +315,29 @@ namespace VH.Services.DTOs
         public string FirmaDigital { get; set; } = string.Empty;
         public string? FotoEvidencia { get; set; }
         public string? Observaciones { get; set; }
+
+        /// <summary>
+        /// Lo que esta firma ampara, renglón por renglón. Una entrada por cada
+        /// lote del que se tomó material.
+        /// </summary>
+        public List<ConceptoFirmadoDto> Conceptos { get; set; } = new();
+
+        public decimal TotalPiezas => Conceptos.Sum(c => c.Cantidad);
+    }
+
+    /// <summary>
+    /// Una línea de las que se imprimen debajo de una firma: qué se llevó la
+    /// persona en ese acto de entrega y de qué lote salió.
+    /// </summary>
+    public class ConceptoFirmadoDto
+    {
+        public int IdEntrega { get; set; }
+        public int IdCompraDetalle { get; set; }
+        public string NombreMaterial { get; set; } = string.Empty;
+        public string UnidadMedida { get; set; } = string.Empty;
+        public decimal Cantidad { get; set; }
+        public string? Talla { get; set; }
+
+        public string DescripcionLote => $"Lote #{IdCompraDetalle}";
     }
 }

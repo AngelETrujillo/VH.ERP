@@ -101,6 +101,18 @@ namespace VH.Services.Services
             await _unitOfWork.RequisicionesCobertura.FindAsync(
                 c => idsDetalle.Contains(c.IdRequisicionDetalle));
 
+            // Y una última para lo que ampara cada firma. Es lo que se imprime
+            // debajo de ella: material, cuánto y de qué lote salió. Deducirlo de
+            // los renglones no alcanza, porque un renglón entregado en dos actos
+            // guarda un solo acumulado y un solo lote.
+            var idsFirma = requisicion.Entregas.Select(e => e.IdRequisicionEntrega).ToList();
+            if (idsFirma.Count > 0)
+            {
+                await _unitOfWork.EntregasEPP.FindAsync(
+                    e => e.IdRequisicionEntrega != null && idsFirma.Contains(e.IdRequisicionEntrega.Value),
+                    includeProperties: "CompraDetalle.Material.UnidadMedida");
+            }
+
             return requisicion;
         }
 
@@ -436,6 +448,23 @@ namespace VH.Services.Services
 
             try
             {
+                // La firma de este acto de entrega, que ampara sólo lo que esta
+                // persona se llevó hoy. Se graba antes que las salidas porque cada
+                // una nace apuntando a ella: sin ese sello la ficha no puede saber
+                // qué cubrió cada firma cuando la misma persona firma dos veces.
+                var firma = new RequisicionEntrega
+                {
+                    IdRequisicion = requisicion.IdRequisicion,
+                    IdEmpleado = idEmpleado,
+                    FechaEntrega = DateTime.Now,
+                    IdUsuarioEntrega = userId,
+                    FirmaDigital = firmaDigital,
+                    FotoEvidencia = fotoEvidencia,
+                    Observaciones = observaciones
+                };
+                await _unitOfWork.RequisicionesEntregas.AddAsync(firma);
+                await _unitOfWork.CompleteAsync();
+
                 // La salida de almacén pasa por EntregaEPPService, que descuenta lote
                 // e inventario, evalúa las alertas de consumo y recalcula estadísticas.
                 foreach (var entrega in detalles)
@@ -474,6 +503,7 @@ namespace VH.Services.Services
                         {
                             IdEmpleado = idEmpleado,
                             IdCompraDetalle = lote.IdCompraDetalle,
+                            IdRequisicionEntrega = firma.IdRequisicionEntrega,
                             FechaEntrega = DateTime.Now,
                             CantidadEntregada = cantidad,
                             TallaEntregada = detalle.TallaSolicitada ?? lote.Talla ?? string.Empty,
@@ -492,21 +522,6 @@ namespace VH.Services.Services
                     if (detalle.CantidadEntregada >= detalle.CantidadSolicitada)
                         detalle.EstadoRenglon = EstadoRenglonRequisicion.Surtido;
                 }
-
-                // La firma de este acto de entrega, que ampara sólo lo que esta
-                // persona se llevó hoy.
-                var firma = new RequisicionEntrega
-                {
-                    IdRequisicion = requisicion.IdRequisicion,
-                    IdEmpleado = idEmpleado,
-                    FechaEntrega = DateTime.Now,
-                    IdUsuarioEntrega = userId,
-                    FirmaDigital = firmaDigital,
-                    FotoEvidencia = fotoEvidencia,
-                    Observaciones = observaciones
-                };
-                await _unitOfWork.RequisicionesEntregas.AddAsync(firma);
-                await _unitOfWork.CompleteAsync();
 
                 // Cada renglón queda amarrado a la firma que lo respalda: con varias
                 // firmas por documento, es lo único que dice cuál cubrió qué.

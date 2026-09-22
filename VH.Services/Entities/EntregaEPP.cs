@@ -18,6 +18,19 @@ namespace VH.Services.Entities
         [Required]
         public int IdCompraDetalle { get; set; }
 
+        /// <summary>
+        /// Acto de entrega que ampara esta salida, cuando vino de una requisición.
+        ///
+        /// Una firma puede amparar varias salidas: si lo pedido está repartido en
+        /// dos lotes, se descuenta de cada uno por separado pero la persona firma
+        /// una sola vez. Sin este enlace la ficha tenía que adivinar qué cubrió
+        /// cada firma agrupando por trabajador, y con dos entregas al mismo obrero
+        /// mostraba el acumulado del renglón en ambas.
+        ///
+        /// Nulo en las entregas sueltas, que no nacen de ninguna requisición.
+        /// </summary>
+        public int? IdRequisicionEntrega { get; set; }
+
         // ===== DATOS DE LA ENTREGA =====
         [Required]
         public DateTime FechaEntrega { get; set; }
@@ -35,5 +48,8 @@ namespace VH.Services.Entities
 
         [ForeignKey("IdCompraDetalle")]
         public virtual CompraEPPDetalle? CompraDetalle { get; set; }
+
+        [ForeignKey("IdRequisicionEntrega")]
+        public virtual RequisicionEntrega? RequisicionEntrega { get; set; }
     }
 }
