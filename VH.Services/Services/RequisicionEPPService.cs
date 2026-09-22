@@ -591,7 +591,8 @@ namespace VH.Services.Services
                     {
                         await _inventarioService.LiberarReservaAsync(
                             detalle.IdMaterial, requisicion.IdAlmacen, porLiberar,
-                            userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion);
+                            userId, requisicion.IdRequisicion, requisicion.NumeroRequisicion,
+                            motivo: "se canceló la requisición.");
                     }
                 }
 

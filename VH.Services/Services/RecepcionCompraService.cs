@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -723,7 +723,8 @@ namespace VH.Services.Services
                 await _inventarioService.LiberarReservaAsync(
                     detalle.IdMaterial,
                     requisicion?.IdAlmacen ?? renglon.IdAlmacenDestino,
-                    soltar, userId, detalle.IdRequisicion, requisicion?.NumeroRequisicion);
+                    soltar, userId, detalle.IdRequisicion, requisicion?.NumeroRequisicion,
+                    motivo: "se deshizo la recepción que traía este material.");
 
                 cobertura.CantidadApartada -= soltar;
                 _unitOfWork.RequisicionesCobertura.Update(cobertura);

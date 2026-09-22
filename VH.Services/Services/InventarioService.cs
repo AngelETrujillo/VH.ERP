@@ -173,11 +173,14 @@ namespace VH.Services.Services
         }
 
         public async Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
-            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null,
+            string? motivo = null)
         {
             await SoltarComprometidoAsync(
                 idMaterial, idAlmacen, cantidad, TipoMovimientoInventario.LiberacionReserva,
-                "Apartado liberado: el renglón se canceló o se rechazó.",
+                string.IsNullOrWhiteSpace(motivo)
+                    ? "Apartado liberado."
+                    : $"Apartado liberado: {motivo}",
                 userId, idRequisicion, folioRequisicion);
         }
 

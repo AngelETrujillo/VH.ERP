@@ -82,11 +82,17 @@ namespace VH.Services.Interfaces
             string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
 
         /// <summary>
-        /// Suelta una reserva sin mover la existencia: el renglón se canceló o se
-        /// rechazó y el material vuelve a estar disponible para otros.
+        /// Suelta una reserva sin mover la existencia: el material deja de estar
+        /// prometido y vuelve a estar disponible para otros.
+        ///
+        /// El <paramref name="motivo"/> lo pone quien llama, porque el kardex se
+        /// lee meses después y "se liberó" a secas no explica nada: no es lo mismo
+        /// que alguien cancelara su requisición a que el material nunca llegó
+        /// porque se deshizo la recepción que lo traía.
         /// </summary>
         Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
-            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null,
+            string? motivo = null);
 
         /// <summary>
         /// Consume una reserva al surtirla. Sólo baja el comprometido: la salida
