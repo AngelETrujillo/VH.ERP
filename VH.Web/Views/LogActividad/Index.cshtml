@@ -1,30 +1,57 @@
-﻿@model IEnumerable<VH.Services.DTOs.LogActividad.LogActividadResponseDto>
+@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.LogActividad.LogActividadResponseDto>
 @{
     ViewData["Title"] = "Log de Actividad";
+
+    // El paginador y la barra de búsqueda conservan los filtros de esta pantalla:
+    // sin esto, pasar a la página dos dentro de un rango de fechas te devolvía al
+    // log completo.
+    var filtros = new Dictionary<string, string?>
+    {
+        ["desde"]  = ViewBag.Desde?.ToString("yyyy-MM-dd"),
+        ["hasta"]  = ViewBag.Hasta?.ToString("yyyy-MM-dd"),
+        ["userId"] = ViewBag.UserId as string
+    };
+    ViewData["FiltrosPaginador"] = filtros;
+    ViewData["FiltrosOcultos"] = filtros;
+    ViewData["BuscarPlaceholder"] = "Buscar por acción, entidad, descripción o usuario…";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0"><i class="bi bi-journal-text"></i> Log de Actividad</h4>
+    <div>
+        <h4 class="mb-0"><i class="bi bi-journal-text"></i> Log de Actividad</h4>
+        <small class="text-muted">Todo lo que se ha hecho en el sistema, y quién lo hizo</small>
+    </div>
+    <span class="badge bg-secondary">@Model.Total registro(s)</span>
 </div>
 
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
+            @* La búsqueda de texto viaja junto con las fechas para no perderse al filtrar. *@
+            @if (!string.IsNullOrWhiteSpace(Model.Buscado))
+            {
+                <input type="hidden" name="buscar" value="@Model.Buscado" />
+            }
+            <input type="hidden" name="tamano" value="@Model.Tamano" />
+
             <div class="col-md-3">
-                <label class="form-label">Desde</label>
-                <input type="date" name="desde" class="form-control" value="@(ViewBag.Desde?.ToString("yyyy-MM-dd"))" />
+                <label for="fDesde" class="form-label">Desde</label>
+                <input type="date" id="fDesde" name="desde" class="form-control"
+                       value="@(ViewBag.Desde?.ToString("yyyy-MM-dd"))" />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Hasta</label>
-                <input type="date" name="hasta" class="form-control" value="@(ViewBag.Hasta?.ToString("yyyy-MM-dd"))" />
+                <label for="fHasta" class="form-label">Hasta</label>
+                <input type="date" id="fHasta" name="hasta" class="form-control"
+                       value="@(ViewBag.Hasta?.ToString("yyyy-MM-dd"))" />
             </div>
             <div class="col-md-4">
-                <label class="form-label">Usuario ID</label>
-                <input type="text" name="userId" class="form-control" value="@ViewBag.UserId" placeholder="ID del usuario" />
+                <label for="fUsuario" class="form-label">Usuario</label>
+                <input type="text" id="fUsuario" name="userId" class="form-control"
+                       value="@ViewBag.UserId" placeholder="ID del usuario" />
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-search"></i> Filtrar
+                    <i class="bi bi-funnel"></i> Filtrar
                 </button>
             </div>
         </form>
@@ -32,42 +59,66 @@
 </div>
 
 <div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover table-sm">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Usuario</th>
-                        <th>Acción</th>
-                        <th>Entidad</th>
-                        <th>Descripción</th>
-                        <th>IP</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var log in Model)
-                    {
+    <div class="card-header bg-white py-3">
+        @await Html.PartialAsync("_BarraBusqueda", Model)
+    </div>
+
+    <div class="card-body p-0">
+        @if (Model.Vacio)
+        {
+            <div class="text-center py-5 text-muted">
+                @if (Model.Buscado != null)
+                {
+                    <i class="bi bi-search display-6 d-block mb-3 opacity-50"></i>
+                    <p class="mb-0">Nada coincide con «@Model.Buscado» en este rango.</p>
+                }
+                else
+                {
+                    <i class="bi bi-journal display-6 d-block mb-3 opacity-50"></i>
+                    <p class="mb-0">No hay actividad registrada con esos filtros.</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-dark">
                         <tr>
-                            <td>@log.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                            <td>@log.NombreUsuario</td>
-                            <td>
-                                <span class="badge bg-@(log.Accion switch {
-                                    "Login" => "success",
-                                    "Logout" => "secondary",
-                                    "Crear" => "primary",
-                                    "Actualizar" => "warning",
-                                    "Eliminar" => "danger",
-                                    _ => "info"
-                                })">@log.Accion</span>
-                            </td>
-                            <td>@log.Entidad</td>
-                            <td>@log.Descripcion</td>
-                            <td><small class="text-muted">@log.DireccionIP</small></td>
+                            <th class="ps-3">Fecha</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Entidad</th>
+                            <th>Descripción</th>
+                            <th>IP</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.Renglones)
+                        {
+                            <tr>
+                                <td class="ps-3">@log.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>@log.NombreUsuario</td>
+                                <td>
+                                    <span class="badge bg-@(log.Accion switch {
+                                        "Login" => "success",
+                                        "Logout" => "secondary",
+                                        "Crear" => "primary",
+                                        "Actualizar" => "warning",
+                                        "Eliminar" => "danger",
+                                        _ => "info"
+                                    })">@log.Accion</span>
+                                </td>
+                                <td>@log.Entidad</td>
+                                <td>@log.Descripcion</td>
+                                <td><small class="text-muted">@log.DireccionIP</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
+        }
     </div>
 </div>

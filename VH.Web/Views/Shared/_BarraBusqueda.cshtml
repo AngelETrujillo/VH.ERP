@@ -1,0 +1,58 @@
+@*
+    Barra de búsqueda compartida.
+
+    Es un formulario GET, no un manejador de teclado: la búsqueda viaja al servidor
+    y vuelve filtrada. Antes cada pantalla escondía filas con JavaScript, lo que
+    sólo funciona mientras la tabla entera quepa en el navegador.
+
+    Al buscar se vuelve a la página 1. Buscar en la página cuatro y quedarse en la
+    cuatro es cómo se llega a una pantalla vacía que parece un error.
+
+    La vista puede añadir sus propios filtros dentro del formulario pasándolos en
+    ViewData["FiltrosOcultos"], o dibujarlos ella misma si son visibles.
+*@
+@model dynamic
+@{
+    var placeholder = ViewData["BuscarPlaceholder"] as string ?? "Buscar…";
+    var ocultos = ViewData["FiltrosOcultos"] as Dictionary<string, string?>
+                  ?? new Dictionary<string, string?>();
+    var buscado = (string?)Model?.Buscado;
+    var tamano = Model?.Tamano ?? VH.Services.DTOs.ConsultaPaginada.TamanoPorOmision;
+}
+
+<form method="get" class="row g-2 align-items-center">
+
+    @foreach (var f in ocultos.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
+    {
+        <input type="hidden" name="@f.Key" value="@f.Value" />
+    }
+
+    <div class="col-12 col-md">
+        <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="search" name="buscar" id="campoBuscar"
+                   class="form-control border-start-0 ps-0"
+                   value="@buscado" placeholder="@placeholder"
+                   aria-label="@placeholder" />
+            <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+            @if (!string.IsNullOrWhiteSpace(buscado))
+            {
+                <a href="?tamano=@tamano" class="btn btn-outline-secondary" title="Quitar la búsqueda">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="col-auto">
+        <select name="tamano" id="campoTamano" class="form-select form-select-sm"
+                aria-label="Renglones por página" onchange="this.form.submit()">
+            @foreach (var t in new[] { 25, 50, 100 })
+            {
+                <option value="@t" selected="@(t == tamano)">@t por página</option>
+            }
+        </select>
+    </div>
+</form>

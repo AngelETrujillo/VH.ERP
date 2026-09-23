@@ -1,0 +1,96 @@
+@*
+    Paginador compartido.
+
+    Recibe cualquier ResultadoPaginado sin importar de qué tipo sean sus renglones,
+    por eso el modelo llega como dynamic: Razor no admite parciales genéricas y la
+    alternativa era una parcial por cada pantalla.
+
+    Conserva los filtros propios de cada listado al cambiar de página. La vista los
+    pasa en ViewData["FiltrosPaginador"] como diccionario; sin eso, paginar dentro
+    de una búsqueda te devolvía a la lista completa en la página dos.
+*@
+@model dynamic
+@{
+    var filtros = ViewData["FiltrosPaginador"] as Dictionary<string, string?>
+                  ?? new Dictionary<string, string?>();
+
+    string Liga(int pagina)
+    {
+        var partes = new List<string> { $"pagina={pagina}", $"tamano={Model.Tamano}" };
+
+        if (!string.IsNullOrWhiteSpace((string?)Model.Buscado))
+            partes.Add($"buscar={Uri.EscapeDataString((string)Model.Buscado)}");
+
+        foreach (var f in filtros.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
+            partes.Add($"{f.Key}={Uri.EscapeDataString(f.Value!)}");
+
+        return "?" + string.Join("&", partes);
+    }
+}
+
+@if (Model.Total > 0)
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-3 border-top">
+
+        <small class="text-muted">
+            Mostrando <strong>@Model.Desde</strong>–<strong>@Model.Hasta</strong>
+            de <strong>@Model.Total</strong>
+            @if (!string.IsNullOrWhiteSpace((string?)Model.Buscado))
+            {
+                <span>para «@Model.Buscado»</span>
+            }
+        </small>
+
+        @if (!Model.CabeEnUna)
+        {
+            <nav aria-label="Paginación">
+                <ul class="pagination pagination-sm mb-0">
+
+                    <li class="page-item @(Model.HayAnterior ? "" : "disabled")">
+                        <a class="page-link" href="@Liga(Model.Pagina - 1)"
+                           aria-label="Página anterior" tabindex="@(Model.HayAnterior ? 0 : -1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    @{ var ventana = (IReadOnlyList<int>)Model.Ventana(2); }
+
+                    @if (ventana.First() > 1)
+                    {
+                        <li class="page-item"><a class="page-link" href="@Liga(1)">1</a></li>
+                        @if (ventana.First() > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                    }
+
+                    @foreach (var p in ventana)
+                    {
+                        <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                            <a class="page-link" href="@Liga(p)"
+                               aria-current="@(p == Model.Pagina ? "page" : null)">@p</a>
+                        </li>
+                    }
+
+                    @if (ventana.Last() < Model.TotalPaginas)
+                    {
+                        @if (ventana.Last() < Model.TotalPaginas - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                        <li class="page-item">
+                            <a class="page-link" href="@Liga(Model.TotalPaginas)">@Model.TotalPaginas</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.HaySiguiente ? "" : "disabled")">
+                        <a class="page-link" href="@Liga(Model.Pagina + 1)"
+                           aria-label="Página siguiente" tabindex="@(Model.HaySiguiente ? 0 : -1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}
