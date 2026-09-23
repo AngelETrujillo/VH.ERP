@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
@@ -21,23 +21,32 @@ namespace VH.Web.Controllers
         }
 
         // GET: OrdenesCompra
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             try
             {
-                var response = await _httpClient.GetAsync("api/ordenescompra");
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+
+                var url = "api/ordenescompra/paginado?" + string.Join("&", partes);
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var ordenes = await response.Content.ReadFromJsonAsync<IEnumerable<OrdenCompraResponseDto>>();
-                return View(ordenes);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<OrdenCompraResponseDto>>();
+
+                return View(pag ?? ResultadoPaginado<OrdenCompraResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar órdenes de compra");
                 ViewBag.ErrorMessage = "Error al cargar las órdenes de compra";
-                return View(new List<OrdenCompraResponseDto>());
+                return View(ResultadoPaginado<OrdenCompraResponseDto>.Ninguno(consulta));
             }
         }
 

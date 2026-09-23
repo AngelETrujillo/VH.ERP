@@ -37,6 +37,18 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<CompraEPPResponseDto>>(compras));
         }
 
+        // GET: api/comprasepp/paginado
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<CompraEPPResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] int? idMaterial = null,
+            [FromQuery] int? idProveedor = null,
+            [FromQuery] int? idAlmacen = null)
+        {
+            var pagina = await _compraService.GetPaginadoAsync(consulta, idMaterial, idProveedor, idAlmacen);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<CompraEPPResponseDto>>(pagina.Renglones)));
+        }
+
         // GET: api/comprasepp/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CompraEPPResponseDto>> GetById(int id)

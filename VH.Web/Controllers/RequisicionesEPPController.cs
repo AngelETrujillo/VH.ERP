@@ -33,51 +33,55 @@ namespace VH.Web.Controllers
         }
 
         // GET: RequisicionesEPP
-        public async Task<IActionResult> Index(string? filtro)
+        public async Task<IActionResult> Index(
+            string? filtro,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActual = filtro;
+
             try
             {
-                var url = filtro switch
-                {
-                    "mis" => "api/requisicionesepp/mis-requisiciones",
-                    "pendientes-aprobacion" => "api/requisicionesepp/pendientes-aprobacion",
-                    "pendientes-entrega" => "api/requisicionesepp/pendientes-entrega",
-                    _ => "api/requisicionesepp"
-                };
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+                if (!string.IsNullOrWhiteSpace(filtro)) partes.Add($"filtro={Uri.EscapeDataString(filtro)}");
 
-                _logger.LogInformation("Llamando a: {Url}", url);
+                var url = "api/requisicionesepp/paginado?" + string.Join("&", partes);
 
                 var response = await _httpClient.GetAsync(url);
-
-                _logger.LogInformation("Status Code: {StatusCode}", response.StatusCode);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
+                // Sin permiso para ver todas, se cae a las propias. Era el
+                // comportamiento anterior y se conserva.
                 if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    response = await _httpClient.GetAsync("api/requisicionesepp/mis-requisiciones");
+                    ViewBag.FiltroActual = "mis";
+                    var propias = partes.Where(p => !p.StartsWith("filtro=")).ToList();
+                    propias.Add("filtro=mis");
+                    response = await _httpClient.GetAsync(
+                        "api/requisicionesepp/paginado?" + string.Join("&", propias));
                 }
-
-                var content = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation("Response Content: {Content}", content);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var requisiciones = System.Text.Json.JsonSerializer.Deserialize<IEnumerable<RequisicionEPPResponseDto>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    ViewBag.FiltroActual = filtro;
-                    return View(requisiciones ?? new List<RequisicionEPPResponseDto>());
+                    var pag = await response.Content
+                        .ReadFromJsonAsync<ResultadoPaginado<RequisicionEPPResponseDto>>();
+
+                    return View(pag ?? ResultadoPaginado<RequisicionEPPResponseDto>.Ninguno(consulta));
                 }
 
                 ViewBag.ErrorMessage = "Error al cargar las requisiciones";
-                return View(new List<RequisicionEPPResponseDto>());
+                return View(ResultadoPaginado<RequisicionEPPResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar requisiciones");
                 ViewBag.ErrorMessage = "Error al cargar las requisiciones: " + ex.Message;
-                return View(new List<RequisicionEPPResponseDto>());
+                return View(ResultadoPaginado<RequisicionEPPResponseDto>.Ninguno(consulta));
             }
         }
 

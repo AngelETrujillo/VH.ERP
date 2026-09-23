@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text.Json;
@@ -85,24 +85,32 @@ namespace VH.Web.Controllers
         }
 
         // GET: Devoluciones/Historial
-        public async Task<IActionResult> Historial()
+        public async Task<IActionResult> Historial(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             try
             {
-                var response = await _httpClient.GetAsync("api/devoluciones");
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+
+                var url = "api/devoluciones/paginado?" + string.Join("&", partes);
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var devoluciones = await response.Content.ReadFromJsonAsync<List<DevolucionResponseDto>>();
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<DevolucionResponseDto>>();
 
-                return View(devoluciones ?? new List<DevolucionResponseDto>());
+                return View(pag ?? ResultadoPaginado<DevolucionResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar el historial de devoluciones");
                 ViewBag.ErrorMessage = "Error al cargar el historial";
-                return View(new List<DevolucionResponseDto>());
+                return View(ResultadoPaginado<DevolucionResponseDto>.Ninguno(consulta));
             }
         }
 

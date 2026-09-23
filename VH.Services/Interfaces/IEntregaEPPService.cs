@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
@@ -22,6 +23,9 @@ namespace VH.Services.Interfaces
         /// Obtiene las entregas de un material específico
         /// </summary>
         Task<IEnumerable<EntregaEPP>> GetEntregasByMaterialAsync(int idMaterial);
+
+        /// <summary>Una página de entregas, filtrada y ordenada en la base.</summary>
+        Task<ResultadoPaginado<EntregaEPP>> GetPaginadoAsync(ConsultaPaginada consulta, int? idEmpleado = null);
 
         /// <summary>
         /// Registra una nueva entrega de EPP.

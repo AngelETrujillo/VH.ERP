@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -50,6 +50,15 @@ namespace VH.API.Controllers
         {
             var devoluciones = await _devolucionService.GetDevolucionesAsync(idEmpleado);
             return Ok(_mapper.Map<IEnumerable<DevolucionResponseDto>>(devoluciones));
+        }
+
+        // GET: api/devoluciones/paginado
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<DevolucionResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] int? idEmpleado = null)
+        {
+            var pagina = await _devolucionService.GetHistorialPaginadoAsync(consulta, idEmpleado);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<DevolucionResponseDto>>(pagina.Renglones)));
         }
 
         // POST: api/devoluciones

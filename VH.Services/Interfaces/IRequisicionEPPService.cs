@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
@@ -11,6 +12,15 @@ namespace VH.Services.Interfaces
     {
         // Consultas
         Task<IEnumerable<RequisicionEPP>> GetAllAsync();
+
+        /// <summary>
+        /// Una página de requisiciones. El <paramref name="filtro"/> reemplaza a las
+        /// cuatro rutas distintas que tenía la pantalla ("mis", "pendientes-aprobacion",
+        /// "pendientes-entrega" o ninguna), que no se podían paginar por separado sin
+        /// repetir el paginador cuatro veces.
+        /// </summary>
+        Task<ResultadoPaginado<RequisicionEPP>> GetPaginadoAsync(
+            ConsultaPaginada consulta, string? filtro = null, string? userId = null);
         Task<IEnumerable<RequisicionEPP>> GetByUsuarioAsync(string userId);
         Task<IEnumerable<RequisicionEPP>> GetByEmpleadoAsync(int idEmpleado);
         Task<IEnumerable<RequisicionEPP>> GetByEstadoAsync(EstadoRequisicion estado);

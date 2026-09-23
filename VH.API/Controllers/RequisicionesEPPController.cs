@@ -41,6 +41,19 @@ namespace VH.API.Controllers
         }
 
         // GET: api/requisicionesepp/mis-requisiciones
+        /// <summary>
+        /// Una página, con el filtro de la pantalla. Sustituye a las cuatro rutas
+        /// para los listados; las otras siguen para quien las consuma sin paginar.
+        /// </summary>
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<RequisicionEPPResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] string? filtro = null)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+            var pagina = await _requisicionService.GetPaginadoAsync(consulta, filtro, userId);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<RequisicionEPPResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("mis-requisiciones")]
         public async Task<ActionResult<IEnumerable<RequisicionEPPResponseDto>>> GetMisRequisiciones()
         {

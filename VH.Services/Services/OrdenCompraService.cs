@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -116,6 +116,24 @@ namespace VH.Services.Services
             }
 
             return await _unitOfWork.OrdenesCompra.GetAllAsync(includeProperties: IncludeOrden);
+        }
+
+        public async Task<ResultadoPaginado<OrdenCompra>> GetPaginadoAsync(
+            ConsultaPaginada consulta, EstadoOrdenCompra? estado = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.OrdenesCompra.GetPaginadoAsync(
+                consulta,
+                filtro: o =>
+                    (estado == null || o.Estado == estado) &&
+                    (texto == null ||
+                     o.Folio.Contains(texto) ||
+                     (o.Observaciones != null && o.Observaciones.Contains(texto)) ||
+                     (o.Proveedor != null && o.Proveedor.Nombre.Contains(texto)) ||
+                     o.Detalles.Any(d => d.Material != null && d.Material.Nombre.Contains(texto))),
+                orden: q => q.OrderByDescending(o => o.FechaEmision).ThenByDescending(o => o.IdOrdenCompra),
+                includeProperties: IncludeOrden);
         }
 
         public async Task<OrdenCompra?> GetOrdenByIdAsync(int id)

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VH.Services.DTOs.CompraEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.CompraEPPResponseDto>
 @{
     ViewData["Title"] = "Compras EPP";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -35,10 +35,28 @@
         </div>
     }
 
+@{
+    var filtrosCompras = new Dictionary<string, string?>
+    {
+        ["idMaterial"]  = ViewBag.FiltroMaterial?.ToString(),
+        ["idProveedor"] = ViewBag.FiltroProveedor?.ToString(),
+        ["idAlmacen"]   = ViewBag.FiltroAlmacen?.ToString()
+    };
+    ViewData["FiltrosPaginador"] = filtrosCompras;
+    ViewData["FiltrosOcultos"] = filtrosCompras;
+    ViewData["BuscarPlaceholder"] = "Buscar por factura, UUID, proveedor, material u observaciones…";
+}
+
     <!-- Filtros -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
+                @if (!string.IsNullOrWhiteSpace(Model.Buscado))
+                {
+                    <input type="hidden" name="buscar" value="@Model.Buscado" />
+                }
+                <input type="hidden" name="tamano" value="@Model.Tamano" />
+
                 <div class="col-md-3">
                     <label class="form-label small fw-semibold">Material</label>
                     <select name="idMaterial" class="form-select" asp-items="@ViewBag.Materiales">
@@ -72,18 +90,12 @@
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <span class="badge bg-secondary">@Model?.Count() registros</span>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total registro(s)</span>
                 </div>
             </div>
         </div>
@@ -103,9 +115,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
                                 <tr>
                                     <td class="ps-4">
@@ -194,6 +206,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>

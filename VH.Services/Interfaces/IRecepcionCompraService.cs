@@ -26,6 +26,10 @@ namespace VH.Services.Interfaces
 
         Task<IEnumerable<RecepcionCompra>> GetRecepcionesAsync(int? idOrdenCompra = null, int? idAlmacen = null);
 
+        /// <summary>Una página del historial de recepciones.</summary>
+        Task<ResultadoPaginado<RecepcionCompra>> GetHistorialPaginadoAsync(
+            ConsultaPaginada consulta, int? idOrdenCompra = null, int? idAlmacen = null);
+
         Task<RecepcionCompra?> GetRecepcionByIdAsync(int id);
 
         /// <summary>

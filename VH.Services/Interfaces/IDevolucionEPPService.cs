@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -20,6 +20,10 @@ namespace VH.Services.Interfaces
 
         /// <summary>Historial de devoluciones.</summary>
         Task<IEnumerable<DevolucionEPP>> GetDevolucionesAsync(int? idEmpleado = null);
+
+        /// <summary>Una página del historial de devoluciones.</summary>
+        Task<ResultadoPaginado<DevolucionEPP>> GetHistorialPaginadoAsync(
+            ConsultaPaginada consulta, int? idEmpleado = null);
 
         /// <summary>
         /// Registra la vuelta de una herramienta.

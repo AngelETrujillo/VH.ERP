@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -56,6 +57,30 @@ namespace VH.Services.Services
             }
 
             return await _unitOfWork.EntregasEPP.GetAllAsync(includeProperties: IncludeProperties);
+        }
+
+        public async Task<ResultadoPaginado<EntregaEPP>> GetPaginadoAsync(
+            ConsultaPaginada consulta, int? idEmpleado = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.EntregasEPP.GetPaginadoAsync(
+                consulta,
+                filtro: e =>
+                    (idEmpleado == null || e.IdEmpleado == idEmpleado) &&
+                    (texto == null ||
+                     // Por las tres columnas del nombre: NombreCompleto es calculada
+                     // y EF no la puede traducir a SQL.
+                     (e.Empleado != null && (e.Empleado.Nombre.Contains(texto) ||
+                                             e.Empleado.ApellidoPaterno.Contains(texto) ||
+                                             e.Empleado.ApellidoMaterno.Contains(texto) ||
+                                             e.Empleado.NumeroNomina.Contains(texto))) ||
+                     (e.CompraDetalle != null && e.CompraDetalle.Material != null &&
+                      e.CompraDetalle.Material.Nombre.Contains(texto)) ||
+                     e.TallaEntregada.Contains(texto) ||
+                     e.Observaciones.Contains(texto)),
+                orden: q => q.OrderByDescending(e => e.FechaEntrega),
+                includeProperties: IncludeProperties);
         }
 
         public async Task<EntregaEPP?> GetEntregaByIdAsync(int id)

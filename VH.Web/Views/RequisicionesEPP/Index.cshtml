@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VH.Services.DTOs.RequisicionEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.RequisicionEPPResponseDto>
 @{
     ViewData["Title"] = "Requisiciones EPP";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -31,24 +31,32 @@
 
     <!-- Alertas -->
 
+@{
+    var filtroReq = ViewBag.FiltroActual as string;
+    var filtrosReq = new Dictionary<string, string?> { ["filtro"] = filtroReq };
+    ViewData["FiltrosPaginador"] = filtrosReq;
+    ViewData["FiltrosOcultos"] = filtrosReq;
+    ViewData["BuscarPlaceholder"] = "Buscar por folio, trabajador, nómina, material o almacén…";
+}
+
     <!-- Filtros con scroll horizontal en móvil -->
     <div class="mb-3 mb-md-4">
         <div class="d-flex gap-2 overflow-auto pb-1 filtros-scroll">
-            <a asp-action="Index"
+            <a asp-action="Index" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                class="btn @(ViewBag.FiltroActual == null ? "btn-primary" : "btn-outline-primary") btn-sm text-nowrap flex-shrink-0">
                 <i class="bi bi-list-ul me-1"></i>Todas
             </a>
-            <a asp-action="Index" asp-route-filtro="mis"
+            <a asp-action="Index" asp-route-filtro="mis" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                class="btn @(ViewBag.FiltroActual == "mis" ? "btn-primary" : "btn-outline-primary") btn-sm text-nowrap flex-shrink-0">
                 <i class="bi bi-person me-1"></i>Mis Requisiciones
             </a>
             @if (esSuperAdmin || esAdmin || puedeEditar)
             {
-                <a asp-action="Index" asp-route-filtro="pendientes-aprobacion"
+                <a asp-action="Index" asp-route-filtro="pendientes-aprobacion" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                    class="btn @(ViewBag.FiltroActual == "pendientes-aprobacion" ? "btn-warning" : "btn-outline-warning") btn-sm text-nowrap flex-shrink-0">
                     <i class="bi bi-clock me-1"></i>Pend. Aprobación
                 </a>
-                <a asp-action="Index" asp-route-filtro="pendientes-entrega"
+                <a asp-action="Index" asp-route-filtro="pendientes-entrega" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                    class="btn @(ViewBag.FiltroActual == "pendientes-entrega" ? "btn-info" : "btn-outline-info") btn-sm text-nowrap flex-shrink-0">
                     <i class="bi bi-box-arrow-right me-1"></i>Pend. Entrega
                 </a>
@@ -63,11 +71,24 @@
         </div>
     }
 
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
+                </div>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total requisición(es)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== VISTA MÓVIL: Cards ===================== -->
     <div class="d-md-none">
-        @if (Model != null && Model.Any())
+        @if (!Model.Vacio)
         {
-            foreach (var item in Model)
+            foreach (var item in Model.Renglones)
             {
                 <div class="card shadow-sm border-0 mb-3 requisicion-card">
                     <!-- Header de la card -->
@@ -157,9 +178,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model != null && Model.Any())
+                            @if (!Model.Vacio)
                             {
-                                foreach (var item in Model)
+                                foreach (var item in Model.Renglones)
                                 {
                                     <tr>
                                         <td class="ps-4">
@@ -226,6 +247,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                @await Html.PartialAsync("_Paginador", Model)
             </div>
         </div>
     </div>

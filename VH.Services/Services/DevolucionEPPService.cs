@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -68,6 +68,28 @@ namespace VH.Services.Services
                 .ToList();
 
             return prestados;
+        }
+
+        public async Task<ResultadoPaginado<DevolucionEPP>> GetHistorialPaginadoAsync(
+            ConsultaPaginada consulta, int? idEmpleado = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.DevolucionesEPP.GetPaginadoAsync(
+                consulta,
+                filtro: d =>
+                    (idEmpleado == null || (d.Entrega != null && d.Entrega.IdEmpleado == idEmpleado)) &&
+                    (texto == null ||
+                     (d.Observaciones != null && d.Observaciones.Contains(texto)) ||
+                     (d.Entrega != null && d.Entrega.Empleado != null &&
+                      (d.Entrega.Empleado.Nombre.Contains(texto) ||
+                       d.Entrega.Empleado.ApellidoPaterno.Contains(texto) ||
+                       d.Entrega.Empleado.NumeroNomina.Contains(texto))) ||
+                     (d.Entrega != null && d.Entrega.CompraDetalle != null &&
+                      d.Entrega.CompraDetalle.Material != null &&
+                      d.Entrega.CompraDetalle.Material.Nombre.Contains(texto))),
+                orden: q => q.OrderByDescending(d => d.FechaDevolucion).ThenByDescending(d => d.IdDevolucion),
+                includeProperties: "UsuarioRecibe,Entrega.Empleado,Entrega.CompraDetalle.Material.UnidadMedida");
         }
 
         public async Task<IEnumerable<DevolucionEPP>> GetDevolucionesAsync(int? idEmpleado = null)

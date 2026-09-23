@@ -28,39 +28,43 @@ namespace VH.Web.Controllers
         }
 
         // GET: ComprasEPP
-        public async Task<IActionResult> Index(int? idMaterial, int? idProveedor, int? idAlmacen)
+        public async Task<IActionResult> Index(
+            int? idMaterial, int? idProveedor, int? idAlmacen,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
+            await CargarFiltrosEnViewBag();
+            ViewBag.FiltroMaterial = idMaterial;
+            ViewBag.FiltroProveedor = idProveedor;
+            ViewBag.FiltroAlmacen = idAlmacen;
+
             try
             {
-                var url = "api/comprasepp";
-                var queryParams = new List<string>();
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+                if (idMaterial.HasValue) partes.Add($"idMaterial={idMaterial}");
+                if (idProveedor.HasValue) partes.Add($"idProveedor={idProveedor}");
+                if (idAlmacen.HasValue) partes.Add($"idAlmacen={idAlmacen}");
 
-                if (idMaterial.HasValue) queryParams.Add($"idMaterial={idMaterial}");
-                if (idProveedor.HasValue) queryParams.Add($"idProveedor={idProveedor}");
-                if (idAlmacen.HasValue) queryParams.Add($"idAlmacen={idAlmacen}");
-
-                if (queryParams.Any()) url += "?" + string.Join("&", queryParams);
+                var url = "api/comprasepp/paginado?" + string.Join("&", partes);
 
                 var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var compras = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<CompraEPPResponseDto>>();
 
-                await CargarFiltrosEnViewBag();
-                ViewBag.FiltroMaterial = idMaterial;
-                ViewBag.FiltroProveedor = idProveedor;
-                ViewBag.FiltroAlmacen = idAlmacen;
-
-                return View(compras);
+                return View(pag ?? ResultadoPaginado<CompraEPPResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar compras EPP");
                 ViewBag.ErrorMessage = "Error al cargar las compras";
-                return View(new List<CompraEPPResponseDto>());
+                return View(ResultadoPaginado<CompraEPPResponseDto>.Ninguno(consulta));
             }
         }
 

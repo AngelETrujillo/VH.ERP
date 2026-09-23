@@ -34,6 +34,10 @@ namespace VH.Services.Interfaces
 
         Task<IEnumerable<OrdenCompra>> GetOrdenesAsync(EstadoOrdenCompra? estado = null);
 
+        /// <summary>Una página de órdenes emitidas.</summary>
+        Task<ResultadoPaginado<OrdenCompra>> GetPaginadoAsync(
+            ConsultaPaginada consulta, EstadoOrdenCompra? estado = null);
+
         Task<OrdenCompra?> GetOrdenByIdAsync(int id);
 
         /// <summary>

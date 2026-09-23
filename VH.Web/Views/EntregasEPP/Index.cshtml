@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VH.Services.DTOs.EntregaEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.EntregaEPPResponseDto>
 @{
     ViewData["Title"] = "Entregas EPP";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -36,13 +36,30 @@
         </div>
     }
 
-    <!-- Filtro por Empleado -->
+    @{
+    var filtrosEntregas = new Dictionary<string, string?>
+    {
+        ["idEmpleado"] = ViewBag.FiltroEmpleado?.ToString()
+    };
+    ViewData["FiltrosPaginador"] = filtrosEntregas;
+    ViewData["FiltrosOcultos"] = filtrosEntregas;
+    ViewData["BuscarPlaceholder"] = "Buscar por empleado, nómina, material, talla u observaciones…";
+}
+
+<!-- Filtro por Empleado -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body py-3">
             <form method="get" class="row g-3 align-items-end">
+                @* Se conservan al filtrar; si no, cambiar de empleado perdía la búsqueda. *@
+                @if (!string.IsNullOrWhiteSpace(Model.Buscado))
+                {
+                    <input type="hidden" name="buscar" value="@Model.Buscado" />
+                }
+                <input type="hidden" name="tamano" value="@Model.Tamano" />
+
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold">Filtrar por Empleado</label>
-                    <select name="idEmpleado" class="form-select" asp-items="@ViewBag.EmpleadosFiltro">
+                    <label for="filtroEmpleado" class="form-label small fw-semibold">Filtrar por Empleado</label>
+                    <select id="filtroEmpleado" name="idEmpleado" class="form-select" asp-items="@ViewBag.EmpleadosFiltro">
                         <option value="">-- Todos los empleados --</option>
                     </select>
                 </div>
@@ -61,18 +78,12 @@
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por empleado, material...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <span class="badge bg-secondary">@Model?.Count() registros</span>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total registro(s)</span>
                 </div>
             </div>
         </div>
@@ -91,9 +102,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
                                 <tr>
                                     <td class="ps-4">
@@ -189,6 +200,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>
@@ -215,11 +228,15 @@
 
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
-        });
+        // La búsqueda la hace el servidor. Lo único que queda aquí es devolver el
+        // foco al campo después de buscar, para poder corregir el texto sin
+        // volver a tomar el ratón.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
     </script>
 }

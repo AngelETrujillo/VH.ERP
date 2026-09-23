@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -79,6 +80,35 @@ namespace VH.Services.Services
         {
             return await _unitOfWork.RequisicionesEPP.FindAsync(
                 r => r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Reservado),
+                includeProperties: IncludeListado);
+        }
+
+        public async Task<ResultadoPaginado<RequisicionEPP>> GetPaginadoAsync(
+            ConsultaPaginada consulta, string? filtro = null, string? userId = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.RequisicionesEPP.GetPaginadoAsync(
+                consulta,
+                filtro: r =>
+                    (filtro != "mis" || r.IdUsuarioSolicita == userId) &&
+                    (filtro != "pendientes-aprobacion" ||
+                     r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Solicitado)) &&
+                    (filtro != "pendientes-entrega" ||
+                     r.Detalles.Any(d => d.EstadoRenglon == EstadoRenglonRequisicion.Reservado ||
+                                         d.EstadoRenglon == EstadoRenglonRequisicion.Recibido)) &&
+                    (texto == null ||
+                     r.NumeroRequisicion.Contains(texto) ||
+                     (r.Justificacion != null && r.Justificacion.Contains(texto)) ||
+                     (r.Almacen != null && r.Almacen.Nombre.Contains(texto)) ||
+                     // Por las columnas del empleado destino: NombreCompleto es
+                     // calculada y EF no la traduce a SQL.
+                     r.Detalles.Any(d => d.EmpleadoDestino != null &&
+                                         (d.EmpleadoDestino.Nombre.Contains(texto) ||
+                                          d.EmpleadoDestino.ApellidoPaterno.Contains(texto) ||
+                                          d.EmpleadoDestino.NumeroNomina.Contains(texto))) ||
+                     r.Detalles.Any(d => d.Material != null && d.Material.Nombre.Contains(texto))),
+                orden: q => q.OrderByDescending(r => r.FechaSolicitud).ThenByDescending(r => r.IdRequisicion),
                 includeProperties: IncludeListado);
         }
 

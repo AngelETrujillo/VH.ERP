@@ -1,3 +1,4 @@
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -38,6 +39,30 @@ namespace VH.Services.Services
             }
 
             return await _unitOfWork.ComprasEPP.GetAllAsync(includeProperties: IncludeCabecera);
+        }
+
+        public async Task<ResultadoPaginado<CompraEPP>> GetPaginadoAsync(
+            ConsultaPaginada consulta,
+            int? idMaterial = null, int? idProveedor = null, int? idAlmacen = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.ComprasEPP.GetPaginadoAsync(
+                consulta,
+                filtro: c =>
+                    (!idProveedor.HasValue || c.IdProveedor == idProveedor.Value) &&
+                    (!idMaterial.HasValue || c.Detalles.Any(d => d.IdMaterial == idMaterial.Value)) &&
+                    (!idAlmacen.HasValue || c.Detalles.Any(d => d.IdAlmacen == idAlmacen.Value)) &&
+                    (texto == null ||
+                     c.NumeroDocumento.Contains(texto) ||
+                     c.Observaciones.Contains(texto) ||
+                     (c.UuidCFDI != null && c.UuidCFDI.Contains(texto)) ||
+                     (c.Proveedor != null && c.Proveedor.Nombre.Contains(texto)) ||
+                     // Por el material del renglón: es como el comprador busca
+                     // ("¿en qué facturas vinieron las botas?").
+                     c.Detalles.Any(d => d.Material != null && d.Material.Nombre.Contains(texto))),
+                orden: q => q.OrderByDescending(c => c.FechaCompra).ThenByDescending(c => c.IdCompra),
+                includeProperties: IncludeCabecera);
         }
 
         public async Task<CompraEPP?> GetCompraByIdAsync(int id)

@@ -1,3 +1,4 @@
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -12,6 +13,11 @@ namespace VH.Services.Interfaces
         /// Compras filtradas. Los filtros de material y almacén miran los renglones:
         /// devuelven la compra si alguno de ellos coincide.
         /// </summary>
+        /// <summary>Una página de compras, con los mismos filtros que el listado completo.</summary>
+        Task<ResultadoPaginado<CompraEPP>> GetPaginadoAsync(
+            ConsultaPaginada consulta,
+            int? idMaterial = null, int? idProveedor = null, int? idAlmacen = null);
+
         Task<IEnumerable<CompraEPP>> GetComprasAsync(
             int? idMaterial = null,
             int? idProveedor = null,

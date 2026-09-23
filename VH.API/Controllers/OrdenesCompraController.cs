@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -55,6 +55,16 @@ namespace VH.API.Controllers
         {
             var ordenes = await _ordenService.GetOrdenesAsync(estado);
             return Ok(_mapper.Map<IEnumerable<OrdenCompraResponseDto>>(ordenes));
+        }
+
+        // GET: api/ordenescompra/paginado
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<OrdenCompraResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] EstadoOrdenCompra? estado = null)
+        {
+            var pagina = await _ordenService.GetPaginadoAsync(consulta, estado);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<OrdenCompraResponseDto>>(pagina.Renglones)));
         }
 
         // GET: api/ordenescompra/5

@@ -179,6 +179,29 @@ namespace VH.Services.Services
 
         // ===== CONSULTA =====
 
+        public async Task<ResultadoPaginado<RecepcionCompra>> GetHistorialPaginadoAsync(
+            ConsultaPaginada consulta, int? idOrdenCompra = null, int? idAlmacen = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.RecepcionesCompra.GetPaginadoAsync(
+                consulta,
+                filtro: r =>
+                    (!idOrdenCompra.HasValue || r.IdOrdenCompra == idOrdenCompra.Value) &&
+                    (!idAlmacen.HasValue || r.IdAlmacen == idAlmacen.Value) &&
+                    (texto == null ||
+                     r.Folio.Contains(texto) ||
+                     (r.NumeroFactura != null && r.NumeroFactura.Contains(texto)) ||
+                     (r.OrdenCompra != null && r.OrdenCompra.Folio.Contains(texto)) ||
+                     (r.OrdenCompra != null && r.OrdenCompra.Proveedor != null &&
+                      r.OrdenCompra.Proveedor.Nombre.Contains(texto)) ||
+                     (r.Almacen != null && r.Almacen.Nombre.Contains(texto)) ||
+                     r.Detalles.Any(d => d.LoteProveedor != null && d.LoteProveedor.Contains(texto)) ||
+                     r.Detalles.Any(d => d.Material != null && d.Material.Nombre.Contains(texto))),
+                orden: q => q.OrderByDescending(r => r.FechaRecepcion).ThenByDescending(r => r.IdRecepcion),
+                includeProperties: IncludeRecepcion);
+        }
+
         public async Task<IEnumerable<RecepcionCompra>> GetRecepcionesAsync(
             int? idOrdenCompra = null, int? idAlmacen = null)
         {
