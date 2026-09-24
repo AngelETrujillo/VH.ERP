@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Usuario;
 using VH.Services.Interfaces;
 
@@ -18,6 +19,13 @@ namespace VH.API.Controllers
         {
             _usuarioService = usuarioService;
             _logService = logService;
+        }
+
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<UsuarioResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            return Ok(await _usuarioService.GetPaginadoAsync(consulta, activo));
         }
 
         [HttpGet]

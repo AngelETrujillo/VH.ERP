@@ -24,6 +24,15 @@ namespace VH.API.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<InventarioListadoDto>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] string? estado = null,
+            [FromQuery] int? idAlmacen = null)
+        {
+            return Ok(await _inventarioService.GetListadoPaginadoAsync(consulta, estado, idAlmacen));
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<InventarioResponseDto>>> GetAll()
         {

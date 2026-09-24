@@ -1,9 +1,14 @@
-﻿using VH.Services.DTOs.Usuario;
+﻿using VH.Services.DTOs;
+using VH.Services.DTOs.Usuario;
 
 namespace VH.Services.Interfaces
 {
     public interface IUsuarioService
     {
+        /// <summary>Una página de usuarios, buscando por nombre, usuario o correo.</summary>
+        Task<ResultadoPaginado<UsuarioResponseDto>> GetPaginadoAsync(
+            ConsultaPaginada consulta, bool? activo = null);
+
         Task<IEnumerable<UsuarioResponseDto>> GetAllAsync();
         Task<UsuarioResponseDto?> GetByIdAsync(string id);
         Task<(bool Exitoso, string Mensaje, UsuarioResponseDto? Usuario)> CreateAsync(UsuarioRequestDto request);

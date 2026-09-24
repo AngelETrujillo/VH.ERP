@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Usuario;
 using VH.Services.DTOs.Rol;
 
@@ -23,22 +24,31 @@ namespace VH.Web.Controllers
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/Usuarios");
+                var url = $"api/Usuarios/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
-                var usuarios = await response.Content.ReadFromJsonAsync<IEnumerable<UsuarioResponseDto>>();
-                return View(usuarios);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<UsuarioResponseDto>>();
+                return View(pag ?? ResultadoPaginado<UsuarioResponseDto>.Ninguno(consulta));
             }
             catch
             {
                 ViewBag.Error = "Error al cargar usuarios";
-                return View(new List<UsuarioResponseDto>());
+                return View(ResultadoPaginado<UsuarioResponseDto>.Ninguno(consulta));
             }
         }
 

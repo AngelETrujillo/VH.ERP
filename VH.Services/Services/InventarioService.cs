@@ -1,4 +1,6 @@
-﻿using VH.Services.Entities;
+﻿using AutoMapper;
+using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -8,13 +10,55 @@ namespace VH.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMovimientoInventarioService _movimientoService;
 
-        public InventarioService(IUnitOfWork unitOfWork, IMovimientoInventarioService movimientoService)
+        // El listado arma su propio DTO: la pantalla necesita la página y los
+        // conteos juntos, y los conteos no salen de la página.
+        private readonly IMapper _mapper;
+
+        public InventarioService(
+            IUnitOfWork unitOfWork, IMovimientoInventarioService movimientoService, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _movimientoService = movimientoService;
+            _mapper = mapper;
         }
 
         private const string IncludeProperties = "Almacen.Proyecto,Material.UnidadMedida";
+
+        public async Task<InventarioListadoDto> GetListadoPaginadoAsync(
+            ConsultaPaginada consulta, string? estado = null, int? idAlmacen = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            var pagina = await _unitOfWork.Inventarios.GetPaginadoAsync(
+                consulta,
+                filtro: i =>
+                    (idAlmacen == null || i.IdAlmacen == idAlmacen) &&
+                    (estado == null ||
+                     (estado == "sin"   && i.Existencia == 0) ||
+                     (estado == "bajo"  && i.Existencia > 0 && i.Existencia <= i.StockMinimo) ||
+                     (estado == "sobre" && i.StockMaximo > 0 && i.Existencia > i.StockMaximo)) &&
+                    (texto == null ||
+                     (i.Material != null && i.Material.Nombre.Contains(texto)) ||
+                     (i.Almacen != null && i.Almacen.Nombre.Contains(texto)) ||
+                     i.UbicacionPasillo.Contains(texto)),
+                orden: q => q.OrderBy(i => i.IdAlmacen).ThenBy(i => i.IdMaterial),
+                includeProperties: IncludeProperties);
+
+            // Los conteos son de todo el inventario, no de la página. Se cuentan con
+            // el mismo filtro de almacén para que hablen de lo mismo que la tabla,
+            // pero sin el de estado: son justamente los que dejan elegir el estado.
+            var todos = (await _unitOfWork.Inventarios.FindAsync(
+                i => idAlmacen == null || i.IdAlmacen == idAlmacen)).ToList();
+
+            return new InventarioListadoDto
+            {
+                Renglones = pagina.ConLos(_mapper.Map<IEnumerable<InventarioResponseDto>>(pagina.Renglones)),
+                SinStock = todos.Count(i => i.Existencia == 0),
+                StockBajo = todos.Count(i => i.Existencia > 0 && i.Existencia <= i.StockMinimo),
+                SobreMaximo = todos.Count(i => i.StockMaximo > 0 && i.Existencia > i.StockMaximo),
+                SinMinimo = todos.Count(i => i.StockMinimo <= 0)
+            };
+        }
 
         public async Task<IEnumerable<Inventario>> GetAllInventariosAsync()
         {

@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
@@ -11,6 +12,16 @@ namespace VH.Services.Interfaces
         /// <summary>
         /// Obtiene todos los registros de inventario
         /// </summary>
+        /// <summary>
+        /// Una página del control de inventarios con los conteos del encabezado.
+        /// </summary>
+        /// <param name="estado">
+        /// null = todos; "bajo" = por debajo del mínimo con algo aún; "sin" = en cero;
+        /// "sobre" = por encima del máximo.
+        /// </param>
+        Task<InventarioListadoDto> GetListadoPaginadoAsync(
+            ConsultaPaginada consulta, string? estado = null, int? idAlmacen = null);
+
         Task<IEnumerable<Inventario>> GetAllInventariosAsync();
 
         /// <summary>

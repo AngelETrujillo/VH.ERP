@@ -1,4 +1,5 @@
-﻿using VH.Services.DTOs.Analytics;
+﻿using VH.Services.DTOs;
+using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -234,6 +235,35 @@ namespace VH.Services.Services
         #endregion
 
         #region Consultas
+
+        public async Task<ResultadoPaginado<AlertaConsumoResponseDto>> GetPaginadoAsync(
+            ConsultaPaginada consulta, FiltroAlertasDto filtros)
+        {
+            var texto = consulta.TextoLimpio;
+
+            var pagina = await _unitOfWork.AlertasConsumo.GetPaginadoAsync(
+                consulta,
+                filtro: a =>
+                    (!filtros.FechaDesde.HasValue || a.FechaGeneracion >= filtros.FechaDesde) &&
+                    (!filtros.FechaHasta.HasValue || a.FechaGeneracion <= filtros.FechaHasta) &&
+                    (!filtros.IdProyecto.HasValue || a.IdProyecto == filtros.IdProyecto) &&
+                    (!filtros.IdEmpleado.HasValue || a.IdEmpleado == filtros.IdEmpleado) &&
+                    (!filtros.IdMaterial.HasValue || a.IdMaterial == filtros.IdMaterial) &&
+                    (!filtros.TipoAlerta.HasValue || a.TipoAlerta == filtros.TipoAlerta) &&
+                    (!filtros.Severidad.HasValue || a.Severidad == filtros.Severidad) &&
+                    (!filtros.Estado.HasValue || a.EstadoAlerta == filtros.Estado) &&
+                    (!filtros.SoloPendientes || a.EstadoAlerta == EstadoAlerta.Pendiente) &&
+                    (!filtros.SoloCriticas || a.Severidad == SeveridadAlerta.Critica) &&
+                    (texto == null ||
+                     (a.Material != null && a.Material.Nombre.Contains(texto)) ||
+                     (a.Empleado != null && (a.Empleado.Nombre.Contains(texto) ||
+                                             a.Empleado.ApellidoPaterno.Contains(texto) ||
+                                             a.Empleado.NumeroNomina.Contains(texto)))),
+                orden: q => q.OrderByDescending(a => a.FechaGeneracion).ThenByDescending(a => a.IdAlerta),
+                includeProperties: "Empleado.Proyecto,Material,UsuarioReviso");
+
+            return pagina.Convertir(MapToResponseDto);
+        }
 
         public async Task<IEnumerable<AlertaConsumoResponseDto>> GetAlertasAsync(FiltroAlertasDto filtros)
         {

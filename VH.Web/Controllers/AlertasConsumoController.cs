@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Web.Filters;
@@ -33,8 +34,13 @@ namespace VH.Web.Controllers
      int? idEmpleado = null,
      int? severidad = null,
      int? estado = null,
-     bool soloPendientes = false)
+     bool soloPendientes = false,
+     int pagina = 1,
+     int tamano = ConsultaPaginada.TamanoPorOmision,
+     string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             SetAuthHeader();
 
             // Cargar filtros SIEMPRE primero (antes del try-catch de datos)
@@ -47,17 +53,19 @@ namespace VH.Web.Controllers
 
             try
             {
-                var url = "api/alertasconsumo?";
+                var url = $"api/alertasconsumo/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}&";
+                if (consulta.HayBusqueda) url += $"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}&";
                 if (idProyecto.HasValue) url += $"idProyecto={idProyecto}&";
                 if (idEmpleado.HasValue) url += $"idEmpleado={idEmpleado}&";
                 if (severidad.HasValue) url += $"severidad={severidad}&";
                 if (estado.HasValue) url += $"estado={estado}&";
                 if (soloPendientes) url += "soloPendientes=true&";
 
-                var alertas = await _httpClient.GetFromJsonAsync<IEnumerable<AlertaConsumoResponseDto>>(url);
+                var alertas = await _httpClient
+                    .GetFromJsonAsync<ResultadoPaginado<AlertaConsumoResponseDto>>(url);
                 var resumen = await _httpClient.GetFromJsonAsync<ResumenAlertasDto>($"api/alertasconsumo/resumen?idProyecto={idProyecto}");
 
-                ViewBag.Alertas = alertas ?? new List<AlertaConsumoResponseDto>();
+                ViewBag.Alertas = alertas ?? ResultadoPaginado<AlertaConsumoResponseDto>.Ninguno(consulta);
                 ViewBag.Resumen = resumen ?? new ResumenAlertasDto();
 
                 return View();
@@ -68,7 +76,7 @@ namespace VH.Web.Controllers
                 TempData["Error"] = "Error al cargar las alertas";
 
                 // Asegurar que ViewBag tenga valores por defecto
-                ViewBag.Alertas = new List<AlertaConsumoResponseDto>();
+                ViewBag.Alertas = ResultadoPaginado<AlertaConsumoResponseDto>.Ninguno(consulta);
                 ViewBag.Resumen = new ResumenAlertasDto();
 
                 return View();

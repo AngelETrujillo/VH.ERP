@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Rol;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -12,6 +13,35 @@ namespace VH.Services.Services
         public RolService(RoleManager<Rol> roleManager)
         {
             _roleManager = roleManager;
+        }
+
+        public Task<ResultadoPaginado<RolResponseDto>> GetPaginadoAsync(ConsultaPaginada consulta)
+        {
+            var texto = consulta.TextoLimpio;
+            var query = _roleManager.Roles.AsQueryable();
+
+            if (texto != null)
+                query = query.Where(r =>
+                    (r.Name != null && r.Name.Contains(texto)) ||
+                    (r.Descripcion != null && r.Descripcion.Contains(texto)));
+
+            var total = query.Count();
+
+            var renglones = query
+                .OrderBy(r => r.Name)
+                .Skip(consulta.Salto).Take(consulta.Tamano)
+                .ToList()
+                .Select(r => new RolResponseDto(r.Id, r.Name!, r.Descripcion, r.Activo, r.FechaCreacion))
+                .ToList();
+
+            return Task.FromResult(new ResultadoPaginado<RolResponseDto>
+            {
+                Renglones = renglones,
+                Total = total,
+                Pagina = consulta.Pagina,
+                Tamano = consulta.Tamano,
+                Buscado = texto
+            });
         }
 
         public async Task<IEnumerable<RolResponseDto>> GetAllAsync()

@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VH.API.Filters;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -26,6 +27,13 @@ namespace VH.API.Controllers
         {
             var alertas = await _alertaService.GetAlertasAsync(filtros);
             return Ok(alertas);
+        }
+
+        [HttpGet("paginado")]
+        public async Task<IActionResult> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] FiltroAlertasDto filtros)
+        {
+            return Ok(await _alertaService.GetPaginadoAsync(consulta, filtros));
         }
 
         [HttpGet("{id}")]
