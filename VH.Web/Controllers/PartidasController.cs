@@ -28,9 +28,14 @@ namespace VH.Web.Controllers
         }
 
         // GET: /Partidas?idProyecto=1
-        public async Task<IActionResult> Index(int idProyecto)
+        public async Task<IActionResult> Index(
+            int idProyecto,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             try
             {
                 var proyectoResponse = await _httpClient.GetAsync($"api/proyectos/{idProyecto}");
@@ -45,17 +50,22 @@ namespace VH.Web.Controllers
                 ViewBag.ProyectoNombre = proyecto?.Nombre;
                 ViewBag.PresupuestoTotal = proyecto?.PresupuestoTotal;
 
-                var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas");
-                response.EnsureSuccessStatusCode();
-                var partidas = await response.Content.ReadFromJsonAsync<IEnumerable<ConceptoPartidaResponseDto>>();
+                var url = $"api/proyectos/{idProyecto}/partidas/paginado" +
+                          $"?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
 
-                return View(partidas);
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                var partidas = await response.Content
+                    .ReadFromJsonAsync<ResultadoPaginado<ConceptoPartidaResponseDto>>();
+
+                return View(partidas ?? ResultadoPaginado<ConceptoPartidaResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar partidas");
                 ViewBag.ErrorMessage = "Error al cargar las partidas";
-                return View(new List<ConceptoPartidaResponseDto>());
+                return View(ResultadoPaginado<ConceptoPartidaResponseDto>.Ninguno(consulta));
             }
         }
 

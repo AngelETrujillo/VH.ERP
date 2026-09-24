@@ -1,4 +1,9 @@
-﻿@model IEnumerable<VH.Services.DTOs.UnidadMedidaResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.UnidadMedidaResponseDto>
+@{
+    bool? filtroActivo = ViewBag.FiltroActivo;
+    ViewData["BuscarPlaceholder"] = "Buscar por nombre, abreviatura o descripción…";
+}
+
 @{
     ViewData["Title"] = "Unidades de Medida";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -39,18 +44,12 @@
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por nombre o abreviatura...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-7">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <span class="badge bg-secondary">@Model?.Count() registros</span>
+                <div class="col-lg-5 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total unidad(es)</span>
                 </div>
             </div>
         </div>
@@ -66,9 +65,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
                                 <tr>
                                     <td class="ps-4">
@@ -144,6 +143,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>
@@ -170,11 +171,15 @@
 
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
+        // Buscar y filtrar los hace el servidor. Queda sólo devolver el foco al
+        // campo, para corregir el texto sin volver a tomar el ratón.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
         });
     </script>
 }

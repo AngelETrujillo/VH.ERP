@@ -1,7 +1,8 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VH.API.Filters;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -38,6 +39,31 @@ namespace VH.API.Controllers
                 TotalEmpleados = p.Empleados?.Count ?? 0
             });
             return Ok(response);
+        }
+
+        [HttpGet("paginado")]
+        public async Task<IActionResult> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            var pagina = await _unitOfWork.Puestos.GetPaginadoAsync(
+                consulta,
+                filtro: x => (activo == null || x.Activo == activo) &&
+                             (texto == null || x.Nombre.Contains(texto) || x.Descripcion.Contains(texto)),
+                orden: q => q.OrderBy(x => x.Nombre),
+                includeProperties: "Empleados");
+
+            return Ok(pagina.Convertir(p => new PuestoResponseDto
+            {
+                IdPuesto = p.IdPuesto,
+                Nombre = p.Nombre,
+                Descripcion = p.Descripcion,
+                NivelRiesgoEPP = p.NivelRiesgoEPP,
+                NivelRiesgoTexto = p.NivelRiesgoEPP.ToString(),
+                Activo = p.Activo,
+                TotalEmpleados = p.Empleados?.Count ?? 0
+            }));
         }
 
         [HttpGet("{id}")]

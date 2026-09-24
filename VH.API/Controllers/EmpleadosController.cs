@@ -33,6 +33,14 @@ namespace VH.API.Controllers
         }
 
         // GET: api/empleados/5
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<EmpleadoResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            var pagina = await _empleadoService.GetPaginadoAsync(consulta, activo);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<EmpleadoResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<EmpleadoResponseDto>> GetById(int id)
         {

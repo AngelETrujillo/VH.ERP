@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,17 @@ namespace VH.Services.Services
         public MaterialService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<Material>> GetPaginadoAsync(
+            ConsultaPaginada consulta, TipoMaterial? tipo = null, bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.Materiales.GetPaginadoAsync(
+                consulta,
+                filtro: x => (activo == null || x.Activo == activo) && (tipo == null || x.TipoMaterial == tipo) && (texto == null || x.Nombre.Contains(texto) || x.Descripcion.Contains(texto)),
+                orden: q => q.OrderBy(x => x.Nombre), includeProperties: "UnidadMedida,Inventarios");
         }
 
         public async Task<IEnumerable<Material>> GetAllMaterialesAsync(TipoMaterial? tipo = null)

@@ -32,6 +32,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<MaterialResponseDto>>(materiales));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<MaterialResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] TipoMaterial? tipo = null, [FromQuery] bool? activo = null)
+        {
+            var pagina = await _materialService.GetPaginadoAsync(consulta, tipo, activo);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<MaterialResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<MaterialResponseDto>> GetById(int id)
         {

@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -10,6 +11,17 @@ namespace VH.Services.Services
         public EmpleadoService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<Empleado>> GetPaginadoAsync(
+            ConsultaPaginada consulta, bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.Empleados.GetPaginadoAsync(
+                consulta,
+                filtro: x => (activo == null || x.Activo == activo) && (texto == null || x.Nombre.Contains(texto) || x.ApellidoPaterno.Contains(texto) || x.ApellidoMaterno.Contains(texto) || x.NumeroNomina.Contains(texto) || x.Puesto.Contains(texto) || (x.Proyecto != null && x.Proyecto.Nombre.Contains(texto))),
+                orden: q => q.OrderBy(x => x.ApellidoPaterno).ThenBy(x => x.Nombre), includeProperties: "Proyecto");
         }
 
         public async Task<IEnumerable<Empleado>> GetAllEmpleadosAsync()

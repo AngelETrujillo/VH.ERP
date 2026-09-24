@@ -31,6 +31,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<UnidadMedidaResponseDto>>(unidades));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<UnidadMedidaResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta)
+        {
+            var pagina = await _unidadMedidaService.GetPaginadoAsync(consulta);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<UnidadMedidaResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<UnidadMedidaResponseDto>> GetById(int id)
         {

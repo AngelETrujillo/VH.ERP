@@ -28,24 +28,33 @@ namespace VH.Web.Controllers
         }
 
         // GET: Materiales
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/materiales");
+                var url = $"api/materiales/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
-                return View(materiales);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<MaterialResponseDto>>();
+                return View(pag ?? ResultadoPaginado<MaterialResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar materiales");
                 ViewBag.ErrorMessage = "Error al cargar los materiales";
-                return View(new List<MaterialResponseDto>());
+                return View(ResultadoPaginado<MaterialResponseDto>.Ninguno(consulta));
             }
         }
 

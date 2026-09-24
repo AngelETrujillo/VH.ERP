@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,17 @@ namespace VH.Services.Services
         public AlmacenService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<Almacen>> GetPaginadoAsync(
+            ConsultaPaginada consulta, bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.Almacenes.GetPaginadoAsync(
+                consulta,
+                filtro: x => (activo == null || x.Activo == activo) && (texto == null || x.Nombre.Contains(texto) || x.Descripcion.Contains(texto) || x.Domicilio.Contains(texto) || (x.Proyecto != null && x.Proyecto.Nombre.Contains(texto))),
+                orden: q => q.OrderBy(x => x.Nombre), includeProperties: "Proyecto");
         }
 
         public async Task<IEnumerable<Almacen>> GetAllAlmacenesAsync()

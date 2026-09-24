@@ -48,24 +48,33 @@ namespace VH.Web.Controllers
         }
 
         // GET: Empleado
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/empleados");
+                var url = $"api/empleados/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var empleados = await response.Content.ReadFromJsonAsync<IEnumerable<EmpleadoResponseDto>>();
-                return View(empleados);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<EmpleadoResponseDto>>();
+                return View(pag ?? ResultadoPaginado<EmpleadoResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar empleados");
                 ViewBag.ErrorMessage = "Error al cargar los empleados";
-                return View(new List<EmpleadoResponseDto>());
+                return View(ResultadoPaginado<EmpleadoResponseDto>.Ninguno(consulta));
             }
         }
 

@@ -28,24 +28,33 @@ namespace VH.Web.Controllers
         }
 
         // GET: Almacenes
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/almacenes");
+                var url = $"api/almacenes/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var almacenes = await response.Content.ReadFromJsonAsync<IEnumerable<AlmacenResponseDto>>();
-                return View(almacenes);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<AlmacenResponseDto>>();
+                return View(pag ?? ResultadoPaginado<AlmacenResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar almacenes");
                 ViewBag.ErrorMessage = "Error al cargar los almacenes";
-                return View(new List<AlmacenResponseDto>());
+                return View(ResultadoPaginado<AlmacenResponseDto>.Ninguno(consulta));
             }
         }
 
