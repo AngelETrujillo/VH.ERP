@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using VH.Services.DTOs;
@@ -25,21 +25,30 @@ namespace VH.Web.Controllers
         }
 
         // GET: Kardex?idMaterial=1&idAlmacen=1
-        public async Task<IActionResult> Index(int? idMaterial, int? idAlmacen, DateTime? desde, DateTime? hasta)
+        public async Task<IActionResult> Index(
+            int? idMaterial, int? idAlmacen, DateTime? desde, DateTime? hasta,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool ascendente = false)
         {
             await CargarListasEnViewBag();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
 
             ViewBag.IdMaterial = idMaterial;
             ViewBag.IdAlmacen = idAlmacen;
             ViewBag.Desde = desde;
             ViewBag.Hasta = hasta;
+            ViewBag.Ascendente = ascendente;
 
             if (!idMaterial.HasValue || !idAlmacen.HasValue)
-                return View(new List<MovimientoInventarioResponseDto>());
+                return View(KardexDto.Vacio(consulta));
 
             try
             {
-                var url = $"api/kardex?idMaterial={idMaterial}&idAlmacen={idAlmacen}";
+                var url = $"api/kardex/paginado?idMaterial={idMaterial}&idAlmacen={idAlmacen}" +
+                          $"&pagina={consulta.Pagina}&tamano={consulta.Tamano}&ascendente={ascendente.ToString().ToLowerInvariant()}";
+
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
                 if (desde.HasValue) url += $"&desde={desde.Value:yyyy-MM-dd}";
                 if (hasta.HasValue) url += $"&hasta={hasta.Value:yyyy-MM-dd}T23:59:59";
 
@@ -48,15 +57,15 @@ namespace VH.Web.Controllers
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var movimientos = await response.Content.ReadFromJsonAsync<List<MovimientoInventarioResponseDto>>();
+                var kardex = await response.Content.ReadFromJsonAsync<KardexDto>();
 
-                return View(movimientos ?? new List<MovimientoInventarioResponseDto>());
+                return View(kardex ?? KardexDto.Vacio(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar el kardex");
                 ViewBag.ErrorMessage = "Error al cargar el kardex";
-                return View(new List<MovimientoInventarioResponseDto>());
+                return View(KardexDto.Vacio(consulta));
             }
         }
 

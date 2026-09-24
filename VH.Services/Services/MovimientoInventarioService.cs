@@ -1,3 +1,4 @@
+﻿using AutoMapper;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -8,9 +9,14 @@ namespace VH.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public MovimientoInventarioService(IUnitOfWork unitOfWork)
+        // El kardex arma su propio DTO porque la pantalla necesita la página y los
+        // totales juntos, y los totales no se pueden deducir de la página.
+        private readonly IMapper _mapper;
+
+        public MovimientoInventarioService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<MovimientoInventario> RegistrarAsync(
@@ -104,6 +110,61 @@ namespace VH.Services.Services
                 .OrderBy(m => m.Fecha)
                 .ThenBy(m => m.IdMovimiento)
                 .ToList();
+        }
+
+        public async Task<KardexDto> GetKardexPaginadoAsync(
+            ConsultaPaginada consulta, int idMaterial, int idAlmacen,
+            DateTime? desde = null, DateTime? hasta = null, bool ascendente = false)
+        {
+            var texto = consulta.TextoLimpio;
+
+            // El filtro se arma una vez y se usa para la página y para los totales,
+            // porque los dos tienen que hablar del mismo periodo.
+            System.Linq.Expressions.Expression<Func<MovimientoInventario, bool>> filtro =
+                m => m.IdMaterial == idMaterial
+                     && m.IdAlmacen == idAlmacen
+                     && (!desde.HasValue || m.Fecha >= desde.Value)
+                     && (!hasta.HasValue || m.Fecha <= hasta.Value)
+                     && (texto == null ||
+                         (m.DocumentoFolio != null && m.DocumentoFolio.Contains(texto)) ||
+                         (m.DocumentoTipo != null && m.DocumentoTipo.Contains(texto)) ||
+                         (m.Observaciones != null && m.Observaciones.Contains(texto)) ||
+                         (m.Usuario != null && (m.Usuario.Nombre.Contains(texto) ||
+                                                m.Usuario.ApellidoPaterno.Contains(texto))));
+
+            var pagina = await _unitOfWork.MovimientosInventario.GetPaginadoAsync(
+                consulta,
+                filtro: filtro,
+                orden: q => ascendente
+                    ? q.OrderBy(m => m.Fecha).ThenBy(m => m.IdMovimiento)
+                    : q.OrderByDescending(m => m.Fecha).ThenByDescending(m => m.IdMovimiento),
+                includeProperties: "Material.UnidadMedida,Almacen,Usuario");
+
+            // Los totales del periodo salen de todos los movimientos que lo componen,
+            // no de los que caben en la página. Las reservas quedan fuera: apartan,
+            // no mueven el anaquel. La condición va escrita y no por AfectaExistencia,
+            // que es una propiedad calculada y no se puede traducir a SQL.
+            var delPeriodo = (await _unitOfWork.MovimientosInventario.FindAsync(filtro))
+                .Where(m => m.Tipo != TipoMovimientoInventario.Reserva &&
+                            m.Tipo != TipoMovimientoInventario.LiberacionReserva)
+                .ToList();
+
+            var inventario = (await _unitOfWork.Inventarios.FindAsync(
+                i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen)).FirstOrDefault();
+
+            var primero = pagina.Renglones.FirstOrDefault();
+
+            return new KardexDto
+            {
+                Movimientos = pagina.ConLos(_mapper.Map<IEnumerable<MovimientoInventarioResponseDto>>(pagina.Renglones)),
+                ExistenciaActual = inventario?.Existencia ?? 0m,
+                Apartado = inventario?.Comprometido ?? 0m,
+                Entradas = delPeriodo.Where(m => m.Cantidad > 0).Sum(m => m.Cantidad),
+                Salidas = delPeriodo.Where(m => m.Cantidad < 0).Sum(m => Math.Abs(m.Cantidad)),
+                NombreMaterial = primero?.Material?.Nombre ?? string.Empty,
+                NombreAlmacen = primero?.Almacen?.Nombre ?? string.Empty,
+                UnidadMedida = primero?.Material?.UnidadMedida?.Abreviatura ?? string.Empty
+            };
         }
 
         public async Task<decimal> GetSaldoAFechaAsync(int idMaterial, int idAlmacen, DateTime fecha)

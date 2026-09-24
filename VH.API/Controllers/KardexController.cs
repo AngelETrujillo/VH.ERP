@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -51,6 +51,26 @@ namespace VH.API.Controllers
 
         // GET: api/kardex/saldo?idMaterial=1&idAlmacen=1&fecha=2026-06-30
         // La existencia que había en una fecha pasada, reconstruida del kardex.
+        /// <summary>
+        /// Una página del kardex más los totales del periodo. Los totales no pueden
+        /// salir de la página: serían los de la página, no los del periodo.
+        /// </summary>
+        [HttpGet("paginado")]
+        public async Task<ActionResult<KardexDto>> GetKardexPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] int idMaterial,
+            [FromQuery] int idAlmacen,
+            [FromQuery] DateTime? desde = null,
+            [FromQuery] DateTime? hasta = null,
+            [FromQuery] bool ascendente = false)
+        {
+            if (idMaterial <= 0 || idAlmacen <= 0)
+                return BadRequest(new { message = "Indique material y almacén." });
+
+            return Ok(await _movimientoService.GetKardexPaginadoAsync(
+                consulta, idMaterial, idAlmacen, desde, hasta, ascendente));
+        }
+
         [HttpGet("saldo")]
         public async Task<ActionResult<decimal>> GetSaldoAFecha(
             [FromQuery] int idMaterial,

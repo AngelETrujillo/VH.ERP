@@ -1,4 +1,4 @@
-using VH.Services.DTOs;
+﻿using VH.Services.DTOs;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -32,6 +32,23 @@ namespace VH.Services.Interfaces
             int? documentoId = null,
             string? documentoFolio = null,
             string? observaciones = null);
+
+        /// <summary>
+        /// Una página del kardex con los totales del periodo.
+        ///
+        /// El saldo no hace falta arrastrarlo entre páginas: cada movimiento guarda
+        /// el suyo desde que se registró, así que un renglón dice cuánto había
+        /// después de él sin depender del anterior. Eso también permite leerlo del
+        /// más reciente al más viejo sin que la columna pierda sentido.
+        /// </summary>
+        /// <param name="ascendente">
+        /// Verdadero para leerlo como un kardex de papel, del movimiento más viejo
+        /// al más nuevo. Por omisión va al revés, porque lo que se consulta en
+        /// pantalla casi siempre es lo último que pasó.
+        /// </param>
+        Task<KardexDto> GetKardexPaginadoAsync(
+            ConsultaPaginada consulta, int idMaterial, int idAlmacen,
+            DateTime? desde = null, DateTime? hasta = null, bool ascendente = false);
 
         /// <summary>Kardex de un material en un almacén, con su saldo corrido.</summary>
         Task<IEnumerable<MovimientoInventario>> GetKardexAsync(

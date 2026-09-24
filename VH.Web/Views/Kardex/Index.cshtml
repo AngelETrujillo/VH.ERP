@@ -1,8 +1,9 @@
-﻿@model IEnumerable<VH.Services.DTOs.MovimientoInventarioResponseDto>
+﻿@model VH.Services.DTOs.KardexDto
 @{
     ViewData["Title"] = "Kardex de Almacén";
 
-    var movimientos = Model?.ToList() ?? new List<VH.Services.DTOs.MovimientoInventarioResponseDto>();
+    var pagina = Model.Movimientos;
+    var movimientos = pagina.Renglones;
     var materiales = ViewBag.Materiales as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
     var almacenes = ViewBag.Almacenes as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
 
@@ -10,22 +11,36 @@
     int? idAlmacen = ViewBag.IdAlmacen;
     DateTime? desde = ViewBag.Desde;
     DateTime? hasta = ViewBag.Hasta;
+    bool ascendente = ViewBag.Ascendente ?? false;
 
     var haySeleccion = idMaterial.HasValue && idAlmacen.HasValue;
 
-    var nombreMaterial = movimientos.FirstOrDefault()?.NombreMaterial
-        ?? materiales.FirstOrDefault(m => m.Value == idMaterial?.ToString())?.Text
-        ?? "";
-    var nombreAlmacen = movimientos.FirstOrDefault()?.NombreAlmacen
-        ?? almacenes.FirstOrDefault(a => a.Value == idAlmacen?.ToString())?.Text
-        ?? "";
+    var nombreMaterial = !string.IsNullOrEmpty(Model.NombreMaterial)
+        ? Model.NombreMaterial
+        : materiales.FirstOrDefault(m => m.Value == idMaterial?.ToString())?.Text ?? "";
+    var nombreAlmacen = !string.IsNullOrEmpty(Model.NombreAlmacen)
+        ? Model.NombreAlmacen
+        : almacenes.FirstOrDefault(a => a.Value == idAlmacen?.ToString())?.Text ?? "";
 
-    // El saldo final es el del último renglón que movió existencia.
-    var ultimoConSaldo = movimientos.LastOrDefault(m => m.AfectaExistencia);
-    var saldoFinal = ultimoConSaldo?.SaldoResultante ?? 0m;
+    // Los tres totales vienen del servidor. Antes se deducían de los renglones que
+    // la vista tenía a la mano, lo cual dejó de ser correcto al paginar: habrían
+    // pasado a describir la página en vez del periodo.
+    var saldoFinal = Model.ExistenciaActual;
+    var entradas = Model.Entradas;
+    var salidas = Model.Salidas;
 
-    var entradas = movimientos.Where(m => m.AfectaExistencia && m.Cantidad > 0).Sum(m => m.Cantidad);
-    var salidas = movimientos.Where(m => m.AfectaExistencia && m.Cantidad < 0).Sum(m => Math.Abs(m.Cantidad));
+    // Los filtros del kardex acompañan a cada liga del paginador y a la búsqueda.
+    var filtrosKardex = new Dictionary<string, string?>
+    {
+        ["idMaterial"] = idMaterial?.ToString(),
+        ["idAlmacen"]  = idAlmacen?.ToString(),
+        ["desde"]      = desde?.ToString("yyyy-MM-dd"),
+        ["hasta"]      = hasta?.ToString("yyyy-MM-dd"),
+        ["ascendente"] = ascendente ? "true" : null
+    };
+    ViewData["FiltrosPaginador"] = filtrosKardex;
+    ViewData["FiltrosOcultos"] = filtrosKardex;
+    ViewData["BuscarPlaceholder"] = "Buscar por documento, folio, motivo o quién lo movió…";
 }
 
 <div class="container-fluid">
@@ -52,6 +67,14 @@
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
+                @* Cambiar de material o de fechas arranca en la página 1, pero
+                   conserva el tamaño y el sentido de lectura elegidos. *@
+                <input type="hidden" name="tamano" value="@pagina.Tamano" />
+                @if (ascendente)
+                {
+                    <input type="hidden" name="ascendente" value="true" />
+                }
+
                 <div class="col-md-4">
                     <label class="form-label small text-muted fw-semibold">MATERIAL</label>
                     <select name="idMaterial" class="form-select" required>
@@ -158,9 +181,26 @@
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold">Movimientos</h6>
-                <span class="badge bg-secondary">@movimientos.Count movimientos</span>
+            <div class="card-header bg-white py-3">
+                <div class="row align-items-center g-2">
+                    <div class="col-lg-7">
+                        @await Html.PartialAsync("_BarraBusqueda", pagina)
+                    </div>
+                    <div class="col-lg-5 text-lg-end">
+                        @{
+                            var ligaOrden = $"?idMaterial={idMaterial}&idAlmacen={idAlmacen}&tamano={pagina.Tamano}" +
+                                            (pagina.Buscado != null ? $"&buscar={Uri.EscapeDataString(pagina.Buscado)}" : "") +
+                                            (desde.HasValue ? $"&desde={desde:yyyy-MM-dd}" : "") +
+                                            (hasta.HasValue ? $"&hasta={hasta:yyyy-MM-dd}" : "") +
+                                            (ascendente ? "" : "&ascendente=true");
+                        }
+                        <a href="@ligaOrden" class="btn btn-sm btn-outline-secondary me-2"
+                           title="@(ascendente ? "Ver primero lo más reciente" : "Leerlo como kardex de papel, del más viejo al más nuevo")">
+                            <i class="bi bi-arrow-down-up me-1"></i>@(ascendente ? "Más reciente primero" : "Del más viejo al más nuevo")
+                        </a>
+                        <span class="badge bg-secondary">@pagina.Total movimiento(s)</span>
+                    </div>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -178,7 +218,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (movimientos.Any())
+                            @if (!pagina.Vacio)
                             {
                                 @foreach (var m in movimientos)
                                 {
@@ -237,13 +277,22 @@
                             {
                                 <tr>
                                     <td colspan="8" class="text-center py-5 text-muted">
-                                        Este material no tiene movimientos en ese almacén dentro del periodo.
+                                        @if (pagina.Buscado != null)
+                                        {
+                                            <span>Ningún movimiento coincide con «@pagina.Buscado» en este periodo.</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Este material no tiene movimientos en ese almacén dentro del periodo.</span>
+                                        }
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
+
+                @await Html.PartialAsync("_Paginador", pagina)
             </div>
         </div>
 
