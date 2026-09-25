@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/PartidasController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 
@@ -8,6 +10,8 @@ namespace VH.API.Controllers
 {
     [Route("api/proyectos/{idProyecto}/partidas")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("PROYECTOS")]
     public class PartidasController : ControllerBase
     {
         private readonly IConceptoPartidaService _partidaService;
@@ -27,6 +31,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<ConceptoPartidaResponseDto>>(partidas));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<ConceptoPartidaResponseDto>>> GetPaginado(
+            int idProyecto, [FromQuery] ConsultaPaginada consulta)
+        {
+            var pagina = await _partidaService.GetPaginadoAsync(consulta, idProyecto);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<ConceptoPartidaResponseDto>>(pagina.Renglones)));
+        }
+
         // GET: api/proyectos/1/partidas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ConceptoPartidaResponseDto>> GetById(int idProyecto, int id)
@@ -38,6 +50,7 @@ namespace VH.API.Controllers
 
         // POST: api/proyectos/1/partidas
         [HttpPost]
+        [RequierePermisoApi("PROYECTOS", "crear")]
         public async Task<ActionResult<ConceptoPartidaResponseDto>> Create(int idProyecto, [FromBody] ConceptoPartidaRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -52,6 +65,7 @@ namespace VH.API.Controllers
 
         // PUT: api/proyectos/1/partidas/5
         [HttpPut("{id}")]
+        [RequierePermisoApi("PROYECTOS", "editar")]
         public async Task<IActionResult> Update(int idProyecto, int id, [FromBody] ConceptoPartidaRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -66,6 +80,7 @@ namespace VH.API.Controllers
 
         // DELETE: api/proyectos/1/partidas/5
         [HttpDelete("{id}")]
+        [RequierePermisoApi("PROYECTOS", "eliminar")]
         public async Task<IActionResult> Delete(int idProyecto, int id)
         {
             var result = await _partidaService.DeletePartidaAsync(id);

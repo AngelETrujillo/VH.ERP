@@ -1,4 +1,5 @@
-﻿using VH.Services.DTOs.Analytics;
+﻿using VH.Services.DTOs;
+using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
 
@@ -23,21 +24,28 @@ namespace VH.Services.Services
             var alertas = new List<AlertaConsumo>();
 
             // Obtener el material desde la compra
-            var compra = await _unitOfWork.ComprasEPP.GetByIdAsync(entrega.IdCompra, "Material");
+            var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, "Material");
             if (compra == null) return alertas;
 
             var idMaterial = compra.IdMaterial;
 
+            // Las tres reglas -pidió antes de tiempo, pidió de más, pidió muy
+            // seguido- hablan del consumo de una persona. Lo que se carga a la obra
+            // no tiene de quién sospechar.
+            if (!entrega.IdEmpleado.HasValue) return alertas;
+
+            var idEmpleado = entrega.IdEmpleado.Value;
+
             // 1. Evaluar solicitud prematura
-            var alertaPrematura = await EvaluarSolicitudPrematuraAsync(entrega.IdEmpleado, idMaterial, entrega.IdEntrega);
+            var alertaPrematura = await EvaluarSolicitudPrematuraAsync(idEmpleado, idMaterial, entrega.IdEntrega);
             if (alertaPrematura != null) alertas.Add(alertaPrematura);
 
             // 2. Evaluar exceso de cantidad
-            var alertaCantidad = await EvaluarExcesoCantidadAsync(entrega.IdEmpleado, idMaterial, entrega.CantidadEntregada, entrega.IdEntrega);
+            var alertaCantidad = await EvaluarExcesoCantidadAsync(idEmpleado, idMaterial, entrega.CantidadEntregada, entrega.IdEntrega);
             if (alertaCantidad != null) alertas.Add(alertaCantidad);
 
             // 3. Evaluar frecuencia mensual
-            var alertaFrecuencia = await EvaluarExcesoFrecuenciaAsync(entrega.IdEmpleado, idMaterial);
+            var alertaFrecuencia = await EvaluarExcesoFrecuenciaAsync(idEmpleado, idMaterial);
             if (alertaFrecuencia != null) alertas.Add(alertaFrecuencia);
 
             return alertas;
@@ -53,9 +61,13 @@ namespace VH.Services.Services
 
             foreach (var detalle in detalles)
             {
-                // Evaluar cada material solicitado
+                // El destino vive en el renglón: cada uno puede ir a una persona
+                // distinta. Lo que se carga a la obra no se evalúa, porque el
+                // consumo prematuro se mide contra el historial de una persona.
+                if (!detalle.IdEmpleadoDestino.HasValue) continue;
+
                 var alertaPrematura = await EvaluarSolicitudPrematuraAsync(
-                    requisicion.IdEmpleadoRecibe,
+                    detalle.IdEmpleadoDestino.Value,
                     detalle.IdMaterial,
                     idRequisicion: requisicion.IdRequisicion);
 
@@ -71,13 +83,20 @@ namespace VH.Services.Services
             var config = await GetConfiguracionMaterialAsync(idMaterial);
             if (config == null) return null; // Sin configuración, no evaluar
 
+            // La vida útil se lee del catálogo, que es donde vive. Sin ella no hay
+            // contra qué comparar: "pidió antes de tiempo" exige saber cuánto se
+            // supone que dura.
+            var materialConfig = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
+            var vidaUtilDias = materialConfig?.VidaUtilDiasDefault ?? 0;
+            if (vidaUtilDias <= 0) return null;
+
             // Obtener última entrega del mismo material al mismo empleado
             var todasEntregasEmpleado = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
-                "Compra");
+                "CompraDetalle");
 
             var entregasAnteriores = todasEntregasEmpleado
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var ultimaEntrega = entregasAnteriores
                 .Where(e => idEntrega == null || e.IdEntrega != idEntrega)
@@ -88,23 +107,23 @@ namespace VH.Services.Services
 
             // Calcular días transcurridos
             var diasTranscurridos = (int)(DateTime.Now - ultimaEntrega.FechaEntrega).TotalDays;
-            var umbralDias = (int)(config.VidaUtilDias * config.UmbralAlertaPorcentaje / 100.0);
+            var umbralDias = (int)(vidaUtilDias * config.UmbralAlertaPorcentaje / 100.0);
 
             if (diasTranscurridos >= umbralDias) return null; // Dentro del rango normal
 
             // Calcular desviación
-            var desviacion = ((config.VidaUtilDias - diasTranscurridos) / (decimal)config.VidaUtilDias) * 100;
+            var desviacion = ((vidaUtilDias - diasTranscurridos) / (decimal)vidaUtilDias) * 100;
 
             // Determinar severidad
-            var severidad = diasTranscurridos < (config.VidaUtilDias * 0.3m)
+            var severidad = diasTranscurridos < (vidaUtilDias * 0.3m)
                 ? SeveridadAlerta.Critica
-                : diasTranscurridos < (config.VidaUtilDias * 0.5m)
+                : diasTranscurridos < (vidaUtilDias * 0.5m)
                     ? SeveridadAlerta.Alta
                     : SeveridadAlerta.Media;
 
             // Obtener datos del empleado y material
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             // Calcular costo estimado
             var costoEstimado = material?.CostoUnitarioEstimado ?? 0;
@@ -119,9 +138,9 @@ namespace VH.Services.Services
                 IdEntrega = idEntrega,
                 IdRequisicion = idRequisicion,
                 Descripcion = $"Solicitud prematura de {material?.Nombre ?? "material"}. " +
-                              $"Vida útil esperada: {config.VidaUtilDias} días. " +
+                              $"Vida útil esperada: {vidaUtilDias} días. " +
                               $"Días desde última entrega: {diasTranscurridos}.",
-                ValorEsperado = $"{config.VidaUtilDias} días",
+                ValorEsperado = $"{vidaUtilDias} días",
                 ValorReal = $"{diasTranscurridos} días",
                 Desviacion = desviacion,
                 CostoEstimado = costoEstimado,
@@ -143,7 +162,7 @@ namespace VH.Services.Services
             if (cantidad <= config.CantidadMaximaPorEntrega) return null;
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((cantidad - config.CantidadMaximaPorEntrega.Value) / config.CantidadMaximaPorEntrega.Value) * 100;
             var costoExceso = (cantidad - config.CantidadMaximaPorEntrega.Value) * (material?.CostoUnitarioEstimado ?? 0);
@@ -181,10 +200,10 @@ namespace VH.Services.Services
             var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             var todasEntregasMes = await _unitOfWork.EntregasEPP.FindAsync(
             e => e.IdEmpleado == idEmpleado && e.FechaEntrega >= inicioMes,
-            "Compra");
+            "CompraDetalle");
 
             var entregasMes = todasEntregasMes
-                .Where(e => e.Compra != null && e.Compra.IdMaterial == idMaterial);
+                .Where(e => e.CompraDetalle != null && e.CompraDetalle.IdMaterial == idMaterial);
 
             var totalMes = entregasMes.Sum(e => e.CantidadEntregada);
 
@@ -200,7 +219,7 @@ namespace VH.Services.Services
             if (alertaExistente.Any()) return null; // Ya se generó alerta este mes
 
             var empleado = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado, "Proyecto");
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(idMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
 
             var desviacion = ((totalMes - config.CantidadMaximaMensual.Value) / config.CantidadMaximaMensual.Value) * 100;
 
@@ -230,6 +249,35 @@ namespace VH.Services.Services
         #endregion
 
         #region Consultas
+
+        public async Task<ResultadoPaginado<AlertaConsumoResponseDto>> GetPaginadoAsync(
+            ConsultaPaginada consulta, FiltroAlertasDto filtros)
+        {
+            var texto = consulta.TextoLimpio;
+
+            var pagina = await _unitOfWork.AlertasConsumo.GetPaginadoAsync(
+                consulta,
+                filtro: a =>
+                    (!filtros.FechaDesde.HasValue || a.FechaGeneracion >= filtros.FechaDesde) &&
+                    (!filtros.FechaHasta.HasValue || a.FechaGeneracion <= filtros.FechaHasta) &&
+                    (!filtros.IdProyecto.HasValue || a.IdProyecto == filtros.IdProyecto) &&
+                    (!filtros.IdEmpleado.HasValue || a.IdEmpleado == filtros.IdEmpleado) &&
+                    (!filtros.IdMaterial.HasValue || a.IdMaterial == filtros.IdMaterial) &&
+                    (!filtros.TipoAlerta.HasValue || a.TipoAlerta == filtros.TipoAlerta) &&
+                    (!filtros.Severidad.HasValue || a.Severidad == filtros.Severidad) &&
+                    (!filtros.Estado.HasValue || a.EstadoAlerta == filtros.Estado) &&
+                    (!filtros.SoloPendientes || a.EstadoAlerta == EstadoAlerta.Pendiente) &&
+                    (!filtros.SoloCriticas || a.Severidad == SeveridadAlerta.Critica) &&
+                    (texto == null ||
+                     (a.Material != null && a.Material.Nombre.Contains(texto)) ||
+                     (a.Empleado != null && (a.Empleado.Nombre.Contains(texto) ||
+                                             a.Empleado.ApellidoPaterno.Contains(texto) ||
+                                             a.Empleado.NumeroNomina.Contains(texto)))),
+                orden: q => q.OrderByDescending(a => a.FechaGeneracion).ThenByDescending(a => a.IdAlerta),
+                includeProperties: "Empleado.Proyecto,Material,UsuarioReviso");
+
+            return pagina.Convertir(MapToResponseDto);
+        }
 
         public async Task<IEnumerable<AlertaConsumoResponseDto>> GetAlertasAsync(FiltroAlertasDto filtros)
         {
@@ -350,15 +398,32 @@ namespace VH.Services.Services
 
         public async Task<ConfiguracionMaterialEPP> GuardarConfiguracionMaterialAsync(ConfiguracionMaterialRequestDto dto)
         {
+            // Vida útil, frecuencia y solicitud prematura describen el desgaste de un
+            // equipo de protección asignado a una persona. Sobre un consumible o una
+            // herramienta no significan nada, y generarían alertas sin sentido.
+            var material = await _unitOfWork.Materiales.GetByIdAsync(dto.IdMaterial);
+            if (material == null)
+                throw new ArgumentException($"El material con ID {dto.IdMaterial} no existe.");
+
+            if (material.TipoMaterial != TipoMaterial.EPP)
+                throw new InvalidOperationException(
+                    $"'{material.Nombre}' es {material.TipoMaterial.ToString().ToLowerInvariant()}, " +
+                    "y el control de consumo sólo aplica a equipo de protección personal.");
+
+            // La vida útil y el "vuelve o no vuelve" son del material, no de esta
+            // configuración: la pantalla los sigue editando aquí, pero se guardan
+            // en el catálogo, que es donde los lee el resto del sistema.
+            material.VidaUtilDiasDefault = dto.VidaUtilDias > 0 ? dto.VidaUtilDias : null;
+            material.EsRetornable = dto.RequiereDevolucion;
+            _unitOfWork.Materiales.Update(material);
+
             var existente = await GetConfiguracionMaterialAsync(dto.IdMaterial);
 
             if (existente != null)
             {
-                existente.VidaUtilDias = dto.VidaUtilDias;
                 existente.FrecuenciaMinimaDias = dto.FrecuenciaMinimaDias;
                 existente.CantidadMaximaMensual = dto.CantidadMaximaMensual;
                 existente.CantidadMaximaPorEntrega = dto.CantidadMaximaPorEntrega;
-                existente.RequiereDevolucion = dto.RequiereDevolucion;
                 existente.UmbralAlertaPorcentaje = dto.UmbralAlertaPorcentaje;
 
                 _unitOfWork.ConfiguracionesMaterialEPP.Update(existente);
@@ -369,11 +434,9 @@ namespace VH.Services.Services
             var nueva = new ConfiguracionMaterialEPP
             {
                 IdMaterial = dto.IdMaterial,
-                VidaUtilDias = dto.VidaUtilDias,
                 FrecuenciaMinimaDias = dto.FrecuenciaMinimaDias,
                 CantidadMaximaMensual = dto.CantidadMaximaMensual,
                 CantidadMaximaPorEntrega = dto.CantidadMaximaPorEntrega,
-                RequiereDevolucion = dto.RequiereDevolucion,
                 UmbralAlertaPorcentaje = dto.UmbralAlertaPorcentaje,
                 Activo = true
             };
@@ -395,11 +458,11 @@ namespace VH.Services.Services
                 IdMaterial = c.IdMaterial,
                 NombreMaterial = c.Material?.Nombre ?? "",
                 UnidadMedida = c.Material?.UnidadMedida?.Abreviatura ?? "",
-                VidaUtilDias = c.VidaUtilDias,
+                VidaUtilDias = c.Material?.VidaUtilDiasDefault ?? 0,
                 FrecuenciaMinimaDias = c.FrecuenciaMinimaDias,
                 CantidadMaximaMensual = c.CantidadMaximaMensual,
                 CantidadMaximaPorEntrega = c.CantidadMaximaPorEntrega,
-                RequiereDevolucion = c.RequiereDevolucion,
+                RequiereDevolucion = c.Material?.EsRetornable ?? false,
                 UmbralAlertaPorcentaje = c.UmbralAlertaPorcentaje,
                 Activo = c.Activo
             });

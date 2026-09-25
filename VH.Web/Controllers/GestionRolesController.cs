@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Rol;
 
 namespace VH.Web.Controllers
@@ -22,22 +23,29 @@ namespace VH.Web.Controllers
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/Roles");
+                var url = $"api/Roles/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
-                var roles = await response.Content.ReadFromJsonAsync<IEnumerable<RolResponseDto>>();
-                return View(roles);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<RolResponseDto>>();
+                return View(pag ?? ResultadoPaginado<RolResponseDto>.Ninguno(consulta));
             }
             catch
             {
                 ViewBag.Error = "Error al cargar roles";
-                return View(new List<RolResponseDto>());
+                return View(ResultadoPaginado<RolResponseDto>.Ninguno(consulta));
             }
         }
 

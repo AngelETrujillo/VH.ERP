@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+Ôªøusing Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 using VH.Web.Filters;
@@ -23,8 +24,8 @@ namespace VH.Web.Controllers
         private void SetAuthHeader()
         {
             var token = HttpContext.Session.GetString("JwtToken");
-            _logger.LogWarning("=== DEBUG: Token en sesiÛn = {Token}",
-                string.IsNullOrEmpty(token) ? "NULL/VACÕO" : token.Substring(0, Math.Min(50, token.Length)) + "...");
+            _logger.LogWarning("=== DEBUG: Token en sesi√≥n = {Token}",
+                string.IsNullOrEmpty(token) ? "NULL/VAC√çO" : token.Substring(0, Math.Min(50, token.Length)) + "...");
 
             if (!string.IsNullOrEmpty(token))
             {
@@ -81,40 +82,44 @@ namespace VH.Web.Controllers
         //    catch (Exception ex)
         //    {
         //        _logger.LogError(ex, "Error al cargar puestos");
-        //        TempData["Error"] = $"ExcepciÛn: {ex.Message}";
+        //        TempData["Error"] = $"Excepci√≥n: {ex.Message}";
         //        return View(new List<PuestoResponseDto>());
         //    }
         //}
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             try
             {
-                // LOG TEMPORAL - Ver URL base
-                _logger.LogWarning("=== DEBUG: BaseAddress = {Base}", _httpClient.BaseAddress);
+                var url = $"api/puestos/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
 
-                var response = await _httpClient.GetAsync("api/puestos");
-                var content = await response.Content.ReadAsStringAsync();
-
-                _logger.LogWarning("=== DEBUG: Status = {Status}", response.StatusCode);
-                _logger.LogWarning("=== DEBUG: Content (primeros 500 chars) = {Content}",
-                    content.Length > 500 ? content.Substring(0, 500) : content);
+                var response = await _httpClient.GetAsync(url);
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
 
                 if (!response.IsSuccessStatusCode)
                 {
                     TempData["Error"] = $"API Error: {response.StatusCode}";
-                    return View(new List<PuestoResponseDto>());
+                    return View(ResultadoPaginado<PuestoResponseDto>.Ninguno(consulta));
                 }
 
-                var puestos = await response.Content.ReadFromJsonAsync<IEnumerable<PuestoResponseDto>>();
-                return View(puestos ?? new List<PuestoResponseDto>());
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<PuestoResponseDto>>();
+                return View(pag ?? ResultadoPaginado<PuestoResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar puestos");
                 TempData["Error"] = ex.Message;
-                return View(new List<PuestoResponseDto>());
+                return View(ResultadoPaginado<PuestoResponseDto>.Ninguno(consulta));
             }
         }
 
@@ -145,7 +150,7 @@ namespace VH.Web.Controllers
         [RequierePermiso("PUESTOS", "crear")]
         public async Task<IActionResult> Create(PuestoRequestDto dto)
         {
-            // DEBUG: Ver quÈ valores llegan
+            // DEBUG: Ver qu√© valores llegan
             _logger.LogWarning("=== DEBUG CREATE: Nombre={Nombre}, Activo={Activo}, NivelRiesgo={Nivel}",
                 dto.Nombre, dto.Activo, dto.NivelRiesgoEPP);
 

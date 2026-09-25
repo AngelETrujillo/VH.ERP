@@ -28,24 +28,33 @@ namespace VH.Web.Controllers
         }
 
         // GET: Materiales
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, bool? activo = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroActivo = activo;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/materiales");
+                var url = $"api/materiales/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (activo.HasValue) url += $"&activo={activo.Value.ToString().ToLowerInvariant()}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var materiales = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
-                return View(materiales);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<MaterialResponseDto>>();
+                return View(pag ?? ResultadoPaginado<MaterialResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar materiales");
                 ViewBag.ErrorMessage = "Error al cargar los materiales";
-                return View(new List<MaterialEPPResponseDto>());
+                return View(ResultadoPaginado<MaterialResponseDto>.Ninguno(consulta));
             }
         }
 
@@ -56,7 +65,7 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
             return View(material);
         }
 
@@ -73,7 +82,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("MATERIALES_EPP", "crear")]
-        public async Task<IActionResult> Create(MaterialEPPRequestDto materialDto)
+        public async Task<IActionResult> Create(MaterialRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
@@ -84,6 +93,16 @@ namespace VH.Web.Controllers
                     if (response.IsSuccessStatusCode)
                     {
                         TempData["Mensaje"] = "Material creado exitosamente";
+
+                        // El stock mínimo no es del material: es de cada almacén que lo
+                        // guarda. Un material recién creado no tiene ninguno, así que
+                        // nunca va a aparecer en la bandeja de reposición hasta que
+                        // alguien se lo configure. Más vale decirlo ahora.
+                        TempData["WarningMessage"] =
+                            "Este material aún no tiene stock mínimo en ningún almacén. " +
+                            "Sin mínimo no se vigila y nunca aparecerá en la reposición de compras. " +
+                            "Configúrelo en Control de Inventario.";
+
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
@@ -107,13 +126,17 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
-            var dto = new MaterialEPPRequestDto(
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
+            var dto = new MaterialRequestDto(
                 material!.Nombre,
                 material.Descripcion,
                 material.IdUnidadMedida,
                 material.CostoUnitarioEstimado,
-                material.Activo
+                material.Activo,
+                material.TipoMaterial,
+                material.RequiereTalla,
+                material.EsRetornable,
+                material.ControlaCaducidad
             );
 
             await CargarUnidadesMedidaEnViewBag();
@@ -125,7 +148,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("MATERIALES_EPP", "editar")]
-        public async Task<IActionResult> Edit(int id, MaterialEPPRequestDto materialDto)
+        public async Task<IActionResult> Edit(int id, MaterialRequestDto materialDto)
         {
             if (ModelState.IsValid)
             {
@@ -151,7 +174,7 @@ namespace VH.Web.Controllers
             var response = await _httpClient.GetAsync($"api/materiales/{id}");
             if (!response.IsSuccessStatusCode) return NotFound();
 
-            var material = await response.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+            var material = await response.Content.ReadFromJsonAsync<MaterialResponseDto>();
             return View(material);
         }
 

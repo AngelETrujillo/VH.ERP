@@ -27,24 +27,30 @@ namespace VH.Web.Controllers
         }
 
         // GET: UnidadesMedida
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/unidadesmedida");
+                var url = $"api/unidadesmedida/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var unidades = await response.Content.ReadFromJsonAsync<IEnumerable<UnidadMedidaResponseDto>>();
-                return View(unidades);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<UnidadMedidaResponseDto>>();
+                return View(pag ?? ResultadoPaginado<UnidadMedidaResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar unidades de medida");
                 ViewBag.ErrorMessage = "Error al cargar las unidades de medida";
-                return View(new List<UnidadMedidaResponseDto>());
+                return View(ResultadoPaginado<UnidadMedidaResponseDto>.Ninguno(consulta));
             }
         }
 

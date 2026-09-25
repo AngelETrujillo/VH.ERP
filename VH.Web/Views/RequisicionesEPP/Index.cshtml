@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VH.Services.DTOs.RequisicionEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.RequisicionEPPResponseDto>
 @{
     ViewData["Title"] = "Requisiciones EPP";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -19,47 +19,44 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary shadow-sm">
+            @if (Html.PuedeCrear("REQUISICIONES_EPP"))
+            {
+                <a asp-action="Create" class="btn btn-primary shadow-sm">
                 <i class="bi bi-plus-lg me-1 me-md-2"></i>
                 <span class="d-none d-sm-inline">Nueva </span>Requisición
-            </a>
+                </a>
+            }
         }
     </div>
 
     <!-- Alertas -->
-    @if (TempData["Mensaje"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+
+@{
+    var filtroReq = ViewBag.FiltroActual as string;
+    var filtrosReq = new Dictionary<string, string?> { ["filtro"] = filtroReq };
+    ViewData["FiltrosPaginador"] = filtrosReq;
+    ViewData["FiltrosOcultos"] = filtrosReq;
+    ViewData["BuscarPlaceholder"] = "Buscar por folio, trabajador, nómina, material o almacén…";
+}
 
     <!-- Filtros con scroll horizontal en móvil -->
     <div class="mb-3 mb-md-4">
         <div class="d-flex gap-2 overflow-auto pb-1 filtros-scroll">
-            <a asp-action="Index"
+            <a asp-action="Index" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                class="btn @(ViewBag.FiltroActual == null ? "btn-primary" : "btn-outline-primary") btn-sm text-nowrap flex-shrink-0">
                 <i class="bi bi-list-ul me-1"></i>Todas
             </a>
-            <a asp-action="Index" asp-route-filtro="mis"
+            <a asp-action="Index" asp-route-filtro="mis" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                class="btn @(ViewBag.FiltroActual == "mis" ? "btn-primary" : "btn-outline-primary") btn-sm text-nowrap flex-shrink-0">
                 <i class="bi bi-person me-1"></i>Mis Requisiciones
             </a>
             @if (esSuperAdmin || esAdmin || puedeEditar)
             {
-                <a asp-action="Index" asp-route-filtro="pendientes-aprobacion"
+                <a asp-action="Index" asp-route-filtro="pendientes-aprobacion" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                    class="btn @(ViewBag.FiltroActual == "pendientes-aprobacion" ? "btn-warning" : "btn-outline-warning") btn-sm text-nowrap flex-shrink-0">
                     <i class="bi bi-clock me-1"></i>Pend. Aprobación
                 </a>
-                <a asp-action="Index" asp-route-filtro="pendientes-entrega"
+                <a asp-action="Index" asp-route-filtro="pendientes-entrega" asp-route-buscar="@Model.Buscado" asp-route-tamano="@Model.Tamano"
                    class="btn @(ViewBag.FiltroActual == "pendientes-entrega" ? "btn-info" : "btn-outline-info") btn-sm text-nowrap flex-shrink-0">
                     <i class="bi bi-box-arrow-right me-1"></i>Pend. Entrega
                 </a>
@@ -74,11 +71,24 @@
         </div>
     }
 
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
+                </div>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total requisición(es)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== VISTA MÓVIL: Cards ===================== -->
     <div class="d-md-none">
-        @if (Model != null && Model.Any())
+        @if (!Model.Vacio)
         {
-            foreach (var item in Model)
+            foreach (var item in Model.Renglones)
             {
                 <div class="card shadow-sm border-0 mb-3 requisicion-card">
                     <!-- Header de la card -->
@@ -90,8 +100,8 @@
                         <!-- Empleado y fecha -->
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
-                                <div class="fw-semibold">@item.NombreEmpleadoRecibe</div>
-                                <div class="text-muted small">@item.NumeroNominaEmpleado</div>
+                                <div class="fw-semibold">@item.ResumenDestinatarios</div>
+                                <div class="text-muted small">@item.TotalEmpleados trabajador(es)</div>
                             </div>
                             <div class="text-end text-muted small">
                                 @item.FechaSolicitud.ToString("dd/MM/yy")
@@ -112,7 +122,7 @@
                                class="btn btn-outline-info btn-sm flex-fill">
                                 <i class="bi bi-eye me-1"></i>Ver
                             </a>
-                            @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente && (esSuperAdmin || esAdmin))
+                            @if (puedeEditar && item.TieneRenglonesPorDecidir && (esSuperAdmin || esAdmin))
                             {
                                 <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                    class="btn btn-outline-warning btn-sm flex-fill">
@@ -126,7 +136,7 @@
                                     <i class="bi bi-box-arrow-right me-1"></i>Entregar
                                 </a>
                             }
-                            @if (item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                            @if (item.PuedeCancelarse)
                             {
                                 <form asp-action="Cancelar" asp-route-id="@item.IdRequisicion" method="post" class="flex-fill"
                                       onsubmit="return confirm('¿Cancelar esta requisición?');">
@@ -168,9 +178,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model != null && Model.Any())
+                            @if (!Model.Vacio)
                             {
-                                foreach (var item in Model)
+                                foreach (var item in Model.Renglones)
                                 {
                                     <tr>
                                         <td class="ps-4">
@@ -180,8 +190,8 @@
                                         </td>
                                         <td>@item.NombreUsuarioSolicita</td>
                                         <td>
-                                            <div>@item.NombreEmpleadoRecibe</div>
-                                            <small class="text-muted">@item.NumeroNominaEmpleado</small>
+                                            <div>@item.ResumenDestinatarios</div>
+                                            <small class="text-muted">@item.TotalEmpleados trabajador(es)</small>
                                         </td>
                                         <td>@item.NombreAlmacen</td>
                                         <td class="text-center">
@@ -196,7 +206,7 @@
                                                    class="btn btn-outline-info" title="Ver detalles">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                @if (puedeEditar && item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                                                @if (puedeEditar && item.TieneRenglonesPorDecidir)
                                                 {
                                                     <a asp-action="Aprobar" asp-route-id="@item.IdRequisicion"
                                                        class="btn btn-outline-warning" title="Aprobar/Rechazar">
@@ -210,7 +220,7 @@
                                                         <i class="bi bi-box-arrow-right"></i>
                                                     </a>
                                                 }
-                                                @if (item.EstadoRequisicion == VH.Services.Entities.EstadoRequisicion.Pendiente)
+                                                @if (item.PuedeCancelarse)
                                                 {
                                                     <form asp-action="Cancelar" asp-route-id="@item.IdRequisicion" method="post" class="d-inline"
                                                           onsubmit="return confirm('¿Está seguro de cancelar esta requisición?');">
@@ -237,6 +247,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                @await Html.PartialAsync("_Paginador", Model)
             </div>
         </div>
     </div>

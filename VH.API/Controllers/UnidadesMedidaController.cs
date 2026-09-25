@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/UnidadesMedidaController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -9,6 +11,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("UNIDADES_MEDIDA")]
     public class UnidadesMedidaController : ControllerBase
     {
         private readonly IUnidadMedidaService _unidadMedidaService;
@@ -27,6 +31,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<UnidadMedidaResponseDto>>(unidades));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<UnidadMedidaResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta)
+        {
+            var pagina = await _unidadMedidaService.GetPaginadoAsync(consulta);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<UnidadMedidaResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<UnidadMedidaResponseDto>> GetById(int id)
         {
@@ -36,6 +48,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("UNIDADES_MEDIDA", "crear")]
         public async Task<ActionResult<UnidadMedidaResponseDto>> Create([FromBody] UnidadMedidaRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -54,6 +67,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("UNIDADES_MEDIDA", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] UnidadMedidaRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -66,6 +80,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("UNIDADES_MEDIDA", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -18,7 +18,7 @@
                     <div class="alert alert-secondary">
                         <strong>Descripción:</strong> @Model.Descripcion<br />
                         <strong>Unidad:</strong> @Model.AbreviaturaUnidadMedida - @Model.NombreUnidadMedida<br />
-                        <strong>Cantidad:</strong> @Model.CantidadEstimada
+                        <strong>Cantidad:</strong> @Model.CantidadEstimada.FormatoCantidad()
                     </div>
 
                     <form asp-action="Delete" asp-route-id="@Model.IdPartida" asp-route-idProyecto="@idProyecto">

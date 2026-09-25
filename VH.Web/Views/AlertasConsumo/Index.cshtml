@@ -1,8 +1,24 @@
-@using VH.Services.DTOs.Analytics
+﻿@using VH.Services.DTOs.Analytics
 @{
     ViewData["Title"] = "Alertas de Consumo";
-    var alertas = ViewBag.Alertas as IEnumerable<AlertaConsumoResponseDto>;
+    var pagina = ViewBag.Alertas as VH.Services.DTOs.ResultadoPaginado<AlertaConsumoResponseDto>
+                 ?? VH.Services.DTOs.ResultadoPaginado<AlertaConsumoResponseDto>.Ninguno();
+    var alertas = pagina.Renglones;
     var resumen = ViewBag.Resumen as ResumenAlertasDto;
+
+    // El paginador conserva los cuatro filtros de la pantalla; sin ellos, pasar de
+    // página dentro de "solo pendientes de un proyecto" habría devuelto todo.
+    var filtrosAlertas = new Dictionary<string, string?>
+    {
+        ["idProyecto"]     = ViewBag.FiltroProyecto?.ToString(),
+        ["idEmpleado"]     = ViewBag.FiltroEmpleado?.ToString(),
+        ["severidad"]      = ViewBag.FiltroSeveridad?.ToString(),
+        ["estado"]         = ViewBag.FiltroEstado?.ToString(),
+        ["soloPendientes"] = ViewBag.SoloPendientes == true ? "true" : null
+    };
+    ViewData["FiltrosPaginador"] = filtrosAlertas;
+    ViewData["FiltrosOcultos"] = filtrosAlertas;
+    ViewData["BuscarPlaceholder"] = "Buscar por material, trabajador o nómina…";
 }
 
 <div class="container-fluid">
@@ -62,7 +78,7 @@
         <div class="col-md-2">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h3 class="mb-0 text-primary">@(resumen?.CostoPotencialTotal.ToString("C") ?? "$0")</h3>
+                    <h3 class="mb-0 text-primary">@(resumen?.CostoPotencialTotal.ToString("C2") ?? "$0")</h3>
                     <small class="text-muted">Pérdida Potencial</small>
                 </div>
             </div>
@@ -127,11 +143,27 @@
                         <i class="bi bi-funnel me-1"></i>Filtrar
                     </button>
                 </div>
+                @* Se conservan al filtrar, para no perder la búsqueda de texto. *@
+                @if (!string.IsNullOrWhiteSpace(pagina.Buscado))
+                {
+                    <input type="hidden" name="buscar" value="@pagina.Buscado" />
+                }
+                <input type="hidden" name="tamano" value="@pagina.Tamano" />
             </form>
         </div>
     </div>
 
     <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", pagina)
+                </div>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@pagina.Total alerta(s)</span>
+                </div>
+            </div>
+        </div>
         <div class="card-body p-0">
             <form id="formMasivo" asp-action="RevisarMasivo" method="post">
                 <div class="table-responsive">
@@ -153,7 +185,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (alertas != null && alertas.Any())
+                            @if (!pagina.Vacio)
                             {
                                 @foreach (var alerta in alertas)
                                 {
@@ -188,7 +220,7 @@
                                             <span class="badge bg-@alerta.ColorEstado">@alerta.EstadoTexto</span>
                                         </td>
                                         <td class="text-end">
-                                            <strong>@(alerta.CostoEstimado?.ToString("C") ?? "-")</strong>
+                                            <strong>@(alerta.CostoEstimado?.ToString("C2") ?? "-")</strong>
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
@@ -216,7 +248,9 @@
                     </table>
                 </div>
 
-                @if (alertas != null && alertas.Any())
+                @await Html.PartialAsync("_Paginador", pagina)
+
+                @if (!pagina.Vacio)
                 {
                     <div class="card-footer bg-white">
                         <div class="row align-items-center">

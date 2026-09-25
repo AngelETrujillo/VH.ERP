@@ -1,4 +1,26 @@
-﻿@model IEnumerable<VH.Services.DTOs.ProveedorResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.ProveedorResponseDto>
+@{
+    bool? filtroActivo = ViewBag.FiltroActivo;
+    ViewData["BuscarPlaceholder"] = "Buscar por nombre, RFC, contacto o teléfono…";
+    var filtrosEstado = new Dictionary<string, string?>
+    {
+        ["activo"] = filtroActivo?.ToString().ToLowerInvariant()
+    };
+    ViewData["FiltrosPaginador"] = filtrosEstado;
+    ViewData["FiltrosOcultos"] = filtrosEstado;
+
+    // El estado deja de ser un radio que esconde filas y pasa a ser una liga:
+    // filtrando en el navegador, "Inactivos" sólo habría ocultado los activos de
+    // la página que estuvieras viendo.
+    string LigaEstado(bool? activo)
+    {
+        var partes = new List<string> { $"tamano={Model.Tamano}" };
+        if (activo.HasValue) partes.Add($"activo={activo.Value.ToString().ToLowerInvariant()}");
+        if (Model.Buscado != null) partes.Add($"buscar={Uri.EscapeDataString(Model.Buscado)}");
+        return "?" + string.Join("&", partes);
+    }
+}
+
 @{
     ViewData["Title"] = "Proveedores";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -18,9 +40,12 @@
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("PROVEEDORES"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
-            </a>
+                </a>
+            }
         }
     </div>
 
@@ -32,37 +57,21 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por nombre, RFC o contacto...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-7">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroTodos" checked>
-                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroActivos">
-                        <label class="btn btn-outline-success btn-sm" for="filtroActivos">Activos</label>
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroInactivos">
-                        <label class="btn btn-outline-danger btn-sm" for="filtroInactivos">Inactivos</label>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="btn-group me-2" role="group" aria-label="Filtrar por estado">
+                        <a href="@LigaEstado(null)" class="btn btn-sm @(filtroActivo == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                        <a href="@LigaEstado(true)" class="btn btn-sm @(filtroActivo == true ? "btn-success" : "btn-outline-success")">Activos</a>
+                        <a href="@LigaEstado(false)" class="btn btn-sm @(filtroActivo == false ? "btn-danger" : "btn-outline-danger")">Inactivos</a>
                     </div>
-                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
+                    <span class="badge bg-secondary">@Model.Total proveedor(es)</span>
                 </div>
             </div>
         </div>
@@ -80,9 +89,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
                                 <tr data-estado="@(item.Activo ? "activo" : "inactivo")">
                                     <td class="ps-4">
@@ -138,17 +147,23 @@
                                             </a>
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdProveedor"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("PROVEEDORES"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdProveedor"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdProveedor"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("PROVEEDORES"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdProveedor"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
                                     </td>
@@ -163,9 +178,12 @@
                                         <i class="bi bi-truck display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay proveedores registrados</h5>
                                         <p class="text-muted">Comienza agregando tu primer proveedor</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("PROVEEDORES"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Agregar Proveedor
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -173,6 +191,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>
@@ -199,11 +219,15 @@
 
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
+        // Buscar y filtrar los hace el servidor. Queda sólo devolver el foco al
+        // campo, para corregir el texto sin volver a tomar el ratón.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
         });
         document.querySelectorAll('input[name="filtroEstado"]').forEach(radio => {
             radio.addEventListener('change', function() {

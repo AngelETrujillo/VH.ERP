@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,6 +13,17 @@ namespace VH.Services.Services
         public UnidadMedidaService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<UnidadMedida>> GetPaginadoAsync(
+            ConsultaPaginada consulta)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.UnidadesMedida.GetPaginadoAsync(
+                consulta,
+                filtro: x => (texto == null || x.Nombre.Contains(texto) || x.Abreviatura.Contains(texto) || x.Descripcion.Contains(texto)),
+                orden: q => q.OrderBy(x => x.Nombre));
         }
 
         public async Task<IEnumerable<UnidadMedida>> GetAllUnidadesMedidaAsync()
@@ -80,7 +92,7 @@ namespace VH.Services.Services
             }
 
             // Verificar si está siendo usada por materiales o conceptos
-            var materialesUsandola = await _unitOfWork.MaterialesEPP.FindAsync(m => m.IdUnidadMedida == id);
+            var materialesUsandola = await _unitOfWork.Materiales.FindAsync(m => m.IdUnidadMedida == id);
             var conceptosUsandola = await _unitOfWork.ConceptosPartidas.FindAsync(c => c.IdUnidadMedida == id);
 
             if (materialesUsandola.Any() || conceptosUsandola.Any())

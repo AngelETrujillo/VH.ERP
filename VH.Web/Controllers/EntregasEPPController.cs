@@ -28,32 +28,39 @@ namespace VH.Web.Controllers
         }
 
         // GET: EntregasEPP
-        public async Task<IActionResult> Index(int? idEmpleado)
+        public async Task<IActionResult> Index(
+            int? idEmpleado,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
+            await CargarEmpleadosEnViewBag();
+            ViewBag.FiltroEmpleado = idEmpleado;
+
             try
             {
-                var url = "api/entregasepp";
-                if (idEmpleado.HasValue)
-                    url += $"?idEmpleado={idEmpleado}";
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+                if (idEmpleado.HasValue) partes.Add($"idEmpleado={idEmpleado}");
+
+                var url = "api/entregasepp/paginado?" + string.Join("&", partes);
 
                 var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var entregas = await response.Content.ReadFromJsonAsync<IEnumerable<EntregaEPPResponseDto>>();
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<EntregaEPPResponseDto>>();
 
-                await CargarEmpleadosEnViewBag();
-                ViewBag.FiltroEmpleado = idEmpleado;
-
-                return View(entregas);
+                return View(pag ?? ResultadoPaginado<EntregaEPPResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar entregas EPP");
                 ViewBag.ErrorMessage = "Error al cargar las entregas";
-                return View(new List<EntregaEPPResponseDto>());
+                return View(ResultadoPaginado<EntregaEPPResponseDto>.Ninguno(consulta));
             }
         }
 
@@ -202,7 +209,7 @@ namespace VH.Web.Controllers
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
-                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                     ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                     {
                         Value = m.IdMaterial.ToString(),

@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/EmpleadosController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -9,6 +11,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("EMPLEADOS")]
     public class EmpleadosController : ControllerBase
     {
         private readonly IEmpleadoService _empleadoService;
@@ -29,6 +33,14 @@ namespace VH.API.Controllers
         }
 
         // GET: api/empleados/5
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<EmpleadoResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            var pagina = await _empleadoService.GetPaginadoAsync(consulta, activo);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<EmpleadoResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<EmpleadoResponseDto>> GetById(int id)
         {
@@ -39,6 +51,7 @@ namespace VH.API.Controllers
 
         // POST: api/empleados
         [HttpPost]
+        [RequierePermisoApi("EMPLEADOS", "crear")]
         public async Task<ActionResult<EmpleadoResponseDto>> Create([FromBody] EmpleadoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -58,6 +71,7 @@ namespace VH.API.Controllers
 
         // PUT: api/empleados/5
         [HttpPut("{id}")]
+        [RequierePermisoApi("EMPLEADOS", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] EmpleadoRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -78,6 +92,7 @@ namespace VH.API.Controllers
 
         // DELETE: api/empleados/5
         [HttpDelete("{id}")]
+        [RequierePermisoApi("EMPLEADOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -1,0 +1,139 @@
+﻿@model VH.Services.DTOs.RevisionIntegridadDto
+@{
+    ViewData["Title"] = "Revisión de Integridad";
+    var lista = Model.Descuadres;
+    var desajustes = Model.Desajustes;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-clipboard-data text-primary me-2"></i>Revisión de Integridad
+            </h2>
+            <p class="text-muted mb-0">
+                Existencia que el kardex no alcanza a explicar, y totales guardados
+                que ya no coinciden con lo que suman sus partes
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-journals me-2"></i>Ver kardex
+        </a>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model.TodoCuadra)
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle text-success" style="font-size:3rem;"></i>
+                <h5 class="mt-3">Todo cuadra</h5>
+                <p class="text-muted mb-0">
+                    Cada unidad en existencia tiene un movimiento que la explica: una compra,
+                    una entrega, un traspaso o un ajuste firmado.<br />
+                    Y cada total guardado coincide con la suma de sus partes.
+                </p>
+            </div>
+        </div>
+    }
+
+    @if (lista.Any())
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>@lista.Count</strong> registro(s) con existencia que no coincide con la suma de sus
+            movimientos. Corrija cada uno con un ajuste por conteo desde su kardex.
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Material</th>
+                                <th>Almacén</th>
+                                <th class="text-end">Saldo registrado</th>
+                                <th class="text-end">Suma del kardex</th>
+                                <th class="text-end">Diferencia</th>
+                                <th class="text-center" style="width:120px;">Kardex</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in lista)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">@d.NombreMaterial</td>
+                                    <td>@d.NombreAlmacen</td>
+                                    <td class="text-end">@d.SaldoRegistrado.FormatoCantidad()</td>
+                                    <td class="text-end">@d.SaldoKardex.FormatoCantidad()</td>
+                                    <td class="text-end fw-bold @(d.Diferencia > 0 ? "text-success" : "text-danger")">
+                                        @d.Diferencia.ToString("+0.##;-0.##")
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Index"
+                                           asp-route-idMaterial="@d.IdMaterial"
+                                           asp-route-idAlmacen="@d.IdAlmacen"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-journals"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (desajustes.Any())
+    {
+        <div class="alert alert-secondary mt-4">
+            <i class="bi bi-files me-2"></i>
+            <strong>@desajustes.Count</strong> dato(s) guardado(s) por duplicado que ya no
+            coinciden. El sistema guarda algunos totales calculados para no sumarlos en cada
+            consulta, y conserva en la recepción una copia de lo que se capturó. Esto compara
+            unos con otros.
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Qué</th>
+                                <th>Documento</th>
+                                <th>Detalle</th>
+                                <th class="text-end">Guardado</th>
+                                <th class="text-end">Real</th>
+                                <th>Qué hacer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in desajustes)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">@d.Concepto</td>
+                                    <td class="font-monospace small">@d.Documento</td>
+                                    <td>@d.Detalle</td>
+                                    <td class="text-end"><span class="badge bg-secondary">@d.Guardado</span></td>
+                                    <td class="text-end"><span class="badge bg-primary">@d.Real</span></td>
+                                    <td><small class="text-muted">@d.Sugerencia</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

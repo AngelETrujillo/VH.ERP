@@ -1,4 +1,5 @@
-﻿using VH.Services.DTOs.Analytics;
+﻿using VH.Services.DTOs;
+using VH.Services.DTOs.Analytics;
 using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
@@ -13,6 +14,10 @@ namespace VH.Services.Interfaces
         Task<AlertaConsumo?> EvaluarExcesoFrecuenciaAsync(int idEmpleado, int idMaterial);
 
         // ===== CONSULTAS =====
+        /// <summary>Una página de alertas, con los mismos filtros del listado completo.</summary>
+        Task<ResultadoPaginado<AlertaConsumoResponseDto>> GetPaginadoAsync(
+            ConsultaPaginada consulta, FiltroAlertasDto filtros);
+
         Task<IEnumerable<AlertaConsumoResponseDto>> GetAlertasAsync(FiltroAlertasDto filtros);
         Task<AlertaConsumoResponseDto?> GetAlertaByIdAsync(int id);
         Task<IEnumerable<AlertaConsumoResponseDto>> GetAlertasPendientesEmpleadoAsync(int idEmpleado);

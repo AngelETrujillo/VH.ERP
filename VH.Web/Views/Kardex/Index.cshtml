@@ -1,0 +1,411 @@
+﻿@model VH.Services.DTOs.KardexDto
+@{
+    ViewData["Title"] = "Kardex de Almacén";
+
+    var pagina = Model.Movimientos;
+    var movimientos = pagina.Renglones;
+    var materiales = ViewBag.Materiales as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+    var almacenes = ViewBag.Almacenes as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+
+    int? idMaterial = ViewBag.IdMaterial;
+    int? idAlmacen = ViewBag.IdAlmacen;
+    DateTime? desde = ViewBag.Desde;
+    DateTime? hasta = ViewBag.Hasta;
+    bool ascendente = ViewBag.Ascendente ?? false;
+
+    var haySeleccion = idMaterial.HasValue && idAlmacen.HasValue;
+
+    var nombreMaterial = !string.IsNullOrEmpty(Model.NombreMaterial)
+        ? Model.NombreMaterial
+        : materiales.FirstOrDefault(m => m.Value == idMaterial?.ToString())?.Text ?? "";
+    var nombreAlmacen = !string.IsNullOrEmpty(Model.NombreAlmacen)
+        ? Model.NombreAlmacen
+        : almacenes.FirstOrDefault(a => a.Value == idAlmacen?.ToString())?.Text ?? "";
+
+    // Los tres totales vienen del servidor. Antes se deducían de los renglones que
+    // la vista tenía a la mano, lo cual dejó de ser correcto al paginar: habrían
+    // pasado a describir la página en vez del periodo.
+    var saldoFinal = Model.ExistenciaActual;
+    var entradas = Model.Entradas;
+    var salidas = Model.Salidas;
+
+    // Los filtros del kardex acompañan a cada liga del paginador y a la búsqueda.
+    var filtrosKardex = new Dictionary<string, string?>
+    {
+        ["idMaterial"] = idMaterial?.ToString(),
+        ["idAlmacen"]  = idAlmacen?.ToString(),
+        ["desde"]      = desde?.ToString("yyyy-MM-dd"),
+        ["hasta"]      = hasta?.ToString("yyyy-MM-dd"),
+        ["ascendente"] = ascendente ? "true" : null
+    };
+    ViewData["FiltrosPaginador"] = filtrosKardex;
+    ViewData["FiltrosOcultos"] = filtrosKardex;
+    ViewData["BuscarPlaceholder"] = "Buscar por documento, folio, motivo o quién lo movió…";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-journals text-primary me-2"></i>Kardex de Almacén
+            </h2>
+            <p class="text-muted mb-0">Todo lo que entró y salió, con su documento y quién lo movió</p>
+        </div>
+        <a asp-action="Descuadres" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-clipboard-data me-2"></i>Revisar descuadres
+        </a>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                @* Cambiar de material o de fechas arranca en la página 1, pero
+                   conserva el tamaño y el sentido de lectura elegidos. *@
+                <input type="hidden" name="tamano" value="@pagina.Tamano" />
+                @if (ascendente)
+                {
+                    <input type="hidden" name="ascendente" value="true" />
+                }
+
+                <div class="col-md-4">
+                    <label class="form-label small text-muted fw-semibold">MATERIAL</label>
+                    <select name="idMaterial" class="form-select" required>
+                        <option value="">Seleccione un material...</option>
+                        @foreach (var m in materiales)
+                        {
+                            <option value="@m.Value" selected="@(m.Value == idMaterial?.ToString())">@m.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted fw-semibold">ALMACÉN</label>
+                    <select name="idAlmacen" class="form-select" required>
+                        <option value="">Seleccione un almacén...</option>
+                        @foreach (var a in almacenes)
+                        {
+                            <option value="@a.Value" selected="@(a.Value == idAlmacen?.ToString())">@a.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-semibold">DESDE</label>
+                    <input type="date" name="desde" class="form-control" value="@(desde?.ToString("yyyy-MM-dd"))">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-semibold">HASTA</label>
+                    <input type="date" name="hasta" class="form-control" value="@(hasta?.ToString("yyyy-MM-dd"))">
+                </div>
+                <div class="col-md-1 d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!haySeleccion)
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-journals text-muted" style="font-size:3rem;"></i>
+                <h5 class="mt-3 text-muted">Elija un material y un almacén</h5>
+                <p class="text-muted mb-0">El kardex es la historia de un material en un almacén concreto.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Existencia actual</div>
+                        <div class="fs-3 fw-bold">@saldoFinal.FormatoCantidad()</div>
+                        <div class="small text-muted">@nombreMaterial en @nombreAlmacen</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Entradas</div>
+                        <div class="fs-3 fw-bold text-success">+@entradas.FormatoCantidad()</div>
+                        <div class="small text-muted">En el periodo consultado</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="small text-muted text-uppercase fw-semibold">Salidas</div>
+                        <div class="fs-3 fw-bold text-danger">-@salidas.FormatoCantidad()</div>
+                        <div class="small text-muted">En el periodo consultado</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body d-flex flex-column justify-content-center gap-2">
+                        @if (!Html.PuedeCrear("KARDEX"))
+                        {
+                            <span class="text-muted small">
+                                <i class="bi bi-lock me-1"></i>Sólo consulta: no puede registrar movimientos.
+                            </span>
+                        }
+                        else
+                        {
+                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalAjuste">
+                            <i class="bi bi-sliders me-1"></i>Ajustar por conteo
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" data-bs-toggle="modal" data-bs-target="#modalTraspaso">
+                                <i class="bi bi-arrow-left-right me-1"></i>Traspaso
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger flex-fill" data-bs-toggle="modal" data-bs-target="#modalMerma">
+                                <i class="bi bi-trash me-1"></i>Merma
+                            </button>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <div class="row align-items-center g-2">
+                    <div class="col-lg-7">
+                        @await Html.PartialAsync("_BarraBusqueda", pagina)
+                    </div>
+                    <div class="col-lg-5 text-lg-end">
+                        @{
+                            var ligaOrden = $"?idMaterial={idMaterial}&idAlmacen={idAlmacen}&tamano={pagina.Tamano}" +
+                                            (pagina.Buscado != null ? $"&buscar={Uri.EscapeDataString(pagina.Buscado)}" : "") +
+                                            (desde.HasValue ? $"&desde={desde:yyyy-MM-dd}" : "") +
+                                            (hasta.HasValue ? $"&hasta={hasta:yyyy-MM-dd}" : "") +
+                                            (ascendente ? "" : "&ascendente=true");
+                        }
+                        <a href="@ligaOrden" class="btn btn-sm btn-outline-secondary me-2"
+                           title="@(ascendente ? "Ver primero lo más reciente" : "Leerlo como kardex de papel, del más viejo al más nuevo")">
+                            <i class="bi bi-arrow-down-up me-1"></i>@(ascendente ? "Más reciente primero" : "Del más viejo al más nuevo")
+                        </a>
+                        <span class="badge bg-secondary">@pagina.Total movimiento(s)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Fecha</th>
+                                <th>Movimiento</th>
+                                <th>Documento</th>
+                                <th class="text-end">Entrada</th>
+                                <th class="text-end">Salida</th>
+                                <th class="text-end">Saldo</th>
+                                <th class="text-end">Costo unit.</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!pagina.Vacio)
+                            {
+                                @foreach (var m in movimientos)
+                                {
+                                    <tr class="@(m.AfectaExistencia ? "" : "table-light")">
+                                        <td class="ps-4 text-nowrap">
+                                            <div>@m.Fecha.ToString("dd/MM/yyyy")</div>
+                                            <small class="text-muted">@m.Fecha.ToString("HH:mm")</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@m.TipoClase-subtle text-@m.TipoClase">
+                                                <i class="bi @m.TipoIcono me-1"></i>@m.TipoTexto
+                                            </span>
+                                            @if (!string.IsNullOrWhiteSpace(m.Observaciones))
+                                            {
+                                                <div class="small text-muted mt-1">@m.Observaciones</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(m.DocumentoFolio))
+                                            {
+                                                <div class="fw-semibold">@m.DocumentoFolio</div>
+                                            }
+                                            @if (m.DocumentoId.HasValue)
+                                            {
+                                                <small class="text-muted">@m.DocumentoTipo #@m.DocumentoId</small>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(m.DocumentoTipo))
+                                            {
+                                                <small class="text-muted">@m.DocumentoTipo</small>
+                                            }
+                                        </td>
+                                        <td class="text-end text-success fw-semibold">
+                                            @(m.AfectaExistencia && m.Cantidad > 0 ? m.Cantidad.FormatoCantidad() : "")
+                                        </td>
+                                        <td class="text-end text-danger fw-semibold">
+                                            @(m.AfectaExistencia && m.Cantidad < 0 ? Math.Abs(m.Cantidad).FormatoCantidad() : "")
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            @if (m.AfectaExistencia)
+                                            {
+                                                @m.SaldoResultante.FormatoCantidad()
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@m.Cantidad.ToString("+0.##;-0.##") apartado</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @(m.CostoUnitario.HasValue ? m.CostoUnitario.Value.ToString("C2") : "")
+                                        </td>
+                                        <td><small class="text-muted">@m.NombreUsuario</small></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        @if (pagina.Buscado != null)
+                                        {
+                                            <span>Ningún movimiento coincide con «@pagina.Buscado» en este periodo.</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Este material no tiene movimientos en ese almacén dentro del periodo.</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @await Html.PartialAsync("_Paginador", pagina)
+            </div>
+        </div>
+
+        <!-- Ajuste por conteo físico -->
+        <div class="modal fade" id="modalAjuste" tabindex="-1">
+            <div class="modal-dialog">
+                <form asp-action="Ajustar" method="post" class="modal-content">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idMaterial" value="@idMaterial">
+                    <input type="hidden" name="idAlmacen" value="@idAlmacen">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-sliders me-2"></i>Ajustar por conteo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            El sistema dice que hay <strong>@saldoFinal.FormatoCantidad()</strong> de
+                            @nombreMaterial en @nombreAlmacen. Escriba lo que se contó en el anaquel.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label">Existencia contada</label>
+                            <input type="number" step="0.01" min="0" name="existenciaContada" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <textarea name="motivo" class="form-control" rows="2" maxlength="500" required
+                                      placeholder="Conteo cíclico de septiembre, diferencia por..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning">Registrar ajuste</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Traspaso entre almacenes -->
+        <div class="modal fade" id="modalTraspaso" tabindex="-1">
+            <div class="modal-dialog">
+                <form asp-action="Traspasar" method="post" class="modal-content">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idMaterial" value="@idMaterial">
+                    <input type="hidden" name="idAlmacenOrigen" value="@idAlmacen">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-arrow-left-right me-2"></i>Traspasar material</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            Sale de <strong>@nombreAlmacen</strong>. Sólo puede moverse lo que no está
+                            apartado para una requisición.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label">Almacén destino</label>
+                            <select name="idAlmacenDestino" class="form-select" required>
+                                <option value="">Seleccione...</option>
+                                @foreach (var a in almacenes.Where(a => a.Value != idAlmacen?.ToString()))
+                                {
+                                    <option value="@a.Value">@a.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" step="0.01" min="0.01" name="cantidad" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <textarea name="motivo" class="form-control" rows="2" maxlength="500" required
+                                      placeholder="La obra del norte se quedó sin casco..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Traspasar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Merma -->
+        <div class="modal fade" id="modalMerma" tabindex="-1">
+            <div class="modal-dialog">
+                <form asp-action="Merma" method="post" class="modal-content">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idMaterial" value="@idMaterial">
+                    <input type="hidden" name="idAlmacen" value="@idAlmacen">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Registrar merma</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            Material dañado, extraviado o caducado. Sale del almacén y queda asentado
+                            por qué.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" step="0.01" min="0.01" name="cantidad" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <textarea name="motivo" class="form-control" rows="2" maxlength="500" required
+                                      placeholder="Se mojaron en la bodega, caducaron el..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Dar de baja</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+</div>

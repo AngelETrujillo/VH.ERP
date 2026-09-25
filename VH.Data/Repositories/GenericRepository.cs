@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using VH.Services.Interfaces;
+using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Data;
 
@@ -78,6 +79,73 @@ namespace VH.Data.Repositories
             }
 
             return await query.ToListAsync();
+        }
+
+        public async Task<ResultadoPaginado<T>> GetPaginadoAsync(
+            ConsultaPaginada consulta,
+            Expression<Func<T, bool>>? filtro = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orden = null,
+            string? includeProperties = null)
+        {
+            IQueryable<T> query = _dbSet;
+
+            if (filtro != null)
+                query = query.Where(filtro);
+
+            // El total se cuenta antes de los Include: contar no necesita traer las
+            // tablas relacionadas, y con ellas el COUNT se vuelve caro sin motivo.
+            var total = await query.CountAsync();
+
+            if (includeProperties != null)
+            {
+                foreach (var includeProp in includeProperties.Split(
+                             new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProp);
+                }
+            }
+
+            // Sin un orden estable, saltar renglones no significa nada: la base puede
+            // devolverlos en distinto orden en cada consulta y una misma fila aparecer
+            // en dos páginas o en ninguna.
+            query = orden != null
+                ? orden(query)
+                : OrdenarPorLlave(query);
+
+            var renglones = await query
+                .Skip(consulta.Salto)
+                .Take(consulta.Tamano)
+                .ToListAsync();
+
+            return new ResultadoPaginado<T>
+            {
+                Renglones = renglones,
+                Total = total,
+                Pagina = consulta.Pagina,
+                Tamano = consulta.Tamano,
+                Buscado = consulta.TextoLimpio
+            };
+        }
+
+        public async Task<int> ContarAsync(Expression<Func<T, bool>>? filtro = null)
+        {
+            IQueryable<T> query = _dbSet;
+            if (filtro != null) query = query.Where(filtro);
+            return await query.CountAsync();
+        }
+
+        /// <summary>
+        /// Orden de respaldo cuando quien llama no indicó ninguno: la llave primaria,
+        /// descendente, que en estas tablas es lo más reciente primero.
+        /// </summary>
+        private IOrderedQueryable<T> OrdenarPorLlave(IQueryable<T> query)
+        {
+            var llave = _context.Model.FindEntityType(typeof(T))
+                ?.FindPrimaryKey()?.Properties.FirstOrDefault()?.Name;
+
+            return llave == null
+                ? query.OrderBy(e => 0)          // sin llave declarada; al menos es estable
+                : query.OrderByDescending(e => EF.Property<object>(e, llave));
         }
 
         public void Update(T entity)

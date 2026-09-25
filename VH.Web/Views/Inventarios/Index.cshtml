@@ -1,4 +1,26 @@
-﻿@model IEnumerable<VH.Services.DTOs.InventarioResponseDto>
+﻿@model VH.Services.DTOs.InventarioListadoDto
+@{
+    var pagina = Model.Renglones;
+    string? filtroEstado = ViewBag.FiltroEstado;
+    ViewData["BuscarPlaceholder"] = "Buscar por material, almacén o ubicación…";
+
+    var filtrosInv = new Dictionary<string, string?>
+    {
+        ["estado"]     = filtroEstado,
+        ["idAlmacen"]  = ViewBag.FiltroAlmacen?.ToString()
+    };
+    ViewData["FiltrosPaginador"] = filtrosInv;
+    ViewData["FiltrosOcultos"] = filtrosInv;
+
+    string LigaEstado(string? estado)
+    {
+        var partes = new List<string> { $"tamano={pagina.Tamano}" };
+        if (!string.IsNullOrWhiteSpace(estado)) partes.Add($"estado={estado}");
+        if (pagina.Buscado != null) partes.Add($"buscar={Uri.EscapeDataString(pagina.Buscado)}");
+        if (ViewBag.FiltroAlmacen != null) partes.Add($"idAlmacen={ViewBag.FiltroAlmacen}");
+        return "?" + string.Join("&", partes);
+    }
+}
 @{
     ViewData["Title"] = "Inventarios";
 }
@@ -12,9 +34,12 @@
             </h2>
             <p class="text-muted mb-0">Existencias de materiales EPP por almacén</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+        @if (Html.PuedeCrear("INVENTARIOS"))
+        {
+            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
             <i class="bi bi-plus-lg me-2"></i>Nuevo Registro
-        </a>
+            </a>
+        }
     </div>
 
     <!-- Alertas -->
@@ -25,84 +50,72 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
-    <!-- Resumen de alertas -->
-    @if (Model != null && Model.Any())
+    @* Los conteos son de todo el inventario, no de la página: con paginación,
+       "3 materiales sin stock" contado sobre lo cargado habría sido "3 de los
+       veinticinco que alcanzas a ver". *@
+    @if (Model.SinStock > 0 || Model.StockBajo > 0 || Model.SobreMaximo > 0 || Model.SinMinimo > 0)
     {
-        var stockBajo = Model.Count(i => i.Existencia <= i.StockMinimo && i.Existencia > 0);
-        var sinStock = Model.Count(i => i.Existencia == 0);
-        var stockAlto = Model.Count(i => i.StockMaximo > 0 && i.Existencia > i.StockMaximo);
-
-        @if (stockBajo > 0 || sinStock > 0 || stockAlto > 0)
-        {
-            <div class="row g-3 mb-4">
-                @if (sinStock > 0)
-                {
-                    <div class="col-md-4">
-                        <div class="alert alert-danger mb-0 d-flex align-items-center">
+        <div class="row g-3 mb-4">
+            @if (Model.SinStock > 0)
+            {
+                <div class="col-md-3">
+                    <a href="@LigaEstado("sin")" class="text-decoration-none">
+                        <div class="alert alert-danger mb-0 d-flex align-items-center @(filtroEstado == "sin" ? "border border-2 border-danger" : "")">
                             <i class="bi bi-x-circle-fill fs-4 me-3"></i>
-                            <div>
-                                <strong>@sinStock</strong> materiales sin stock
-                            </div>
+                            <div><strong>@Model.SinStock</strong> sin stock</div>
                         </div>
-                    </div>
-                }
-                @if (stockBajo > 0)
-                {
-                    <div class="col-md-4">
-                        <div class="alert alert-warning mb-0 d-flex align-items-center">
+                    </a>
+                </div>
+            }
+            @if (Model.StockBajo > 0)
+            {
+                <div class="col-md-3">
+                    <a href="@LigaEstado("bajo")" class="text-decoration-none">
+                        <div class="alert alert-warning mb-0 d-flex align-items-center @(filtroEstado == "bajo" ? "border border-2 border-warning" : "")">
                             <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-                            <div>
-                                <strong>@stockBajo</strong> materiales con stock bajo
-                            </div>
+                            <div><strong>@Model.StockBajo</strong> con stock bajo</div>
                         </div>
-                    </div>
-                }
-                @if (stockAlto > 0)
-                {
-                    <div class="col-md-4">
-                        <div class="alert alert-info mb-0 d-flex align-items-center">
+                    </a>
+                </div>
+            }
+            @if (Model.SobreMaximo > 0)
+            {
+                <div class="col-md-3">
+                    <a href="@LigaEstado("sobre")" class="text-decoration-none">
+                        <div class="alert alert-info mb-0 d-flex align-items-center @(filtroEstado == "sobre" ? "border border-2 border-info" : "")">
                             <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-                            <div>
-                                <strong>@stockAlto</strong> materiales sobre stock máximo
-                            </div>
+                            <div><strong>@Model.SobreMaximo</strong> sobre el máximo</div>
                         </div>
+                    </a>
+                </div>
+            }
+            @if (Model.SinMinimo > 0)
+            {
+                <div class="col-md-3">
+                    <div class="alert alert-secondary mb-0 d-flex align-items-center">
+                        <i class="bi bi-eye-slash fs-4 me-3"></i>
+                        <div><strong>@Model.SinMinimo</strong> sin mínimo definido</div>
                     </div>
-                }
-            </div>
-        }
+                </div>
+            }
+        </div>
     }
 
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por material o almacén...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-7">
+                    @await Html.PartialAsync("_BarraBusqueda", pagina)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="filtroStock" id="filtroTodos" checked>
-                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
-                        <input type="radio" class="btn-check" name="filtroStock" id="filtroBajo">
-                        <label class="btn btn-outline-warning btn-sm" for="filtroBajo">Stock Bajo</label>
-                        <input type="radio" class="btn-check" name="filtroStock" id="filtroSinStock">
-                        <label class="btn btn-outline-danger btn-sm" for="filtroSinStock">Sin Stock</label>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="btn-group me-2" role="group" aria-label="Filtrar por estado de stock">
+                        <a href="@LigaEstado(null)" class="btn btn-sm @(filtroEstado == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                        <a href="@LigaEstado("bajo")" class="btn btn-sm @(filtroEstado == "bajo" ? "btn-warning" : "btn-outline-warning")">Stock bajo</a>
+                        <a href="@LigaEstado("sin")" class="btn btn-sm @(filtroEstado == "sin" ? "btn-danger" : "btn-outline-danger")">Sin stock</a>
                     </div>
-                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
+                    <span class="badge bg-secondary">@pagina.Total registro(s)</span>
                 </div>
             </div>
         </div>
@@ -114,6 +127,8 @@
                             <th class="ps-4">Material</th>
                             <th>Almacén</th>
                             <th class="text-center">Existencia</th>
+                            <th class="text-center">Apartado</th>
+                            <th class="text-center">Disponible</th>
                             <th class="text-center">Mínimo</th>
                             <th class="text-center">Máximo</th>
                             <th class="text-center">Estado</th>
@@ -122,9 +137,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!pagina.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in pagina.Renglones)
                             {
                                 var estadoStock = "normal";
                                 var badgeClass = "bg-success-subtle text-success";
@@ -172,11 +187,28 @@
                                     </td>
                                     <td class="text-center">
                                         <span class="fs-5 fw-bold @(item.Existencia == 0 ? "text-danger" : item.Existencia <= item.StockMinimo ? "text-warning" : "text-success")">
-                                            @item.Existencia
+                                            @item.Existencia.FormatoCantidad()
                                         </span>
                                     </td>
-                                    <td class="text-center text-muted">@item.StockMinimo</td>
-                                    <td class="text-center text-muted">@(item.StockMaximo > 0 ? item.StockMaximo.ToString() : "-")</td>
+                                    <td class="text-center">
+                                        @if (item.Comprometido > 0)
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning" title="Apartado para requisiciones autorizadas">
+                                                <i class="bi bi-lock me-1"></i>@item.Comprometido.FormatoCantidad()
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-semibold @(item.Disponible <= 0 ? "text-danger" : "")">
+                                            @item.Disponible.FormatoCantidad()
+                                        </span>
+                                    </td>
+                                    <td class="text-center text-muted">@item.StockMinimo.FormatoCantidad()</td>
+                                    <td class="text-center text-muted">@(item.StockMaximo > 0 ? item.StockMaximo.FormatoCantidad() : "-")</td>
                                     <td class="text-center">
                                         <span class="badge @badgeClass px-3 py-2">
                                             <i class="bi @estadoIcono me-1"></i>@estadoTexto
@@ -198,14 +230,20 @@
                                                class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@item.IdInventario"
-                                               class="btn btn-outline-warning" title="Editar">
+                                            @if (Html.PuedeEditar("INVENTARIOS"))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.IdInventario"
+                                                class="btn btn-outline-warning" title="Editar">
                                                 <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a asp-action="Delete" asp-route-id="@item.IdInventario"
-                                               class="btn btn-outline-danger" title="Eliminar">
+                                                </a>
+                                            }
+                                            @if (Html.PuedeEliminar("INVENTARIOS"))
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.IdInventario"
+                                                class="btn btn-outline-danger" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
-                                            </a>
+                                                </a>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -214,14 +252,17 @@
                         else
                         {
                             <tr>
-                                <td colspan="8">
+                                <td colspan="10">
                                     <div class="text-center py-5">
                                         <i class="bi bi-boxes display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay registros de inventario</h5>
                                         <p class="text-muted">El inventario se crea automáticamente con las compras</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("INVENTARIOS"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Crear Registro
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -229,6 +270,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", pagina)
         </div>
     </div>
 </div>
@@ -255,11 +298,14 @@
 
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
+        // Buscar y filtrar los hace el servidor.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
         });
         document.querySelectorAll('input[name="filtroStock"]').forEach(radio => {
             radio.addEventListener('change', function() {

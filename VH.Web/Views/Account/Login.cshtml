@@ -66,6 +66,12 @@
         <form asp-action="Login" method="post">
             <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
 
+            @if (ViewBag.SesionExpirada != null)
+            {
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-clock-history me-2"></i>@ViewBag.SesionExpirada
+                </div>
+            }
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <div class="mb-3">

@@ -1,0 +1,158 @@
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.OrdenCompraResponseDto>
+@using VH.Web.Extensions
+@{
+    ViewData["Title"] = "Órdenes de Compra";
+    // El orden ya viene resuelto del servidor, que es quien puede ordenar el total
+    // y no sólo la página que tenemos a la vista.
+    var lista = Model.Renglones;
+    ViewData["BuscarPlaceholder"] = "Buscar por folio, proveedor, material u observaciones…";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-clipboard-check text-primary me-2"></i>Órdenes de Compra
+            </h2>
+            <p class="text-muted mb-0">Pedidos a proveedores para cubrir lo que falta en almacén</p>
+        </div>
+        @if (Html.PuedeCrear("ORDENES_COMPRA"))
+        {
+        <a asp-action="Faltantes" class="btn btn-primary btn-lg shadow-sm">
+            <i class="bi bi-plus-lg me-2"></i>Ver faltantes
+        </a>
+        }
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
+                </div>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total orden(es)</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tabla">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Folio</th>
+                            <th>Proveedor</th>
+                            <th>Materiales</th>
+                            <th class="text-center">Renglones</th>
+                            <th class="text-center">Destinos</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center" style="width:100px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (lista.Any())
+                        {
+                            @foreach (var o in lista)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-circle bg-primary-subtle text-primary me-3">
+                                                <i class="bi bi-clipboard-check"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold">@o.Folio</h6>
+                                                <small class="text-muted">@o.FechaEmision.ToString("dd/MM/yyyy")</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@o.NombreProveedor</td>
+                                    <td>
+                                        <span class="fw-semibold">@o.ResumenMateriales</span>
+                                        <br /><small class="text-muted">@o.TotalPiezas.FormatoCantidad() piezas</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info-subtle text-info">@o.TotalRenglones</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (o.TotalDestinos > 1)
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning" title="Va a varios almacenes">
+                                                <i class="bi bi-diagram-3 me-1"></i>@o.TotalDestinos
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">1</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-success">@o.Total.ToString("C2")</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-@o.EstadoClase">@o.EstadoTexto</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Details" asp-route-id="@o.IdOrdenCompra"
+                                           class="btn btn-sm btn-outline-info" title="Ver detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8">
+                                    <div class="text-center py-5">
+                                        @if (Model.Buscado != null)
+                                        {
+                                            <i class="bi bi-search display-4 text-muted"></i>
+                                            <h5 class="mt-3 text-muted">Ninguna orden coincide con «@Model.Buscado»</h5>
+                                            <a href="?tamano=@Model.Tamano" class="btn btn-outline-secondary">
+                                                <i class="bi bi-x-lg me-2"></i>Quitar la búsqueda
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-clipboard display-4 text-muted"></i>
+                                            <h5 class="mt-3 text-muted">Todavía no hay órdenes de compra</h5>
+                                            <p class="text-muted">Revise los faltantes para emitir la primera</p>
+                                            <a asp-action="Faltantes" class="btn btn-primary">
+                                                <i class="bi bi-clipboard-plus me-2"></i>Ver faltantes
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Filtrar es cosa del servidor. Aquí sólo se devuelve el foco al campo
+        // para poder corregir la búsqueda sin volver a tomar el ratón.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
+    </script>
+}

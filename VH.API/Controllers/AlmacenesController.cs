@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/AlmacenesController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -9,6 +11,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("ALMACENES")]
     public class AlmacenesController : ControllerBase
     {
         private readonly IAlmacenService _almacenService;
@@ -27,6 +31,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<AlmacenResponseDto>>(almacenes));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<AlmacenResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            var pagina = await _almacenService.GetPaginadoAsync(consulta, activo);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<AlmacenResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<AlmacenResponseDto>> GetById(int id)
         {
@@ -43,6 +55,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("ALMACENES", "crear")]
         public async Task<ActionResult<AlmacenResponseDto>> Create([FromBody] AlmacenRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -61,6 +74,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("ALMACENES", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] AlmacenRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -73,6 +87,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("ALMACENES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
+using VH.Services.DTOs;
 using VH.Services.DTOs.Usuario;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -13,6 +15,58 @@ namespace VH.Services.Services
         public UsuarioService(UserManager<Usuario> userManager)
         {
             _userManager = userManager;
+        }
+
+        public async Task<ResultadoPaginado<UsuarioResponseDto>> GetPaginadoAsync(
+            ConsultaPaginada consulta, bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            // Identity expone sus usuarios como IQueryable, así que el filtro y el
+            // recorte llegan a SQL igual que en el repositorio genérico.
+            var query = _userManager.Users.AsQueryable();
+
+            if (activo.HasValue)
+                query = query.Where(u => u.Activo == activo.Value);
+
+            if (texto != null)
+            {
+                // Por las columnas, no por NombreCompleto, que es calculada.
+                query = query.Where(u =>
+                    u.Nombre.Contains(texto) ||
+                    u.ApellidoPaterno.Contains(texto) ||
+                    u.ApellidoMaterno.Contains(texto) ||
+                    (u.UserName != null && u.UserName.Contains(texto)) ||
+                    (u.Email != null && u.Email.Contains(texto)));
+            }
+
+            var total = query.Count();
+
+            var pagina = query
+                .OrderBy(u => u.ApellidoPaterno).ThenBy(u => u.Nombre)
+                .Skip(consulta.Salto).Take(consulta.Tamano)
+                .ToList();
+
+            var renglones = new List<UsuarioResponseDto>();
+            foreach (var u in pagina)
+            {
+                // Una consulta de roles por usuario. Ya era así; al paginar son
+                // veinticinco en vez de todos.
+                var roles = await _userManager.GetRolesAsync(u);
+                renglones.Add(new UsuarioResponseDto(
+                    u.Id, u.Nombre, u.ApellidoPaterno, u.ApellidoMaterno,
+                    u.NombreCompleto, u.Email!, u.UserName!,
+                    u.Activo, u.FechaCreacion, u.UltimoAcceso, roles));
+            }
+
+            return new ResultadoPaginado<UsuarioResponseDto>
+            {
+                Renglones = renglones,
+                Total = total,
+                Pagina = consulta.Pagina,
+                Tamano = consulta.Tamano,
+                Buscado = texto
+            };
         }
 
         public async Task<IEnumerable<UsuarioResponseDto>> GetAllAsync()

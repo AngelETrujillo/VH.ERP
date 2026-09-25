@@ -28,24 +28,35 @@ namespace VH.Web.Controllers
         }
 
         // GET: Inventarios
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision,
+            string? buscar = null, string? estado = null, int? idAlmacen = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+            ViewBag.FiltroEstado = estado;
+            ViewBag.FiltroAlmacen = idAlmacen;
+
             SetAuthHeader();
             try
             {
-                var response = await _httpClient.GetAsync("api/inventarios");
+                var url = $"api/inventarios/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+                if (!string.IsNullOrWhiteSpace(estado)) url += $"&estado={Uri.EscapeDataString(estado)}";
+                if (idAlmacen.HasValue) url += $"&idAlmacen={idAlmacen}";
+
+                var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var inventarios = await response.Content.ReadFromJsonAsync<IEnumerable<InventarioResponseDto>>();
-                return View(inventarios);
+                var listado = await response.Content.ReadFromJsonAsync<InventarioListadoDto>();
+                return View(listado ?? InventarioListadoDto.Vacio(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar inventarios");
                 ViewBag.ErrorMessage = "Error al cargar los inventarios";
-                return View(new List<InventarioResponseDto>());
+                return View(InventarioListadoDto.Vacio(consulta));
             }
         }
 
@@ -84,6 +95,7 @@ namespace VH.Web.Controllers
                     if (response.IsSuccessStatusCode)
                     {
                         TempData["Mensaje"] = "Inventario creado exitosamente";
+                        AvisarSiFaltaMinimo(dto.StockMinimo);
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
@@ -97,6 +109,19 @@ namespace VH.Web.Controllers
             }
             await CargarListasEnViewBag();
             return View(dto);
+        }
+
+        /// <summary>
+        /// Un registro de inventario sin mínimo queda fuera de la vigilancia: por
+        /// vacío que esté el anaquel, nadie va a proponer reponerlo.
+        /// </summary>
+        private void AvisarSiFaltaMinimo(decimal stockMinimo)
+        {
+            if (stockMinimo > 0) return;
+
+            TempData["WarningMessage"] =
+                "Este registro quedó sin stock mínimo. Mientras siga en cero no se vigila: " +
+                "no aparecerá en la reposición de compras aunque el almacén se quede vacío.";
         }
 
         // GET: Inventarios/Edit/5
@@ -135,6 +160,7 @@ namespace VH.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Mensaje"] = "Inventario actualizado exitosamente";
+                    AvisarSiFaltaMinimo(dto.StockMinimo);
                     return RedirectToAction(nameof(Index));
                 }
                 ModelState.AddModelError("", "Error al actualizar");
@@ -193,7 +219,7 @@ namespace VH.Web.Controllers
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
-                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                     ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                     {
                         Value = m.IdMaterial.ToString(),

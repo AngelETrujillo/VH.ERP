@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -10,6 +11,17 @@ namespace VH.Services.Services
         public ProveedorService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<Proveedor>> GetPaginadoAsync(
+            ConsultaPaginada consulta, bool? activo = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.Proveedores.GetPaginadoAsync(
+                consulta,
+                filtro: x => (activo == null || x.Activo == activo) && (texto == null || x.Nombre.Contains(texto) || x.RFC.Contains(texto) || x.Contacto.Contains(texto) || x.Telefono.Contains(texto)),
+                orden: q => q.OrderBy(x => x.Nombre));
         }
 
         public async Task<IEnumerable<Proveedor>> GetAllProveedoresAsync()

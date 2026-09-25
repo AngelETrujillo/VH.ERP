@@ -1,0 +1,216 @@
+@model IEnumerable<VH.Services.DTOs.PrestamoDto>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Devoluciones";
+    var prestados = Model?.ToList() ?? new List<VH.Services.DTOs.PrestamoDto>();
+    var almacenes = ViewBag.Almacenes as List<SelectListItem> ?? new();
+    int? filtro = ViewBag.FiltroAlmacen;
+
+    var personas = prestados.Select(p => p.IdEmpleado).Distinct().Count();
+    var piezas = prestados.Sum(p => p.Pendiente);
+    var atrasados = prestados.Count(p => p.DiasFuera >= 30);
+    var puedeRegistrar = Html.PuedeCrear("DEVOLUCIONES");
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">
+                <i class="bi bi-arrow-return-left text-primary me-2"></i>Devoluciones
+            </h2>
+            <p class="text-muted mb-0">Herramienta y equipo retornable que sigue en manos de alguien</p>
+        </div>
+        <a asp-action="Historial" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-clock-history me-2"></i>Devoluciones anteriores
+        </a>
+    </div>
+
+    <div class="alert alert-secondary d-flex align-items-start">
+        <i class="bi bi-info-circle me-2 fs-5"></i>
+        <div>
+            Aquí sólo aparece el material marcado como <strong>retornable</strong> en el catálogo.
+            Unos guantes se entregan y se acabó; un rotomartillo sigue siendo de la empresa
+            aunque esté en la obra.
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Piezas afuera</div>
+                    <div class="fs-2 fw-bold">@piezas.FormatoCantidad()</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Personas</div>
+                    <div class="fs-2 fw-bold">@personas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-semibold">Más de 30 días</div>
+                    <div class="fs-2 fw-bold @(atrasados > 0 ? "text-warning" : "")">@atrasados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <label class="form-label small text-muted fw-semibold text-uppercase">Almacén</label>
+                    <form method="get">
+                        <select name="idAlmacen" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            @foreach (var a in almacenes)
+                            {
+                                <option value="@a.Value" selected="@(a.Value == filtro?.ToString())">@a.Text</option>
+                            }
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!prestados.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle text-success" style="font-size:3rem;"></i>
+                <h5 class="mt-3">No hay nada prestado</h5>
+                <p class="text-muted mb-0">
+                    Todo el material retornable está en el almacén. Si esperabas ver algo aquí,
+                    revisa que el material esté marcado como retornable en su ficha.
+                </p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Quién tiene qué</h6>
+                <span class="badge bg-secondary">@prestados.Count préstamo(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Trabajador</th>
+                                <th>Material</th>
+                                <th>Almacén</th>
+                                <th class="text-center">Tiene</th>
+                                <th class="text-center">Desde</th>
+                                @if (puedeRegistrar)
+                                {
+                                    <th class="text-center" style="width:130px;">Devolver</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in prestados)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <span class="fw-semibold">@p.NombreEmpleado</span>
+                                        <br /><small class="text-muted">@p.NumeroNomina · @p.NombreProyecto</small>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@p.NombreMaterial</span>
+                                        <br />
+                                        <small class="text-muted">
+                                            Entrega #@p.IdEntrega
+                                            @if (!string.IsNullOrWhiteSpace(p.Talla)) { <span>· talla @p.Talla</span> }
+                                            @if (!string.IsNullOrWhiteSpace(p.LoteProveedor)) { <span>· lote @p.LoteProveedor</span> }
+                                        </small>
+                                    </td>
+                                    <td><small>@p.NombreAlmacen</small></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary fs-6">@p.Pendiente.FormatoCantidad()</span>
+                                        @if (p.CantidadDevuelta > 0)
+                                        {
+                                            <br /><small class="text-muted">ya volvieron @p.CantidadDevuelta.FormatoCantidad()</small>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <small>@p.FechaEntrega.ToString("dd/MM/yyyy")</small>
+                                        <br />
+                                        <span class="badge @(p.DiasFuera >= 30 ? "bg-warning-subtle text-warning" : "bg-secondary-subtle text-secondary")">
+                                            @p.DiasFuera d
+                                        </span>
+                                    </td>
+                                    @if (puedeRegistrar)
+                                    {
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    data-bs-toggle="modal" data-bs-target="#modalDev@(p.IdEntrega)">
+                                                <i class="bi bi-arrow-return-left me-1"></i>Recibir
+                                            </button>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if (puedeRegistrar)
+        {
+            @foreach (var p in prestados)
+            {
+                <div class="modal fade" id="modalDev@(p.IdEntrega)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form asp-action="Registrar" method="post" class="modal-content">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="IdEntrega" value="@p.IdEntrega" />
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-arrow-return-left me-2"></i>Recibir de vuelta
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted small mb-3">
+                                    <strong>@p.NombreMaterial</strong> que se le prestó a
+                                    <strong>@p.NombreEmpleado</strong> el @p.FechaEntrega.ToString("dd/MM/yyyy").
+                                    Tiene @p.Pendiente.FormatoCantidad() @p.UnidadMedida sin devolver.
+                                </p>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Cuánto vuelve</label>
+                                    <input type="number" name="Cantidad" class="form-control"
+                                           step="0.01" min="0.01" max="@p.Pendiente.FormatoInput()"
+                                           value="@p.Pendiente.FormatoInput()" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">En qué estado</label>
+                                    <select name="Estado" class="form-select" required>
+                                        <option value="0">En buen estado — vuelve al almacén</option>
+                                        <option value="1">Dañada — vuelve, pero hay que revisarla</option>
+                                        <option value="2">Perdida — no vuelve</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Observaciones</label>
+                                    <textarea name="Observaciones" class="form-control" rows="2" maxlength="500"
+                                              placeholder="Obligatorio si vuelve dañada o se perdió"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-success">Registrar devolución</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>

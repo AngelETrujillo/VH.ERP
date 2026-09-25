@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/ProveedoresController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -9,6 +11,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("PROVEEDORES")]
     public class ProveedoresController : ControllerBase
     {
         private readonly IProveedorService _proveedorService;
@@ -27,6 +31,14 @@ namespace VH.API.Controllers
             return Ok(_mapper.Map<IEnumerable<ProveedorResponseDto>>(proveedores));
         }
 
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<ProveedorResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta, [FromQuery] bool? activo = null)
+        {
+            var pagina = await _proveedorService.GetPaginadoAsync(consulta, activo);
+            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<ProveedorResponseDto>>(pagina.Renglones)));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ProveedorResponseDto>> GetById(int id)
         {
@@ -36,6 +48,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("PROVEEDORES", "crear")]
         public async Task<ActionResult<ProveedorResponseDto>> Create([FromBody] ProveedorRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -54,6 +67,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("PROVEEDORES", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] ProveedorRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -73,6 +87,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("PROVEEDORES", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             try

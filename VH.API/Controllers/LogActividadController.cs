@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.Services.DTOs;
 using VH.Services.DTOs.LogActividad;
 using VH.Services.Interfaces;
 
@@ -25,6 +26,20 @@ namespace VH.API.Controllers
         {
             var logs = await _logService.GetAllAsync(desde, hasta, userId);
             return Ok(logs);
+        }
+
+        /// <summary>
+        /// Una página del log. Se deja el endpoint sin paginar para lo que aún lo
+        /// consuma, pero las pantallas usan éste.
+        /// </summary>
+        [HttpGet("paginado")]
+        public async Task<ActionResult<ResultadoPaginado<LogActividadResponseDto>>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] string? userId)
+        {
+            return Ok(await _logService.GetPaginadoAsync(consulta, desde, hasta, userId));
         }
 
         [HttpGet("usuario/{userId}")]

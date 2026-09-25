@@ -1,6 +1,8 @@
 ﻿// VH.API/Controllers/InventariosController.cs
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.DTOs;
 using VH.Services.Entities;
 using VH.Services.Interfaces;
@@ -9,6 +11,8 @@ namespace VH.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [RequierePermisoApi("INVENTARIOS")]
     public class InventariosController : ControllerBase
     {
         private readonly IInventarioService _inventarioService;
@@ -18,6 +22,15 @@ namespace VH.API.Controllers
         {
             _inventarioService = inventarioService;
             _mapper = mapper;
+        }
+
+        [HttpGet("paginado")]
+        public async Task<ActionResult<InventarioListadoDto>> GetPaginado(
+            [FromQuery] ConsultaPaginada consulta,
+            [FromQuery] string? estado = null,
+            [FromQuery] int? idAlmacen = null)
+        {
+            return Ok(await _inventarioService.GetListadoPaginadoAsync(consulta, estado, idAlmacen));
         }
 
         [HttpGet]
@@ -57,6 +70,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost]
+        [RequierePermisoApi("INVENTARIOS", "crear")]
         public async Task<ActionResult<InventarioResponseDto>> Create([FromBody] InventarioRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -75,6 +89,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequierePermisoApi("INVENTARIOS", "editar")]
         public async Task<IActionResult> Update(int id, [FromBody] InventarioRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -97,6 +112,7 @@ namespace VH.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequierePermisoApi("INVENTARIOS", "eliminar")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _inventarioService.DeleteInventarioAsync(id);

@@ -1,4 +1,23 @@
-﻿@model IEnumerable<VH.Services.DTOs.Usuario.UsuarioResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.Usuario.UsuarioResponseDto>
+@{
+    ViewData["BuscarPlaceholder"] = "Buscar por nombre, usuario o correo…";
+    bool? filtroActivo = ViewBag.FiltroActivo;
+    var filtrosEstado = new Dictionary<string, string?>
+    {
+        ["activo"] = filtroActivo?.ToString().ToLowerInvariant()
+    };
+    ViewData["FiltrosPaginador"] = filtrosEstado;
+    ViewData["FiltrosOcultos"] = filtrosEstado;
+
+    string LigaEstado(bool? activo)
+    {
+        var partes = new List<string> { $"tamano={Model.Tamano}" };
+        if (activo.HasValue) partes.Add($"activo={activo.Value.ToString().ToLowerInvariant()}");
+        if (Model.Buscado != null) partes.Add($"buscar={Uri.EscapeDataString(Model.Buscado)}");
+        return "?" + string.Join("&", partes);
+    }
+}
+
 @{
     ViewData["Title"] = "Gestión de Usuarios";
 }
@@ -10,15 +29,23 @@
     </a>
 </div>
 
-@if (TempData["Mensaje"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Mensaje"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
 <div class="card">
+    <div class="card-header bg-white py-3">
+        <div class="row align-items-center g-2">
+            <div class="col-lg-7">
+                @await Html.PartialAsync("_BarraBusqueda", Model)
+            </div>
+            <div class="col-lg-5 text-lg-end">
+                    <div class="btn-group me-2" role="group" aria-label="Filtrar por estado">
+                        <a href="@LigaEstado(null)" class="btn btn-sm @(filtroActivo == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                        <a href="@LigaEstado(true)" class="btn btn-sm @(filtroActivo == true ? "btn-success" : "btn-outline-success")">Activos</a>
+                        <a href="@LigaEstado(false)" class="btn btn-sm @(filtroActivo == false ? "btn-danger" : "btn-outline-danger")">Inactivos</a>
+                    </div>
+                <span class="badge bg-secondary">@Model.Total usuario(s)</span>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
@@ -34,7 +61,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var usuario in Model)
+                    @foreach (var usuario in Model.Renglones)
                     {
                         <tr>
                             <td><strong>@usuario.UserName</strong></td>
@@ -82,5 +109,7 @@
                 </tbody>
             </table>
         </div>
+
+        @await Html.PartialAsync("_Paginador", Model)
     </div>
 </div>

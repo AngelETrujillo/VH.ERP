@@ -1,6 +1,28 @@
-﻿@model IEnumerable<VH.Services.DTOs.MaterialEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.MaterialResponseDto>
 @{
-    ViewData["Title"] = "Materiales EPP";
+    bool? filtroActivo = ViewBag.FiltroActivo;
+    ViewData["BuscarPlaceholder"] = "Buscar por nombre o descripción…";
+    var filtrosEstado = new Dictionary<string, string?>
+    {
+        ["activo"] = filtroActivo?.ToString().ToLowerInvariant()
+    };
+    ViewData["FiltrosPaginador"] = filtrosEstado;
+    ViewData["FiltrosOcultos"] = filtrosEstado;
+
+    // El estado deja de ser un radio que esconde filas y pasa a ser una liga:
+    // filtrando en el navegador, "Inactivos" sólo habría ocultado los activos de
+    // la página que estuvieras viendo.
+    string LigaEstado(bool? activo)
+    {
+        var partes = new List<string> { $"tamano={Model.Tamano}" };
+        if (activo.HasValue) partes.Add($"activo={activo.Value.ToString().ToLowerInvariant()}");
+        if (Model.Buscado != null) partes.Add($"buscar={Uri.EscapeDataString(Model.Buscado)}");
+        return "?" + string.Join("&", partes);
+    }
+}
+
+@{
+    ViewData["Title"] = "Materiales";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
     var puedeCrear = PermisoHelper.PuedeCrear(Context.Session, "EMPLEADOS", esSuperAdmin);
     var puedeEditar = PermisoHelper.PuedeEditar(Context.Session, "EMPLEADOS", esSuperAdmin);
@@ -12,15 +34,18 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1 fw-bold text-dark">
-                <i class="bi bi-shield-check text-primary me-2"></i>Materiales EPP
+                <i class="bi bi-shield-check text-primary me-2"></i>Materiales
             </h2>
-            <p class="text-muted mb-0">Catálogo de equipos de protección personal</p>
+            <p class="text-muted mb-0">Catálogo de EPP, consumibles y herramienta</p>
         </div>
         @if (puedeCrear)
         {
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("MATERIALES_EPP"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo Material
-            </a>
+                </a>
+            }
         }
     </div>
 
@@ -32,37 +57,21 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar por nombre o descripción...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-7">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroTodos" checked>
-                        <label class="btn btn-outline-secondary btn-sm" for="filtroTodos">Todos</label>
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroActivos">
-                        <label class="btn btn-outline-success btn-sm" for="filtroActivos">Activos</label>
-                        <input type="radio" class="btn-check" name="filtroEstado" id="filtroInactivos">
-                        <label class="btn btn-outline-danger btn-sm" for="filtroInactivos">Inactivos</label>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="btn-group me-2" role="group" aria-label="Filtrar por estado">
+                        <a href="@LigaEstado(null)" class="btn btn-sm @(filtroActivo == null ? "btn-secondary" : "btn-outline-secondary")">Todos</a>
+                        <a href="@LigaEstado(true)" class="btn btn-sm @(filtroActivo == true ? "btn-success" : "btn-outline-success")">Activos</a>
+                        <a href="@LigaEstado(false)" class="btn btn-sm @(filtroActivo == false ? "btn-danger" : "btn-outline-danger")">Inactivos</a>
                     </div>
-                    <span class="badge bg-secondary ms-3">@Model?.Count() registros</span>
+                    <span class="badge bg-secondary">@Model.Total material(es)</span>
                 </div>
             </div>
         </div>
@@ -72,6 +81,7 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4">Material</th>
+                            <th>Tipo</th>
                             <th>Unidad</th>
                             <th class="text-end">Costo Estimado</th>
                             <th class="text-center">Stock Global</th>
@@ -80,9 +90,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
                                 <tr data-estado="@(item.Activo ? "activo" : "inactivo")">
                                     <td class="ps-4">
@@ -98,6 +108,11 @@
                                                 }
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(item.TipoMaterialClase)-subtle text-@(item.TipoMaterialClase)">
+                                            @item.TipoMaterialTexto
+                                        </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary-subtle text-secondary">
@@ -141,17 +156,23 @@
                                             </a>
                                             @if (puedeEditar)
                                             {
-                                                <a asp-action="Edit" asp-route-id="@item.IdMaterial"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("MATERIALES_EPP"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdMaterial"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                              }
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdMaterial"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("MATERIALES_EPP"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdMaterial"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
                                     </td>
@@ -161,14 +182,17 @@
                         else
                         {
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="text-center py-5">
                                         <i class="bi bi-shield-check display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay materiales registrados</h5>
-                                        <p class="text-muted">Comienza agregando tu primer material EPP</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        <p class="text-muted">Comienza agregando tu primer material</p>
+                                        @if (Html.PuedeCrear("MATERIALES_EPP"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Agregar Material
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -176,6 +200,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>
@@ -202,11 +228,15 @@
 
 @section Scripts {
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
+        // Buscar y filtrar los hace el servidor. Queda sólo devolver el foco al
+        // campo, para corregir el texto sin volver a tomar el ratón.
+        (function () {
+            const campo = document.getElementById('campoBuscar');
+            if (campo && campo.value) {
+                campo.focus();
+                campo.setSelectionRange(campo.value.length, campo.value.length);
+            }
+        })();
         });
         document.querySelectorAll('input[name="filtroEstado"]').forEach(radio => {
             radio.addEventListener('change', function() {

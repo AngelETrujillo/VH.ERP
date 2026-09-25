@@ -18,21 +18,27 @@ namespace VH.Web.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
             try
             {
-                var response = await _httpClient.GetAsync("api/proyectos");
+                var url = $"api/proyectos/paginado?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
+                if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
+
+                var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
-                var proyectos = await response.Content.ReadFromJsonAsync<IEnumerable<ProyectoResponseDto>>();
-                return View(proyectos);
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<ProyectoResponseDto>>();
+                return View(pag ?? ResultadoPaginado<ProyectoResponseDto>.Ninguno(consulta));
             }
             catch (HttpRequestException e)
             {
                 _logger.LogError(e, "Error al conectar con la API.");
                 ViewBag.ErrorMessage = $"Error al cargar proyectos: {e.Message}";
-                return View(new List<ProyectoResponseDto>());
+                return View(ResultadoPaginado<ProyectoResponseDto>.Ninguno(consulta));
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using VH.Services.Entities;
+﻿using VH.Services.DTOs;
+using VH.Services.Entities;
 
 namespace VH.Services.Interfaces
 {
@@ -11,6 +12,16 @@ namespace VH.Services.Interfaces
         /// <summary>
         /// Obtiene todos los registros de inventario
         /// </summary>
+        /// <summary>
+        /// Una página del control de inventarios con los conteos del encabezado.
+        /// </summary>
+        /// <param name="estado">
+        /// null = todos; "bajo" = por debajo del mínimo con algo aún; "sin" = en cero;
+        /// "sobre" = por encima del máximo.
+        /// </param>
+        Task<InventarioListadoDto> GetListadoPaginadoAsync(
+            ConsultaPaginada consulta, string? estado = null, int? idAlmacen = null);
+
         Task<IEnumerable<Inventario>> GetAllInventariosAsync();
 
         /// <summary>
@@ -64,5 +75,41 @@ namespace VH.Services.Interfaces
         /// Usado para sincronización o corrección de datos.
         /// </summary>
         Task<decimal> RecalcularExistenciaAsync(int idMaterial, int idAlmacen);
+
+        // ===== RESERVA DE EXISTENCIA =====
+
+        /// <summary>
+        /// Lo que todavía puede prometerse de un material en un almacén:
+        /// existencia menos lo ya apartado. Cero si no hay registro de inventario.
+        /// </summary>
+        Task<decimal> GetDisponibleAsync(int idMaterial, int idAlmacen);
+
+        /// <summary>
+        /// Aparta cantidad para un renglón autorizado. Devuelve false si el
+        /// disponible no alcanza, sin tocar nada: el renglón queda por comprar.
+        /// No confirma los cambios; el llamador decide cuándo persistir.
+        /// </summary>
+        Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
+
+        /// <summary>
+        /// Suelta una reserva sin mover la existencia: el material deja de estar
+        /// prometido y vuelve a estar disponible para otros.
+        ///
+        /// El <paramref name="motivo"/> lo pone quien llama, porque el kardex se
+        /// lee meses después y "se liberó" a secas no explica nada: no es lo mismo
+        /// que alguien cancelara su requisición a que el material nunca llegó
+        /// porque se deshizo la recepción que lo traía.
+        /// </summary>
+        Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null,
+            string? motivo = null);
+
+        /// <summary>
+        /// Consume una reserva al surtirla. Sólo baja el comprometido: la salida
+        /// de la existencia la hace el servicio de entregas.
+        /// </summary>
+        Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null);
     }
 }

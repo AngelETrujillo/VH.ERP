@@ -12,9 +12,9 @@ namespace VH.Services.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un empleado válido")]
         int IdEmpleado,
 
-        [Required(ErrorMessage = "El lote/compra es obligatorio")]
+        [Required(ErrorMessage = "El lote es obligatorio")]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un lote válido")]
-        int IdCompra,
+        int IdCompraDetalle,
 
         [Required(ErrorMessage = "La fecha de entrega es obligatoria")]
         DateTime FechaEntrega,
@@ -48,6 +48,7 @@ namespace VH.Services.DTOs
         public string NumeroNominaEmpleado { get; set; } = string.Empty;
 
         // Información del Lote/Compra
+        public int IdCompraDetalle { get; set; }
         public int IdCompra { get; set; }
 
         // Información del Material (obtenida desde la Compra)

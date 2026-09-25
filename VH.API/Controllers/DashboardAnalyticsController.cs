@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VH.API.Filters;
 using VH.Services.Interfaces;
 
 namespace VH.API.Controllers
@@ -7,6 +8,7 @@ namespace VH.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [RequierePermisoApi("DASHBOARD_ANALYTICS")]
     public class DashboardAnalyticsController : ControllerBase
     {
         private readonly IDashboardAnalyticsService _dashboardService;
@@ -110,6 +112,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost("recalcular-estadisticas/{anio}/{mes}")]
+        [RequierePermisoApi("DASHBOARD_ANALYTICS", "editar")]
         public async Task<IActionResult> RecalcularEstadisticas(int anio, int mes)
         {
             await _dashboardService.RecalcularTodasEstadisticasAsync(anio, mes);
@@ -117,6 +120,7 @@ namespace VH.API.Controllers
         }
 
         [HttpPost("recalcular-riesgos")]
+        [RequierePermisoApi("DASHBOARD_ANALYTICS", "editar")]
         public async Task<IActionResult> RecalcularPuntuacionesRiesgo()
         {
             await _dashboardService.RecalcularTodasPuntuacionesRiesgoAsync();

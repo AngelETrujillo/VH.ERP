@@ -1,4 +1,5 @@
-﻿using VH.Services.Interfaces;
+﻿using VH.Services.DTOs;
+using VH.Services.Interfaces;
 using VH.Services.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,6 +14,21 @@ namespace VH.Services.Services
         public ConceptoPartidaService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultadoPaginado<ConceptoPartida>> GetPaginadoAsync(
+            ConsultaPaginada consulta, int idProyecto)
+        {
+            var texto = consulta.TextoLimpio;
+
+            return await _unitOfWork.ConceptosPartidas.GetPaginadoAsync(
+                consulta,
+                filtro: cp => cp.IdProyecto == idProyecto &&
+                              (texto == null ||
+                               cp.Descripcion.Contains(texto) ||
+                               (cp.UnidadMedida != null && cp.UnidadMedida.Nombre.Contains(texto))),
+                orden: q => q.OrderBy(cp => cp.Descripcion),
+                includeProperties: "UnidadMedida");
         }
 
         public async Task<IEnumerable<ConceptoPartida>> GetPartidasByProyectoAsync(int idProyecto)

@@ -1,4 +1,8 @@
-﻿@model IEnumerable<VH.Services.DTOs.Rol.RolResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.Rol.RolResponseDto>
+@{
+    ViewData["BuscarPlaceholder"] = "Buscar por nombre o descripción…";
+}
+
 @{
     ViewData["Title"] = "Gestión de Permisos";
 }
@@ -7,23 +11,19 @@
     <h4 class="mb-0"><i class="bi bi-key"></i> Gestión de Permisos por Rol</h4>
 </div>
 
-@if (TempData["Mensaje"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Mensaje"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
 <div class="card">
+    <div class="card-header bg-white py-3">
+        <div class="row align-items-center g-2">
+            <div class="col-lg-7">
+                @await Html.PartialAsync("_BarraBusqueda", Model)
+            </div>
+            <div class="col-lg-5 text-lg-end">
+                <span class="badge bg-secondary">@Model.Total rol(es)</span>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <p class="text-muted mb-4">Seleccione un rol para configurar sus permisos de acceso a los módulos del sistema.</p>
         <div class="table-responsive">
@@ -37,7 +37,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var rol in Model)
+                    @foreach (var rol in Model.Renglones)
                     {
                         <tr>
                             <td><strong>@rol.Name</strong></td>
@@ -62,5 +62,7 @@
                 </tbody>
             </table>
         </div>
+
+        @await Html.PartialAsync("_Paginador", Model)
     </div>
 </div>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VH.Services.DTOs.CompraEPPResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.CompraEPPResponseDto>
 @{
     ViewData["Title"] = "Compras EPP";
     var esSuperAdmin = User.IsInRole("SuperAdmin");
@@ -17,27 +17,16 @@
             <p class="text-muted mb-0">Registro de compras de equipos de protección personal</p>
         </div>
         @if(puedeCrear){
-            <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
+            @if (Html.PuedeCrear("COMPRAS_EPP"))
+            {
+                <a asp-action="Create" class="btn btn-primary btn-lg shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Nueva Compra
-            </a>
+                </a>
+            }
         }
     </div>
 
     <!-- Alertas -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["WarningMessage"] != null)
-    {
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["WarningMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
     @if (TempData["ErrorMessage"] != null || ViewBag.ErrorMessage != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -46,10 +35,28 @@
         </div>
     }
 
+@{
+    var filtrosCompras = new Dictionary<string, string?>
+    {
+        ["idMaterial"]  = ViewBag.FiltroMaterial?.ToString(),
+        ["idProveedor"] = ViewBag.FiltroProveedor?.ToString(),
+        ["idAlmacen"]   = ViewBag.FiltroAlmacen?.ToString()
+    };
+    ViewData["FiltrosPaginador"] = filtrosCompras;
+    ViewData["FiltrosOcultos"] = filtrosCompras;
+    ViewData["BuscarPlaceholder"] = "Buscar por factura, UUID, proveedor, material u observaciones…";
+}
+
     <!-- Filtros -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
+                @if (!string.IsNullOrWhiteSpace(Model.Buscado))
+                {
+                    <input type="hidden" name="buscar" value="@Model.Buscado" />
+                }
+                <input type="hidden" name="tamano" value="@Model.Tamano" />
+
                 <div class="col-md-3">
                     <label class="form-label small fw-semibold">Material</label>
                     <select name="idMaterial" class="form-select" asp-items="@ViewBag.Materiales">
@@ -83,18 +90,12 @@
     <!-- Card principal -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
-                               placeholder="Buscar...">
-                    </div>
+            <div class="row align-items-center g-2">
+                <div class="col-lg-9">
+                    @await Html.PartialAsync("_BarraBusqueda", Model)
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <span class="badge bg-secondary">@Model?.Count() registros</span>
+                <div class="col-lg-3 text-lg-end">
+                    <span class="badge bg-secondary">@Model.Total registro(s)</span>
                 </div>
             </div>
         </div>
@@ -104,29 +105,25 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4">Fecha</th>
-                            <th>Material</th>
                             <th>Proveedor</th>
-                            <th>Almacén</th>
-                            <th class="text-center">Cantidad</th>
-                            <th class="text-end">P. Unitario</th>
+                            <th>Materiales</th>
+                            <th class="text-center">Renglones</th>
+                            <th class="text-end">Subtotal</th>
                             <th class="text-end">Total</th>
-                            <th class="text-center">Disponible</th>
+                            <th class="text-center">Estado</th>
                             <th class="text-center" style="width:140px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (!Model.Vacio)
                         {
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Renglones)
                             {
-                                var porcentajeDisponible = item.CantidadComprada > 0
-                                ? (item.CantidadDisponible / item.CantidadComprada) * 100
-                                : 0;
                                 <tr>
                                     <td class="ps-4">
                                         <div class="d-flex align-items-center">
                                             <div class="icon-circle bg-success-subtle text-success me-3">
-                                                <i class="bi bi-cart-check"></i>
+                                                <i class="bi bi-receipt"></i>
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-semibold">@item.FechaCompra.ToString("dd/MM/yyyy")</h6>
@@ -137,29 +134,24 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span class="fw-semibold">@item.NombreMaterial</span>
-                                        <br><small class="text-muted">@item.UnidadMedidaMaterial</small>
-                                    </td>
                                     <td>@item.NombreProveedor</td>
                                     <td>
-                                        <span class="badge bg-info-subtle text-info">
-                                            <i class="bi bi-box-seam me-1"></i>@item.NombreAlmacen
-                                        </span>
+                                        <span class="fw-semibold">@item.ResumenMateriales</span>
+                                        <br><small class="text-muted">@item.TotalUnidades.FormatoCantidad() unidades</small>
                                     </td>
-                                    <td class="text-center fw-semibold">@item.CantidadComprada</td>
-                                    <td class="text-end">@item.PrecioUnitario.ToString("C2")</td>
-                                    <td class="text-end fw-bold text-success">@item.CostoTotal.ToString("C2")</td>
                                     <td class="text-center">
-                                        @if (item.CantidadDisponible > 0)
+                                        <span class="badge bg-info-subtle text-info">@item.TotalRenglones</span>
+                                    </td>
+                                    <td class="text-end">@item.Subtotal.ToString("C2")</td>
+                                    <td class="text-end fw-bold text-success">@item.Total.ToString("C2")</td>
+                                    <td class="text-center">
+                                        @if (item.TieneDisponible)
                                         {
-                                            <span class="badge bg-success-subtle text-success">
-                                                @item.CantidadDisponible
-                                            </span>
+                                            <span class="badge bg-success-subtle text-success">Con existencia</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary-subtle text-secondary">Agotado</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">Agotada</span>
                                         }
                                     </td>
                                     <td class="text-center">
@@ -170,17 +162,23 @@
                                             </a>
                                             @if(puedeEditar)
                                             {                                                
-                                                <a asp-action="Edit" asp-route-id="@item.IdCompra"
-                                                   class="btn btn-outline-warning" title="Editar">
+                                                @if (Html.PuedeEditar("COMPRAS_EPP"))
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.IdCompra"
+                                                    class="btn btn-outline-warning" title="Editar">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                             @if (puedeEliminar)
                                             {
-                                                <a asp-action="Delete" asp-route-id="@item.IdCompra"
-                                                   class="btn btn-outline-danger" title="Eliminar">
+                                                @if (Html.PuedeEliminar("COMPRAS_EPP"))
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.IdCompra"
+                                                    class="btn btn-outline-danger" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
-                                                </a>
+                                                    </a>
+                                                }
                                             }
                                         </div>
                                     </td>
@@ -195,9 +193,12 @@
                                         <i class="bi bi-cart-x display-4 text-muted"></i>
                                         <h5 class="mt-3 text-muted">No hay compras registradas</h5>
                                         <p class="text-muted">Comienza registrando tu primera compra de EPP</p>
-                                        <a asp-action="Create" class="btn btn-primary">
+                                        @if (Html.PuedeCrear("COMPRAS_EPP"))
+                                        {
+                                            <a asp-action="Create" class="btn btn-primary">
                                             <i class="bi bi-plus-lg me-2"></i>Nueva Compra
-                                        </a>
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -205,6 +206,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @await Html.PartialAsync("_Paginador", Model)
         </div>
     </div>
 </div>

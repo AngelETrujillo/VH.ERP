@@ -28,39 +28,43 @@ namespace VH.Web.Controllers
         }
 
         // GET: ComprasEPP
-        public async Task<IActionResult> Index(int? idMaterial, int? idProveedor, int? idAlmacen)
+        public async Task<IActionResult> Index(
+            int? idMaterial, int? idProveedor, int? idAlmacen,
+            int pagina = 1, int tamano = ConsultaPaginada.TamanoPorOmision, string? buscar = null)
         {
             SetAuthHeader();
+
+            var consulta = new ConsultaPaginada { Pagina = pagina, Tamano = tamano, Buscar = buscar };
+
+            await CargarFiltrosEnViewBag();
+            ViewBag.FiltroMaterial = idMaterial;
+            ViewBag.FiltroProveedor = idProveedor;
+            ViewBag.FiltroAlmacen = idAlmacen;
+
             try
             {
-                var url = "api/comprasepp";
-                var queryParams = new List<string>();
+                var partes = new List<string> { $"pagina={consulta.Pagina}", $"tamano={consulta.Tamano}" };
+                if (consulta.HayBusqueda) partes.Add($"buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}");
+                if (idMaterial.HasValue) partes.Add($"idMaterial={idMaterial}");
+                if (idProveedor.HasValue) partes.Add($"idProveedor={idProveedor}");
+                if (idAlmacen.HasValue) partes.Add($"idAlmacen={idAlmacen}");
 
-                if (idMaterial.HasValue) queryParams.Add($"idMaterial={idMaterial}");
-                if (idProveedor.HasValue) queryParams.Add($"idProveedor={idProveedor}");
-                if (idAlmacen.HasValue) queryParams.Add($"idAlmacen={idAlmacen}");
-
-                if (queryParams.Any()) url += "?" + string.Join("&", queryParams);
+                var url = "api/comprasepp/paginado?" + string.Join("&", partes);
 
                 var response = await _httpClient.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var compras = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+                var pag = await response.Content.ReadFromJsonAsync<ResultadoPaginado<CompraEPPResponseDto>>();
 
-                await CargarFiltrosEnViewBag();
-                ViewBag.FiltroMaterial = idMaterial;
-                ViewBag.FiltroProveedor = idProveedor;
-                ViewBag.FiltroAlmacen = idAlmacen;
-
-                return View(compras);
+                return View(pag ?? ResultadoPaginado<CompraEPPResponseDto>.Ninguno(consulta));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar compras EPP");
                 ViewBag.ErrorMessage = "Error al cargar las compras";
-                return View(new List<CompraEPPResponseDto>());
+                return View(ResultadoPaginado<CompraEPPResponseDto>.Ninguno(consulta));
             }
         }
 
@@ -98,7 +102,18 @@ namespace VH.Web.Controllers
                     var response = await _httpClient.PostAsJsonAsync("api/comprasepp", dto);
                     if (response.IsSuccessStatusCode)
                     {
-                        TempData["Mensaje"] = "Compra registrada exitosamente";
+                        // La pantalla de compras lee SuccessMessage/WarningMessage;
+                        // con "Mensaje" ni el acuse de la compra se veía.
+                        TempData["SuccessMessage"] = "Compra registrada exitosamente";
+
+                        // El API avisa aquí cuando una compra deja el stock por
+                        // encima del máximo. Antes se descartaba, y el almacenista
+                        // sólo se enteraba si entraba a Control de Inventario a
+                        // buscarlo: el aviso llegaba cuando ya no servía de nada.
+                        var resultado = await response.Content.ReadFromJsonAsync<CompraCreadaResultado>();
+                        if (resultado?.Alertas is { Count: > 0 })
+                            TempData["WarningMessage"] = string.Join(" ", resultado.Alertas);
+
                         return RedirectToAction(nameof(Index));
                     }
                     var error = await response.Content.ReadAsStringAsync();
@@ -114,6 +129,16 @@ namespace VH.Web.Controllers
             return View(dto);
         }
 
+        /// <summary>
+        /// Respuesta del alta de compra: el documento y los avisos de stock que
+        /// haya disparado.
+        /// </summary>
+        private sealed class CompraCreadaResultado
+        {
+            public CompraEPPResponseDto? Data { get; set; }
+            public List<string> Alertas { get; set; } = new();
+        }
+
         // GET: ComprasEPP/Edit/5
         [RequierePermiso("COMPRAS_EPP", "editar")]
         public async Task<IActionResult> Edit(int id)
@@ -123,20 +148,21 @@ namespace VH.Web.Controllers
             if (!response.IsSuccessStatusCode) return NotFound();
 
             var compra = await response.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
-            var dto = new CompraEPPRequestDto(
-                compra!.IdMaterial,
-                compra.IdProveedor,
-                compra.IdAlmacen,
-                compra.FechaCompra,
-                compra.CantidadComprada,
-                compra.PrecioUnitario,
+
+            // Sólo se editan los datos del documento; los renglones se muestran
+            // como referencia porque cambiar el precio de un lote ya consumido
+            // reescribiría el costo de entregas pasadas.
+            var dto = new CompraEPPUpdateDto(
+                compra!.FechaCompra,
                 compra.NumeroDocumento,
+                compra.UuidCFDI,
+                compra.Iva,
                 compra.Observaciones
             );
 
             await CargarListasEnViewBag();
             ViewBag.Id = id;
-            ViewBag.CantidadDisponible = compra.CantidadDisponible;
+            ViewBag.Compra = compra;
             return View(dto);
         }
 
@@ -144,7 +170,7 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("COMPRAS_EPP", "editar")]
-        public async Task<IActionResult> Edit(int id, CompraEPPRequestDto dto)
+        public async Task<IActionResult> Edit(int id, CompraEPPUpdateDto dto)
         {
             if (ModelState.IsValid)
             {
@@ -157,6 +183,12 @@ namespace VH.Web.Controllers
                 }
                 ModelState.AddModelError("", "Error al actualizar");
             }
+
+            SetAuthHeader();
+            var actual = await _httpClient.GetAsync($"api/comprasepp/{id}");
+            if (actual.IsSuccessStatusCode)
+                ViewBag.Compra = await actual.Content.ReadFromJsonAsync<CompraEPPResponseDto>();
+
             await CargarListasEnViewBag();
             ViewBag.Id = id;
             return View(dto);
@@ -202,12 +234,12 @@ namespace VH.Web.Controllers
                 var response = await _httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode) return RedirectToAction(nameof(Index));
 
-                var historial = await response.Content.ReadFromJsonAsync<IEnumerable<CompraEPPResponseDto>>();
+                var historial = await response.Content.ReadFromJsonAsync<IEnumerable<HistorialPrecioDto>>();
 
                 var materialResponse = await _httpClient.GetAsync($"api/materiales/{idMaterial}");
                 if (materialResponse.IsSuccessStatusCode)
                 {
-                    var material = await materialResponse.Content.ReadFromJsonAsync<MaterialEPPResponseDto>();
+                    var material = await materialResponse.Content.ReadFromJsonAsync<MaterialResponseDto>();
                     ViewBag.NombreMaterial = material?.Nombre ?? "Material";
                 }
                 else
@@ -236,7 +268,7 @@ namespace VH.Web.Controllers
                 var materialesResponse = await _httpClient.GetAsync("api/materiales");
                 if (materialesResponse.IsSuccessStatusCode)
                 {
-                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialEPPResponseDto>>();
+                    var materiales = await materialesResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
                     ViewBag.Materiales = materiales?.Where(m => m.Activo).Select(m => new SelectListItem
                     {
                         Value = m.IdMaterial.ToString(),

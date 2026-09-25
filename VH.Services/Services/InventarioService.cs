@@ -1,4 +1,6 @@
-﻿using VH.Services.Entities;
+﻿using AutoMapper;
+using VH.Services.DTOs;
+using VH.Services.Entities;
 using VH.Services.Interfaces;
 
 namespace VH.Services.Services
@@ -6,13 +8,57 @@ namespace VH.Services.Services
     public class InventarioService : IInventarioService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMovimientoInventarioService _movimientoService;
 
-        public InventarioService(IUnitOfWork unitOfWork)
+        // El listado arma su propio DTO: la pantalla necesita la página y los
+        // conteos juntos, y los conteos no salen de la página.
+        private readonly IMapper _mapper;
+
+        public InventarioService(
+            IUnitOfWork unitOfWork, IMovimientoInventarioService movimientoService, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _movimientoService = movimientoService;
+            _mapper = mapper;
         }
 
         private const string IncludeProperties = "Almacen.Proyecto,Material.UnidadMedida";
+
+        public async Task<InventarioListadoDto> GetListadoPaginadoAsync(
+            ConsultaPaginada consulta, string? estado = null, int? idAlmacen = null)
+        {
+            var texto = consulta.TextoLimpio;
+
+            var pagina = await _unitOfWork.Inventarios.GetPaginadoAsync(
+                consulta,
+                filtro: i =>
+                    (idAlmacen == null || i.IdAlmacen == idAlmacen) &&
+                    (estado == null ||
+                     (estado == "sin"   && i.Existencia == 0) ||
+                     (estado == "bajo"  && i.Existencia > 0 && i.Existencia <= i.StockMinimo) ||
+                     (estado == "sobre" && i.StockMaximo > 0 && i.Existencia > i.StockMaximo)) &&
+                    (texto == null ||
+                     (i.Material != null && i.Material.Nombre.Contains(texto)) ||
+                     (i.Almacen != null && i.Almacen.Nombre.Contains(texto)) ||
+                     i.UbicacionPasillo.Contains(texto)),
+                orden: q => q.OrderBy(i => i.IdAlmacen).ThenBy(i => i.IdMaterial),
+                includeProperties: IncludeProperties);
+
+            // Los conteos son de todo el inventario, no de la página. Se cuentan con
+            // el mismo filtro de almacén para que hablen de lo mismo que la tabla,
+            // pero sin el de estado: son justamente los que dejan elegir el estado.
+            var todos = (await _unitOfWork.Inventarios.FindAsync(
+                i => idAlmacen == null || i.IdAlmacen == idAlmacen)).ToList();
+
+            return new InventarioListadoDto
+            {
+                Renglones = pagina.ConLos(_mapper.Map<IEnumerable<InventarioResponseDto>>(pagina.Renglones)),
+                SinStock = todos.Count(i => i.Existencia == 0),
+                StockBajo = todos.Count(i => i.Existencia > 0 && i.Existencia <= i.StockMinimo),
+                SobreMaximo = todos.Count(i => i.StockMaximo > 0 && i.Existencia > i.StockMaximo),
+                SinMinimo = todos.Count(i => i.StockMinimo <= 0)
+            };
+        }
 
         public async Task<IEnumerable<Inventario>> GetAllInventariosAsync()
         {
@@ -60,7 +106,7 @@ namespace VH.Services.Services
                 return existente;
             }
 
-            var material = await _unitOfWork.MaterialesEPP.GetByIdAsync(inventario.IdMaterial);
+            var material = await _unitOfWork.Materiales.GetByIdAsync(inventario.IdMaterial);
             if (material == null)
                 throw new ArgumentException($"El material con ID {inventario.IdMaterial} no existe.");
 
@@ -99,8 +145,8 @@ namespace VH.Services.Services
             if (inventario == null)
                 return false;
 
-            var compras = await _unitOfWork.ComprasEPP.FindAsync(
-                c => c.IdMaterial == inventario.IdMaterial && c.IdAlmacen == inventario.IdAlmacen);
+            var compras = await _unitOfWork.ComprasEPPDetalle.FindAsync(
+                d => d.IdMaterial == inventario.IdMaterial && d.IdAlmacen == inventario.IdAlmacen);
 
             if (compras.Any())
                 throw new InvalidOperationException(
@@ -128,10 +174,101 @@ namespace VH.Services.Services
 
         public async Task<decimal> RecalcularExistenciaAsync(int idMaterial, int idAlmacen)
         {
-            var compras = await _unitOfWork.ComprasEPP.FindAsync(
-                c => c.IdMaterial == idMaterial && c.IdAlmacen == idAlmacen);
+            var compras = await _unitOfWork.ComprasEPPDetalle.FindAsync(
+                d => d.IdMaterial == idMaterial && d.IdAlmacen == idAlmacen);
 
-            return compras.Sum(c => c.CantidadDisponible);
+            return compras.Sum(d => d.CantidadDisponible);
+        }
+
+        // ===== RESERVA DE EXISTENCIA =====
+
+        public async Task<decimal> GetDisponibleAsync(int idMaterial, int idAlmacen)
+        {
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+            return inventario?.Disponible ?? 0;
+        }
+
+        public async Task<bool> ReservarAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
+        {
+            if (cantidad <= 0) return false;
+
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+
+            // Sin registro de inventario no hay nada que apartar: el material
+            // nunca ha entrado a ese almacén.
+            if (inventario == null) return false;
+
+            if (inventario.Disponible < cantidad) return false;
+
+            inventario.Comprometido += cantidad;
+            _unitOfWork.Inventarios.Update(inventario);
+
+            // El apartado no mueve la existencia, pero sí explica por qué parte de
+            // ella dejó de estar disponible: el kardex lo registra igual.
+            await _movimientoService.RegistrarAsync(
+                idMaterial, idAlmacen, TipoMovimientoInventario.Reserva, cantidad, userId,
+                documentoTipo: "RequisicionEPP",
+                documentoId: idRequisicion,
+                documentoFolio: folioRequisicion,
+                observaciones: $"Apartado para requisición. Comprometido: {inventario.Comprometido}");
+
+            return true;
+        }
+
+        public async Task LiberarReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null,
+            string? motivo = null)
+        {
+            await SoltarComprometidoAsync(
+                idMaterial, idAlmacen, cantidad, TipoMovimientoInventario.LiberacionReserva,
+                string.IsNullOrWhiteSpace(motivo)
+                    ? "Apartado liberado."
+                    : $"Apartado liberado: {motivo}",
+                userId, idRequisicion, folioRequisicion);
+        }
+
+        public async Task ConsumirReservaAsync(int idMaterial, int idAlmacen, decimal cantidad,
+            string? userId = null, int? idRequisicion = null, string? folioRequisicion = null)
+        {
+            // Consumir y liberar hacen lo mismo sobre el comprometido, pero en el
+            // kardex se distinguen: uno terminó en entrega y el otro no.
+            await SoltarComprometidoAsync(
+                idMaterial, idAlmacen, cantidad, TipoMovimientoInventario.LiberacionReserva,
+                "Apartado consumido al surtir la requisición.",
+                userId, idRequisicion, folioRequisicion);
+        }
+
+        private async Task SoltarComprometidoAsync(
+            int idMaterial, int idAlmacen, decimal cantidad, TipoMovimientoInventario tipo,
+            string observaciones, string? userId, int? idRequisicion, string? folioRequisicion)
+        {
+            if (cantidad <= 0) return;
+
+            var inventario = await BuscarAsync(idMaterial, idAlmacen);
+            if (inventario == null) return;
+
+            // Nunca por debajo de cero: un comprometido negativo prometería
+            // más existencia de la que hay.
+            var soltado = Math.Min(cantidad, inventario.Comprometido);
+            inventario.Comprometido -= soltado;
+            _unitOfWork.Inventarios.Update(inventario);
+
+            if (soltado <= 0) return;
+
+            await _movimientoService.RegistrarAsync(
+                idMaterial, idAlmacen, tipo, -soltado, userId,
+                documentoTipo: "RequisicionEPP",
+                documentoId: idRequisicion,
+                documentoFolio: folioRequisicion,
+                observaciones: $"{observaciones} Comprometido: {inventario.Comprometido}");
+        }
+
+        private async Task<Inventario?> BuscarAsync(int idMaterial, int idAlmacen)
+        {
+            var inventarios = await _unitOfWork.Inventarios.FindAsync(
+                i => i.IdMaterial == idMaterial && i.IdAlmacen == idAlmacen);
+            return inventarios.FirstOrDefault();
         }
     }
 }
