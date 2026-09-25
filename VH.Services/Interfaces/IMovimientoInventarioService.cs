@@ -61,6 +61,16 @@ namespace VH.Services.Interfaces
         Task<decimal> GetSaldoAFechaAsync(int idMaterial, int idAlmacen, DateTime fecha);
 
         /// <summary>
+        /// Revisa los totales que el sistema guarda calculados —lo recibido de una
+        /// orden, lo entregado de un renglón— contra la suma de sus partes, y las
+        /// copias de lote, talla y caducidad contra su fuente.
+        ///
+        /// Son atajos deliberados para no sumar en cada consulta; esto comprueba que
+        /// sigan diciendo la verdad.
+        /// </summary>
+        Task<IEnumerable<DesajusteDto>> RevisarDatosDuplicadosAsync();
+
+        /// <summary>
         /// Compara el saldo guardado en Inventario contra la suma del kardex y
         /// devuelve las diferencias. Cero filas significa que la existencia está
         /// enteramente explicada por movimientos.

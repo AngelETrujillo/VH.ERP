@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -47,6 +47,10 @@ namespace VH.Services.Entities
         /// Vive aquí y no sólo en la recepción porque es el dato que sirve en una
         /// retirada: el proveedor avisa por número de lote, y desde aquí se llega
         /// a las entregas y a las personas que se lo llevaron.
+        ///
+        /// Ésta es la fuente de verdad para lote, talla y caducidad. La recepción
+        /// que los capturó conserva su copia como acta del documento, pero el
+        /// reparto FIFO, el rastreo y las devoluciones leen de aquí.
         /// </summary>
         [MaxLength(50)]
         public string? LoteProveedor { get; set; }

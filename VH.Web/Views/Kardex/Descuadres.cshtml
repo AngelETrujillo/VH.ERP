@@ -1,16 +1,20 @@
-﻿@model IEnumerable<VH.Services.DTOs.DescuadreDto>
+﻿@model VH.Services.DTOs.RevisionIntegridadDto
 @{
-    ViewData["Title"] = "Descuadres de Inventario";
-    var lista = Model?.ToList() ?? new List<VH.Services.DTOs.DescuadreDto>();
+    ViewData["Title"] = "Revisión de Integridad";
+    var lista = Model.Descuadres;
+    var desajustes = Model.Desajustes;
 }
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1 fw-bold text-dark">
-                <i class="bi bi-clipboard-data text-primary me-2"></i>Descuadres de Inventario
+                <i class="bi bi-clipboard-data text-primary me-2"></i>Revisión de Integridad
             </h2>
-            <p class="text-muted mb-0">Existencia que el kardex no alcanza a explicar</p>
+            <p class="text-muted mb-0">
+                Existencia que el kardex no alcanza a explicar, y totales guardados
+                que ya no coinciden con lo que suman sus partes
+            </p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary shadow-sm">
             <i class="bi bi-journals me-2"></i>Ver kardex
@@ -25,7 +29,7 @@
         </div>
     }
 
-    @if (!lista.Any())
+    @if (Model.TodoCuadra)
     {
         <div class="card shadow-sm border-0">
             <div class="card-body text-center py-5">
@@ -33,12 +37,14 @@
                 <h5 class="mt-3">Todo cuadra</h5>
                 <p class="text-muted mb-0">
                     Cada unidad en existencia tiene un movimiento que la explica: una compra,
-                    una entrega, un traspaso o un ajuste firmado.
+                    una entrega, un traspaso o un ajuste firmado.<br />
+                    Y cada total guardado coincide con la suma de sus partes.
                 </p>
             </div>
         </div>
     }
-    else
+
+    @if (lista.Any())
     {
         <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle me-2"></i>
@@ -79,6 +85,49 @@
                                             <i class="bi bi-journals"></i>
                                         </a>
                                     </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (desajustes.Any())
+    {
+        <div class="alert alert-secondary mt-4">
+            <i class="bi bi-files me-2"></i>
+            <strong>@desajustes.Count</strong> dato(s) guardado(s) por duplicado que ya no
+            coinciden. El sistema guarda algunos totales calculados para no sumarlos en cada
+            consulta, y conserva en la recepción una copia de lo que se capturó. Esto compara
+            unos con otros.
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Qué</th>
+                                <th>Documento</th>
+                                <th>Detalle</th>
+                                <th class="text-end">Guardado</th>
+                                <th class="text-end">Real</th>
+                                <th>Qué hacer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in desajustes)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">@d.Concepto</td>
+                                    <td class="font-monospace small">@d.Documento</td>
+                                    <td>@d.Detalle</td>
+                                    <td class="text-end"><span class="badge bg-secondary">@d.Guardado</span></td>
+                                    <td class="text-end"><span class="badge bg-primary">@d.Real</span></td>
+                                    <td><small class="text-muted">@d.Sugerencia</small></td>
                                 </tr>
                             }
                         </tbody>

@@ -164,21 +164,56 @@ namespace VH.Services.Services
                 if (detalle.CantidadSolicitada <= 0)
                     throw new ArgumentException("La cantidad solicitada debe ser mayor a 0.");
 
-                // El modelo ya admite cargar un renglón a la obra o a una partida,
-                // pero surtirlo exige una salida de almacén que no vaya a una
-                // persona, y eso llega con el kardex de movimientos. Aceptarlo hoy
-                // dejaría renglones autorizados que nadie puede despachar.
-                if (!detalle.IdEmpleadoDestino.HasValue)
+                // Un renglón va a una persona o se carga a la obra, nunca a las dos
+                // ni a ninguna. Sin destino, el material saldría del almacén sin
+                // que nadie pueda decir adónde fue.
+                var vaAPersona = detalle.IdEmpleadoDestino.HasValue;
+                var vaAObra = detalle.IdProyectoDestino.HasValue || detalle.IdConceptoPartida.HasValue;
+
+                if (!vaAPersona && !vaAObra)
                 {
                     throw new ArgumentException(
-                        $"El renglón de '{material.Nombre}' necesita un trabajador que lo reciba. " +
-                        "El consumo cargado directamente a la obra estará disponible cuando " +
-                        "el almacén registre salidas sin destinatario.");
+                        $"El renglón de '{material.Nombre}' necesita un destino: " +
+                        "un trabajador que lo reciba, o la obra o partida a la que se carga.");
                 }
 
-                var empleado = await _unitOfWork.Empleados.GetByIdAsync(detalle.IdEmpleadoDestino.Value);
-                if (empleado == null)
-                    throw new ArgumentException($"El empleado con ID {detalle.IdEmpleadoDestino} no existe.");
+                if (vaAPersona && vaAObra)
+                {
+                    throw new ArgumentException(
+                        $"El renglón de '{material.Nombre}' tiene destinatario y obra a la vez. " +
+                        "Lo que se entrega a una persona lo firma ella; lo que se carga a la " +
+                        "obra no tiene quien firme. Elija uno.");
+                }
+
+                if (vaAPersona)
+                {
+                    var empleado = await _unitOfWork.Empleados.GetByIdAsync(detalle.IdEmpleadoDestino!.Value);
+                    if (empleado == null)
+                        throw new ArgumentException($"El empleado con ID {detalle.IdEmpleadoDestino} no existe.");
+                }
+                else
+                {
+                    // Con partida, la obra se deduce de ella: así no pueden quedar en
+                    // desacuerdo, que es de lo que vive un costeo mal cargado.
+                    if (detalle.IdConceptoPartida.HasValue)
+                    {
+                        var partida = await _unitOfWork.ConceptosPartidas
+                            .GetByIdAsync(detalle.IdConceptoPartida.Value);
+
+                        if (partida == null)
+                            throw new ArgumentException($"La partida con ID {detalle.IdConceptoPartida} no existe.");
+
+                        detalle.IdProyectoDestino = partida.IdProyecto;
+                    }
+                    else
+                    {
+                        var proyecto = await _unitOfWork.Proyectos
+                            .GetByIdAsync(detalle.IdProyectoDestino!.Value);
+
+                        if (proyecto == null)
+                            throw new ArgumentException($"La obra con ID {detalle.IdProyectoDestino} no existe.");
+                    }
+                }
 
                 detalle.EstadoRenglon = EstadoRenglonRequisicion.Solicitado;
             }
@@ -534,6 +569,9 @@ namespace VH.Services.Services
                             IdEmpleado = idEmpleado,
                             IdCompraDetalle = lote.IdCompraDetalle,
                             IdRequisicionEntrega = firma.IdRequisicionEntrega,
+                            // Y a qué renglón: con varios del mismo material en un
+                            // documento, la firma sola no lo distingue.
+                            IdRequisicionDetalle = detalle.IdRequisicionDetalle,
                             FechaEntrega = DateTime.Now,
                             CantidadEntregada = cantidad,
                             TallaEntregada = detalle.TallaSolicitada ?? lote.Talla ?? string.Empty,

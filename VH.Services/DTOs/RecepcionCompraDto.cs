@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -116,11 +116,28 @@ namespace VH.Services.DTOs
         public int IdEntrega { get; set; }
         public DateTime Fecha { get; set; }
         public decimal Cantidad { get; set; }
-        public int IdEmpleado { get; set; }
+        /// <summary>Nulo cuando el material se consumió en la obra y no lo recibió nadie.</summary>
+        public int? IdEmpleado { get; set; }
+
         public string NombreEmpleado { get; set; } = string.Empty;
         public string NumeroNomina { get; set; } = string.Empty;
         public string NombreProyecto { get; set; } = string.Empty;
         public string? Talla { get; set; }
+
+        /// <summary>Partida a la que se cargó, si fue consumo de obra.</summary>
+        public string? Partida { get; set; }
+
+        /// <summary>
+        /// Se consumió en la obra en vez de entregarse a alguien. Importa en un
+        /// retiro de lote: a una persona se le va a buscar, lo que ya se gastó en
+        /// la barda no se recupera.
+        /// </summary>
+        public bool EsConsumoDeObra => !IdEmpleado.HasValue;
+
+        /// <summary>A quién o a qué fue a parar, para pintarlo en una sola columna.</summary>
+        public string Destino => IdEmpleado.HasValue
+            ? NombreEmpleado
+            : (string.IsNullOrWhiteSpace(Partida) ? NombreProyecto : $"{NombreProyecto} · {Partida}");
     }
 
     // ===== PREPARACIÓN DE LA PANTALLA =====

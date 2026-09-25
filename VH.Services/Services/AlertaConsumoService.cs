@@ -29,16 +29,23 @@ namespace VH.Services.Services
 
             var idMaterial = compra.IdMaterial;
 
+            // Las tres reglas -pidió antes de tiempo, pidió de más, pidió muy
+            // seguido- hablan del consumo de una persona. Lo que se carga a la obra
+            // no tiene de quién sospechar.
+            if (!entrega.IdEmpleado.HasValue) return alertas;
+
+            var idEmpleado = entrega.IdEmpleado.Value;
+
             // 1. Evaluar solicitud prematura
-            var alertaPrematura = await EvaluarSolicitudPrematuraAsync(entrega.IdEmpleado, idMaterial, entrega.IdEntrega);
+            var alertaPrematura = await EvaluarSolicitudPrematuraAsync(idEmpleado, idMaterial, entrega.IdEntrega);
             if (alertaPrematura != null) alertas.Add(alertaPrematura);
 
             // 2. Evaluar exceso de cantidad
-            var alertaCantidad = await EvaluarExcesoCantidadAsync(entrega.IdEmpleado, idMaterial, entrega.CantidadEntregada, entrega.IdEntrega);
+            var alertaCantidad = await EvaluarExcesoCantidadAsync(idEmpleado, idMaterial, entrega.CantidadEntregada, entrega.IdEntrega);
             if (alertaCantidad != null) alertas.Add(alertaCantidad);
 
             // 3. Evaluar frecuencia mensual
-            var alertaFrecuencia = await EvaluarExcesoFrecuenciaAsync(entrega.IdEmpleado, idMaterial);
+            var alertaFrecuencia = await EvaluarExcesoFrecuenciaAsync(idEmpleado, idMaterial);
             if (alertaFrecuencia != null) alertas.Add(alertaFrecuencia);
 
             return alertas;
@@ -76,6 +83,13 @@ namespace VH.Services.Services
             var config = await GetConfiguracionMaterialAsync(idMaterial);
             if (config == null) return null; // Sin configuración, no evaluar
 
+            // La vida útil se lee del catálogo, que es donde vive. Sin ella no hay
+            // contra qué comparar: "pidió antes de tiempo" exige saber cuánto se
+            // supone que dura.
+            var materialConfig = await _unitOfWork.Materiales.GetByIdAsync(idMaterial);
+            var vidaUtilDias = materialConfig?.VidaUtilDiasDefault ?? 0;
+            if (vidaUtilDias <= 0) return null;
+
             // Obtener última entrega del mismo material al mismo empleado
             var todasEntregasEmpleado = await _unitOfWork.EntregasEPP.FindAsync(
                 e => e.IdEmpleado == idEmpleado,
@@ -93,17 +107,17 @@ namespace VH.Services.Services
 
             // Calcular días transcurridos
             var diasTranscurridos = (int)(DateTime.Now - ultimaEntrega.FechaEntrega).TotalDays;
-            var umbralDias = (int)(config.VidaUtilDias * config.UmbralAlertaPorcentaje / 100.0);
+            var umbralDias = (int)(vidaUtilDias * config.UmbralAlertaPorcentaje / 100.0);
 
             if (diasTranscurridos >= umbralDias) return null; // Dentro del rango normal
 
             // Calcular desviación
-            var desviacion = ((config.VidaUtilDias - diasTranscurridos) / (decimal)config.VidaUtilDias) * 100;
+            var desviacion = ((vidaUtilDias - diasTranscurridos) / (decimal)vidaUtilDias) * 100;
 
             // Determinar severidad
-            var severidad = diasTranscurridos < (config.VidaUtilDias * 0.3m)
+            var severidad = diasTranscurridos < (vidaUtilDias * 0.3m)
                 ? SeveridadAlerta.Critica
-                : diasTranscurridos < (config.VidaUtilDias * 0.5m)
+                : diasTranscurridos < (vidaUtilDias * 0.5m)
                     ? SeveridadAlerta.Alta
                     : SeveridadAlerta.Media;
 
@@ -124,9 +138,9 @@ namespace VH.Services.Services
                 IdEntrega = idEntrega,
                 IdRequisicion = idRequisicion,
                 Descripcion = $"Solicitud prematura de {material?.Nombre ?? "material"}. " +
-                              $"Vida útil esperada: {config.VidaUtilDias} días. " +
+                              $"Vida útil esperada: {vidaUtilDias} días. " +
                               $"Días desde última entrega: {diasTranscurridos}.",
-                ValorEsperado = $"{config.VidaUtilDias} días",
+                ValorEsperado = $"{vidaUtilDias} días",
                 ValorReal = $"{diasTranscurridos} días",
                 Desviacion = desviacion,
                 CostoEstimado = costoEstimado,
@@ -396,15 +410,20 @@ namespace VH.Services.Services
                     $"'{material.Nombre}' es {material.TipoMaterial.ToString().ToLowerInvariant()}, " +
                     "y el control de consumo sólo aplica a equipo de protección personal.");
 
+            // La vida útil y el "vuelve o no vuelve" son del material, no de esta
+            // configuración: la pantalla los sigue editando aquí, pero se guardan
+            // en el catálogo, que es donde los lee el resto del sistema.
+            material.VidaUtilDiasDefault = dto.VidaUtilDias > 0 ? dto.VidaUtilDias : null;
+            material.EsRetornable = dto.RequiereDevolucion;
+            _unitOfWork.Materiales.Update(material);
+
             var existente = await GetConfiguracionMaterialAsync(dto.IdMaterial);
 
             if (existente != null)
             {
-                existente.VidaUtilDias = dto.VidaUtilDias;
                 existente.FrecuenciaMinimaDias = dto.FrecuenciaMinimaDias;
                 existente.CantidadMaximaMensual = dto.CantidadMaximaMensual;
                 existente.CantidadMaximaPorEntrega = dto.CantidadMaximaPorEntrega;
-                existente.RequiereDevolucion = dto.RequiereDevolucion;
                 existente.UmbralAlertaPorcentaje = dto.UmbralAlertaPorcentaje;
 
                 _unitOfWork.ConfiguracionesMaterialEPP.Update(existente);
@@ -415,11 +434,9 @@ namespace VH.Services.Services
             var nueva = new ConfiguracionMaterialEPP
             {
                 IdMaterial = dto.IdMaterial,
-                VidaUtilDias = dto.VidaUtilDias,
                 FrecuenciaMinimaDias = dto.FrecuenciaMinimaDias,
                 CantidadMaximaMensual = dto.CantidadMaximaMensual,
                 CantidadMaximaPorEntrega = dto.CantidadMaximaPorEntrega,
-                RequiereDevolucion = dto.RequiereDevolucion,
                 UmbralAlertaPorcentaje = dto.UmbralAlertaPorcentaje,
                 Activo = true
             };
@@ -441,11 +458,11 @@ namespace VH.Services.Services
                 IdMaterial = c.IdMaterial,
                 NombreMaterial = c.Material?.Nombre ?? "",
                 UnidadMedida = c.Material?.UnidadMedida?.Abreviatura ?? "",
-                VidaUtilDias = c.VidaUtilDias,
+                VidaUtilDias = c.Material?.VidaUtilDiasDefault ?? 0,
                 FrecuenciaMinimaDias = c.FrecuenciaMinimaDias,
                 CantidadMaximaMensual = c.CantidadMaximaMensual,
                 CantidadMaximaPorEntrega = c.CantidadMaximaPorEntrega,
-                RequiereDevolucion = c.RequiereDevolucion,
+                RequiereDevolucion = c.Material?.EsRetornable ?? false,
                 UmbralAlertaPorcentaje = c.UmbralAlertaPorcentaje,
                 Activo = c.Activo
             });

@@ -75,20 +75,20 @@ namespace VH.Web.Controllers
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/kardex/descuadres");
+                var response = await _httpClient.GetAsync("api/kardex/integridad");
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 response.EnsureSuccessStatusCode();
-                var descuadres = await response.Content.ReadFromJsonAsync<List<DescuadreDto>>();
+                var revision = await response.Content.ReadFromJsonAsync<RevisionIntegridadDto>();
 
-                return View(descuadres ?? new List<DescuadreDto>());
+                return View(revision ?? new RevisionIntegridadDto());
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al reconciliar el inventario");
                 ViewBag.ErrorMessage = "Error al reconciliar el inventario";
-                return View(new List<DescuadreDto>());
+                return View(new RevisionIntegridadDto());
             }
         }
 

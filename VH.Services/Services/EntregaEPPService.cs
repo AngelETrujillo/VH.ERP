@@ -97,9 +97,19 @@ namespace VH.Services.Services
 
         public async Task<(EntregaEPP Entrega, string? Alerta)> CreateEntregaAsync(EntregaEPP entrega, string? userId = null)
         {
-            var empleado = await _unitOfWork.Empleados.GetByIdAsync(entrega.IdEmpleado);
-            if (empleado == null)
-                throw new ArgumentException($"El empleado con ID {entrega.IdEmpleado} no existe.");
+            // Una salida va a una persona o se carga a la obra, pero siempre tiene
+            // destino: sin ninguno, el material sale del almacén sin rastro.
+            if (!entrega.TieneDestino)
+                throw new ArgumentException(
+                    "La salida necesita un destino: un trabajador, o la obra a la que se carga.");
+
+            Empleado? empleado = null;
+            if (entrega.IdEmpleado.HasValue)
+            {
+                empleado = await _unitOfWork.Empleados.GetByIdAsync(entrega.IdEmpleado.Value);
+                if (empleado == null)
+                    throw new ArgumentException($"El empleado con ID {entrega.IdEmpleado} no existe.");
+            }
 
             var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, includeProperties: "Material,Almacen");
             if (compra == null)
@@ -150,17 +160,24 @@ namespace VH.Services.Services
             try
             {
                 var fechaEntrega = entrega.FechaEntrega;
-                await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
-                    entrega.IdEmpleado,
-                    fechaEntrega.Year,
-                    fechaEntrega.Month);
 
-                if (empleado.IdProyecto > 0)
+                // Las estadísticas son de consumo por trabajador. El material que se
+                // carga a la obra no tiene a quién sumárselo y queda fuera; su costo
+                // se sigue por partida, que es otra cuenta.
+                if (entrega.IdEmpleado.HasValue && empleado != null)
                 {
-                    await _dashboardService.RecalcularEstadisticasProyectoAsync(
-                        empleado.IdProyecto,
+                    await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
+                        entrega.IdEmpleado.Value,
                         fechaEntrega.Year,
                         fechaEntrega.Month);
+
+                    if (empleado.IdProyecto > 0)
+                    {
+                        await _dashboardService.RecalcularEstadisticasProyectoAsync(
+                            empleado.IdProyecto,
+                            fechaEntrega.Year,
+                            fechaEntrega.Month);
+                    }
                 }
             }
             catch (Exception)
@@ -249,15 +266,18 @@ namespace VH.Services.Services
             }
 
             // *** Actualizar estadísticas si hubo cambios ***
-            if (result && diferencia != 0)
+            // Igual que al crear: lo cargado a la obra no suma al consumo de nadie.
+            if (result && diferencia != 0 && entregaExistente.IdEmpleado.HasValue)
             {
                 try
                 {
-                    var empleadoStats = await _unitOfWork.Empleados.GetByIdAsync(entregaExistente.IdEmpleado);
                     var fechaEntrega = entregaExistente.FechaEntrega;
 
+                    var empleadoStats = await _unitOfWork.Empleados
+                        .GetByIdAsync(entregaExistente.IdEmpleado.Value);
+
                     await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
-                        entregaExistente.IdEmpleado,
+                        entregaExistente.IdEmpleado.Value,
                         fechaEntrega.Year,
                         fechaEntrega.Month);
 
@@ -306,7 +326,9 @@ namespace VH.Services.Services
             // Guardar datos antes de eliminar
             var idEmpleado = entrega.IdEmpleado;
             var fechaEntrega = entrega.FechaEntrega;
-            var empleadoData = await _unitOfWork.Empleados.GetByIdAsync(idEmpleado);
+            var empleadoData = idEmpleado.HasValue
+                ? await _unitOfWork.Empleados.GetByIdAsync(idEmpleado.Value)
+                : null;
             var idProyecto = empleadoData?.IdProyecto;
 
             _unitOfWork.EntregasEPP.Remove(entrega);
@@ -317,10 +339,13 @@ namespace VH.Services.Services
             {
                 try
                 {
-                    await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
-                        idEmpleado,
-                        fechaEntrega.Year,
-                        fechaEntrega.Month);
+                    if (idEmpleado.HasValue)
+                    {
+                        await _dashboardService.RecalcularEstadisticasEmpleadoAsync(
+                            idEmpleado.Value,
+                            fechaEntrega.Year,
+                            fechaEntrega.Month);
+                    }
 
                     if (idProyecto.HasValue)
                     {

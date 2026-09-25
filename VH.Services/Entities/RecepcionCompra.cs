@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -41,6 +41,10 @@ namespace VH.Services.Entities
         /// <summary>Almacenista que recibió y contó.</summary>
         [Required]
         public string IdUsuarioRecibe { get; set; } = string.Empty;
+
+        // La factura y el UUID se copian a la compra que esta recepción genera, y
+        // ahí es donde los lee la contabilidad. Aquí quedan como acta de captura,
+        // por lo mismo que el lote y la caducidad del renglón.
 
         [MaxLength(50)]
         public string? NumeroFactura { get; set; }

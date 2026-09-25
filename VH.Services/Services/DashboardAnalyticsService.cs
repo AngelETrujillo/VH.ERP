@@ -218,7 +218,10 @@ namespace VH.Services.Services
                 "CompraDetalle,Empleado.Proyecto,Empleado.PuestoCatalogo");
 
             var agrupado = entregas
-                .GroupBy(e => e.IdEmpleado)
+                // Las estadísticas son por trabajador; el consumo de obra no tiene
+                // a quién atribuirse y se cuenta por partida, no aquí.
+                .Where(e => e.IdEmpleado.HasValue)
+                .GroupBy(e => e.IdEmpleado!.Value)
                 .Select(g => new EstadisticaEmpleadoMensual
                 {
                     IdEmpleado = g.Key,

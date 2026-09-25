@@ -92,6 +92,19 @@ namespace VH.API.Controllers
             return Ok(await _movimientoService.ReconciliarAsync());
         }
 
+        // GET: api/kardex/integridad
+        // Las dos revisiones juntas: la existencia contra su historia, y los
+        // totales guardados contra lo que suman sus partes.
+        [HttpGet("integridad")]
+        public async Task<ActionResult<RevisionIntegridadDto>> GetIntegridad()
+        {
+            return Ok(new RevisionIntegridadDto
+            {
+                Descuadres = (await _movimientoService.ReconciliarAsync()).ToList(),
+                Desajustes = (await _movimientoService.RevisarDatosDuplicadosAsync()).ToList()
+            });
+        }
+
         // POST: api/kardex/ajuste
         [HttpPost("ajuste")]
         [RequierePermisoApi("KARDEX", "Crear")]

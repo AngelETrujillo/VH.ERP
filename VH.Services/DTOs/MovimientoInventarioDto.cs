@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using VH.Services.Entities;
 
@@ -90,6 +90,7 @@ namespace VH.Services.DTOs
             TipoMovimientoInventario.Devolucion => "Devolución",
             TipoMovimientoInventario.Merma => "Merma",
             TipoMovimientoInventario.CancelacionCompra => "Compra cancelada",
+            TipoMovimientoInventario.SalidaObra => "Consumo de obra",
             _ => Tipo.ToString()
         };
         public string TipoClase => Tipo switch
@@ -101,6 +102,7 @@ namespace VH.Services.DTOs
             TipoMovimientoInventario.TraspasoSalida => "danger",
             TipoMovimientoInventario.Merma => "danger",
             TipoMovimientoInventario.CancelacionCompra => "danger",
+            TipoMovimientoInventario.SalidaObra => "danger",
             TipoMovimientoInventario.Ajuste => "warning",
             _ => "secondary"
         };
@@ -116,6 +118,7 @@ namespace VH.Services.DTOs
             TipoMovimientoInventario.Devolucion => "bi-arrow-return-left",
             TipoMovimientoInventario.Merma => "bi-trash",
             TipoMovimientoInventario.CancelacionCompra => "bi-x-circle",
+            TipoMovimientoInventario.SalidaObra => "bi-bricks",
             _ => "bi-dot"
         };
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -42,6 +42,17 @@ namespace VH.Services.Entities
         /// <summary>Lo que se pagó de verdad, que manda sobre lo pactado.</summary>
         [Required]
         public decimal PrecioUnitarioReal { get; set; }
+
+        // ===== DATOS DEL LOTE, TAL COMO SE CAPTURARON =====
+        //
+        // Estos tres viven también en el lote de compra que esta recepción generó
+        // (CompraEPPDetalle), y ahí es donde los lee el resto del sistema: el
+        // reparto FIFO por caducidad, el rastreo de lote, las devoluciones.
+        //
+        // La copia de aquí es el acta: lo que el almacenista anotó ese día. Se
+        // conserva a propósito, para que corregir un lote en la compra no reescriba
+        // el documento que lo originó. Si alguna vez dejan de coincidir, manda el
+        // lote de compra; la pantalla de Descuadres avisa de la diferencia.
 
         [MaxLength(20)]
         public string? Talla { get; set; }

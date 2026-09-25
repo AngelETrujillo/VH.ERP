@@ -26,6 +26,9 @@ namespace VH.Services.Services
                     e => (!idEmpleado.HasValue || e.IdEmpleado == idEmpleado.Value),
                     includeProperties: IncludeEntrega))
                 .Where(e => e.CompraDetalle?.Material?.EsRetornable == true)
+                // Sólo lo que tiene quien lo devuelva: el consumo cargado a la obra
+                // se gastó ahí, no hay nadie a quien pedírselo de vuelta.
+                .Where(e => e.IdEmpleado.HasValue)
                 .Where(e => !idAlmacen.HasValue || e.CompraDetalle!.IdAlmacen == idAlmacen.Value)
                 .ToList();
 
@@ -46,7 +49,7 @@ namespace VH.Services.Services
                     {
                         IdEntrega = e.IdEntrega,
                         FechaEntrega = e.FechaEntrega,
-                        IdEmpleado = e.IdEmpleado,
+                        IdEmpleado = e.IdEmpleado!.Value,
                         NombreEmpleado = e.Empleado?.NombreCompleto ?? "",
                         NumeroNomina = e.Empleado?.NumeroNomina ?? "",
                         NombreProyecto = e.Empleado?.Proyecto?.Nombre ?? "",

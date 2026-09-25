@@ -408,7 +408,11 @@ namespace VH.Services.Services
             {
                 IdProveedor = orden.IdProveedor,
                 FechaCompra = dto.FechaRecepcion,
-                NumeroDocumento = dto.NumeroFactura ?? recepcion.Folio,
+                // Vacío cuando el camión llegó sin factura. Antes se rellenaba con
+                // el folio de la recepción, de modo que la compra afirmaba tener
+                // una factura "REC-2026-0002" que no existe. El folio ya queda en
+                // las observaciones, que es donde corresponde.
+                NumeroDocumento = dto.NumeroFactura ?? string.Empty,
                 UuidCFDI = dto.UuidCFDI,
                 Iva = dto.Iva,
                 Moneda = orden.Moneda,
@@ -568,7 +572,7 @@ namespace VH.Services.Services
 
             var entregas = (await _unitOfWork.EntregasEPP.FindAsync(
                     e => ids.Contains(e.IdCompraDetalle),
-                    includeProperties: "Empleado.Proyecto"))
+                    includeProperties: "Empleado.Proyecto,ProyectoDestino,ConceptoPartida"))
                 .ToList();
 
             // El folio de la recepción que lo trajo, para llegar al documento.
@@ -610,7 +614,11 @@ namespace VH.Services.Services
                             IdEmpleado = e.IdEmpleado,
                             NombreEmpleado = e.Empleado?.NombreCompleto ?? "",
                             NumeroNomina = e.Empleado?.NumeroNomina ?? "",
-                            NombreProyecto = e.Empleado?.Proyecto?.Nombre ?? "",
+                            // La obra sale del trabajador cuando lo recibió alguien, y
+                            // del destino de la salida cuando se cargó directo a ella.
+                            NombreProyecto = e.Empleado?.Proyecto?.Nombre
+                                             ?? e.ProyectoDestino?.Nombre ?? "",
+                            Partida = e.ConceptoPartida?.Descripcion,
                             Talla = e.TallaEntregada
                         })
                         .ToList()

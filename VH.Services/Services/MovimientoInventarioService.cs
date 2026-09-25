@@ -181,6 +181,104 @@ namespace VH.Services.Services
             return movimientos.Sum(m => m.Cantidad);
         }
 
+        public async Task<IEnumerable<DesajusteDto>> RevisarDatosDuplicadosAsync()
+        {
+            var desajustes = new List<DesajusteDto>();
+
+            // 1. Lo recibido que guarda el renglón de la orden, contra la suma de
+            //    las recepciones que lo surtieron.
+            var renglonesOrden = await _unitOfWork.OrdenesCompraDetalle.GetAllAsync(
+                includeProperties: "OrdenCompra,Material");
+            var lineasRecepcion = (await _unitOfWork.RecepcionesCompraDetalle.GetAllAsync()).ToList();
+
+            foreach (var r in renglonesOrden)
+            {
+                var recibido = lineasRecepcion
+                    .Where(l => l.IdOrdenCompraDetalle == r.IdOrdenCompraDetalle)
+                    .Sum(l => l.CantidadAceptada);
+
+                if (r.CantidadRecibida == recibido) continue;
+
+                desajustes.Add(new DesajusteDto
+                {
+                    Concepto = "Recibido de la orden",
+                    Documento = r.OrdenCompra?.Folio ?? $"Orden {r.IdOrdenCompra}",
+                    Detalle = r.Material?.Nombre ?? $"Material {r.IdMaterial}",
+                    Guardado = r.CantidadRecibida.ToString("0.##"),
+                    Real = recibido.ToString("0.##"),
+                    Sugerencia = "El renglón dice haber recibido una cantidad distinta de la que " +
+                                 "suman sus recepciones. Revise si alguna se deshizo a medias."
+                });
+            }
+
+            // 2. Lo entregado que guarda el renglón de requisición, contra la suma
+            //    de las salidas que lo surtieron. Sólo cuenta a partir de que las
+            //    salidas saben a qué renglón pertenecen: las anteriores no tienen
+            //    con qué compararse y se omiten.
+            var renglonesReq = await _unitOfWork.RequisicionesEPPDetalle.GetAllAsync(
+                includeProperties: "Requisicion,Material");
+            var salidas = (await _unitOfWork.EntregasEPP.FindAsync(
+                e => e.IdRequisicionDetalle != null)).ToList();
+
+            foreach (var d in renglonesReq)
+            {
+                var propias = salidas.Where(e => e.IdRequisicionDetalle == d.IdRequisicionDetalle).ToList();
+                if (propias.Count == 0) continue;
+
+                var entregado = propias.Sum(e => e.CantidadEntregada);
+                if ((d.CantidadEntregada ?? 0) == entregado) continue;
+
+                desajustes.Add(new DesajusteDto
+                {
+                    Concepto = "Entregado del renglón",
+                    Documento = d.Requisicion?.NumeroRequisicion ?? $"Requisición {d.IdRequisicion}",
+                    Detalle = d.Material?.Nombre ?? $"Material {d.IdMaterial}",
+                    Guardado = (d.CantidadEntregada ?? 0).ToString("0.##"),
+                    Real = entregado.ToString("0.##"),
+                    Sugerencia = "El renglón dice haber entregado una cantidad distinta de la que " +
+                                 "suman sus salidas de almacén."
+                });
+            }
+
+            // 3. Lote, talla y caducidad: la recepción conserva su copia como acta,
+            //    pero manda el lote de compra. Si dejan de coincidir hay que saberlo.
+            var lineasConLote = (await _unitOfWork.RecepcionesCompraDetalle.FindAsync(
+                l => l.IdCompraDetalle != null,
+                includeProperties: "Recepcion,Material,CompraDetalle")).ToList();
+
+            foreach (var l in lineasConLote)
+            {
+                var lote = l.CompraDetalle;
+                if (lote == null) continue;
+
+                var doc = l.Recepcion?.Folio ?? $"Recepción {l.IdRecepcion}";
+                var mat = l.Material?.Nombre ?? $"Material {l.IdMaterial}";
+
+                void Comparar(string que, string? enActa, string? enLote)
+                {
+                    if ((enActa ?? "") == (enLote ?? "")) return;
+                    desajustes.Add(new DesajusteDto
+                    {
+                        Concepto = que,
+                        Documento = doc,
+                        Detalle = mat,
+                        Guardado = string.IsNullOrWhiteSpace(enActa) ? "(vacío)" : enActa!,
+                        Real = string.IsNullOrWhiteSpace(enLote) ? "(vacío)" : enLote!,
+                        Sugerencia = "El acta de recepción y el lote de compra dicen cosas distintas. " +
+                                     "Manda el lote: es el que usan el reparto y el rastreo."
+                    });
+                }
+
+                Comparar("Lote del proveedor", l.LoteProveedor, lote.LoteProveedor);
+                Comparar("Talla", l.Talla, lote.Talla);
+                Comparar("Caducidad",
+                    l.FechaCaducidad?.ToString("yyyy-MM-dd"),
+                    lote.FechaCaducidad?.ToString("yyyy-MM-dd"));
+            }
+
+            return desajustes;
+        }
+
         public async Task<IEnumerable<DescuadreDto>> ReconciliarAsync()
         {
             var inventarios = await _unitOfWork.Inventarios.GetAllAsync(

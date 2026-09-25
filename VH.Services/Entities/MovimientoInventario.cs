@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -140,6 +140,15 @@ namespace VH.Services.Entities
         Merma = 8,
 
         /// <summary>Cancelación de una compra: revierte su entrada. Negativo.</summary>
-        CancelacionCompra = 9
+        CancelacionCompra = 9,
+
+        /// <summary>
+        /// Consumo cargado a una obra o a una partida, sin destinatario. Negativo.
+        ///
+        /// Se distingue de Salida porque esa dice "se lo llevó fulano" y ésta dice
+        /// "se gastó en la barda". El kardex tiene que poder contestar las dos
+        /// preguntas por separado, y el costo por partida se alimenta sólo de ésta.
+        /// </summary>
+        SalidaObra = 10
     }
 }
