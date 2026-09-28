@@ -474,6 +474,29 @@
     background-color: #f7e3f8 !important;
 }
 
+/* Las demas variantes -subtle tampoco existen en 5.1, y las vistas ya las
+   usaban en insignias y circulos de icono: sin regla quedaban sin fondo.
+   Los tonos son los mismos que Bootstrap usa en sus alertas. */
+.bg-primary-subtle {
+    background-color: #cfe2ff !important;
+}
+
+.bg-secondary-subtle {
+    background-color: #e2e3e5 !important;
+}
+
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+}
+
+.bg-danger-subtle {
+    background-color: #f8d7da !important;
+}
+
+.bg-warning-subtle {
+    background-color: #fff3cd !important;
+}
+
 .alert-info {
     color: #6b0770;
     background-color: #f7e3f8;

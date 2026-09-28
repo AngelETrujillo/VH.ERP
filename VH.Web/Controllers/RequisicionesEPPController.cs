@@ -99,10 +99,42 @@ namespace VH.Web.Controllers
 
         // GET: RequisicionesEPP/Create
         [RequierePermiso("REQUISICIONES_EPP", "crear")]
-        public async Task<IActionResult> Create()
+        /// <summary>
+        /// Pantalla de elección. Pedir EPP para una persona, cargar consumible a una
+        /// obra y prestar una herramienta son tres actos distintos, con datos
+        /// distintos; un solo formulario con campos que a veces aplican obliga al
+        /// almacenista a saber cuáles ignorar.
+        ///
+        /// Detrás de las tres va el mismo documento, la misma autorización y el
+        /// mismo apartado: lo que se separa es la pantalla, no el circuito.
+        /// </summary>
+        public IActionResult Create() => View();
+
+        // GET: RequisicionesEPP/CrearEPP
+        [RequierePermiso("REQUISICIONES_EPP", "crear")]
+        public async Task<IActionResult> CrearEPP()
         {
             SetAuthHeader();
-            await CargarListasEnViewBag();
+            await CargarListasEnViewBag(TipoMaterial.EPP);
+            return View();
+        }
+
+        // GET: RequisicionesEPP/CrearConsumible
+        [RequierePermiso("REQUISICIONES_EPP", "crear")]
+        public async Task<IActionResult> CrearConsumible()
+        {
+            SetAuthHeader();
+            await CargarListasEnViewBag(TipoMaterial.Consumible);
+            await CargarObrasEnViewBag();
+            return View();
+        }
+
+        // GET: RequisicionesEPP/CrearHerramienta
+        [RequierePermiso("REQUISICIONES_EPP", "crear")]
+        public async Task<IActionResult> CrearHerramienta()
+        {
+            SetAuthHeader();
+            await CargarListasEnViewBag(TipoMaterial.Herramienta);
             return View();
         }
 
@@ -110,8 +142,17 @@ namespace VH.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("REQUISICIONES_EPP", "crear")]
-        public async Task<IActionResult> Create(RequisicionEPPRequestDto dto)
+        public async Task<IActionResult> Create(RequisicionEPPRequestDto dto, TipoMaterial tipo = TipoMaterial.EPP)
         {
+            // A qué pantalla volver si algo falla: la que el almacenista tenía
+            // abierta, no una genérica que le pida otra vez lo que ya escribió.
+            var vista = tipo switch
+            {
+                TipoMaterial.Consumible => nameof(CrearConsumible),
+                TipoMaterial.Herramienta => nameof(CrearHerramienta),
+                _ => nameof(CrearEPP)
+            };
+
             if (ModelState.IsValid)
             {
                 SetAuthHeader();
@@ -134,8 +175,46 @@ namespace VH.Web.Controllers
                 }
             }
 
-            await CargarListasEnViewBag();
-            return View(dto);
+            await CargarListasEnViewBag(tipo);
+            if (tipo == TipoMaterial.Consumible) await CargarObrasEnViewBag();
+
+            return View(vista, dto);
+        }
+
+        /// <summary>
+        /// Las partidas de una obra, para el selector dependiente de la pantalla de
+        /// consumibles. Devuelve JSON: es la pantalla la que pregunta al elegir la
+        /// obra, en vez de traer el presupuesto completo de todas por adelantado.
+        /// </summary>
+        [RequierePermiso("REQUISICIONES_EPP", "crear")]
+        public async Task<IActionResult> PartidasDeObra(int idProyecto)
+        {
+            SetAuthHeader();
+
+            if (idProyecto <= 0) return Json(Array.Empty<object>());
+
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/proyectos/{idProyecto}/partidas");
+                if (!response.IsSuccessStatusCode) return Json(Array.Empty<object>());
+
+                var partidas = await response.Content
+                    .ReadFromJsonAsync<IEnumerable<ConceptoPartidaResponseDto>>();
+
+                return Json(partidas?
+                    .OrderBy(p => p.Descripcion)
+                    .Select(p => new
+                    {
+                        v = p.IdPartida.ToString(),
+                        t = $"{p.Descripcion} ({p.CantidadEstimada:0.##} {p.AbreviaturaUnidadMedida})"
+                    })
+                    .ToList() ?? new());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar las partidas de la obra {Id}", idProyecto);
+                return Json(Array.Empty<object>());
+            }
         }
 
         // GET: RequisicionesEPP/Aprobar/5
@@ -413,7 +492,12 @@ namespace VH.Web.Controllers
             }));
         }
 
-        private async Task CargarListasEnViewBag()
+        /// <summary>
+        /// Carga las listas de la pantalla. El <paramref name="tipo"/> acota los
+        /// materiales: en la pantalla de herramientas no tiene por qué aparecer un
+        /// casco, y ofrecerlo sólo invita a equivocarse.
+        /// </summary>
+        private async Task CargarListasEnViewBag(TipoMaterial? tipo = null)
         {
             // Empleados
             var empResponse = await _httpClient.GetAsync("api/empleados");
@@ -439,8 +523,11 @@ namespace VH.Web.Controllers
                 }).ToList() ?? new List<SelectListItem>();
             }
 
-            // Materiales
-            var matResponse = await _httpClient.GetAsync("api/materiales");
+            // Materiales, acotados al tipo de la pantalla
+            var urlMateriales = tipo.HasValue
+                ? $"api/materiales?tipo={(int)tipo.Value}"
+                : "api/materiales";
+            var matResponse = await _httpClient.GetAsync(urlMateriales);
             if (matResponse.IsSuccessStatusCode)
             {
                 var materiales = await matResponse.Content.ReadFromJsonAsync<IEnumerable<MaterialResponseDto>>();
@@ -449,7 +536,36 @@ namespace VH.Web.Controllers
                     Value = m.IdMaterial.ToString(),
                     Text = $"{m.Nombre} ({m.AbreviaturaUnidadMedida})"
                 }).ToList() ?? new List<SelectListItem>();
+
+                // Cuáles piden talla: la pantalla habilita el campo sólo en ésos,
+                // en vez de mostrarlo siempre y confiar en que nadie lo llene.
+                ViewBag.MaterialesConTalla = materiales?
+                    .Where(m => m.Activo && m.RequiereTalla)
+                    .Select(m => m.IdMaterial)
+                    .ToList() ?? new List<int>();
             }
+        }
+
+        /// <summary>
+        /// Obras activas, para la pantalla de consumibles. Las partidas de cada una
+        /// se piden al elegirla: cargarlas todas de golpe sería traer el presupuesto
+        /// entero para usar tres renglones.
+        /// </summary>
+        private async Task CargarObrasEnViewBag()
+        {
+            var response = await _httpClient.GetAsync("api/proyectos");
+            if (!response.IsSuccessStatusCode)
+            {
+                ViewBag.Obras = new List<SelectListItem>();
+                return;
+            }
+
+            var obras = await response.Content.ReadFromJsonAsync<IEnumerable<ProyectoResponseDto>>();
+            ViewBag.Obras = obras?
+                .Where(p => p.Activo)
+                .OrderBy(p => p.Nombre)
+                .Select(p => new SelectListItem { Value = p.IdProyecto.ToString(), Text = p.Nombre })
+                .ToList() ?? new List<SelectListItem>();
         }
 
         /// <summary>

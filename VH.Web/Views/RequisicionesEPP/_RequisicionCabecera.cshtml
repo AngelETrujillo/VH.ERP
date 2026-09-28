@@ -1,0 +1,41 @@
+@*
+    Cabecera común a las tres pantallas de requisición.
+
+    Almacén, fecha y justificación se piden igual sea EPP, consumible o
+    herramienta: el documento es el mismo y la autorización también. Lo que cambia
+    -y por eso cada pantalla tiene la suya- es qué se captura por renglón.
+*@
+@model VH.Services.DTOs.RequisicionEPPRequestDto
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Datos de la requisición</h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label asp-for="IdAlmacen" class="form-label fw-semibold">
+                    Almacén <span class="text-danger">*</span>
+                </label>
+                <select asp-for="IdAlmacen" asp-items="@(ViewBag.Almacenes as List<SelectListItem>)"
+                        class="form-select form-select-lg">
+                    <option value="">-- Seleccione almacén --</option>
+                </select>
+                <span asp-validation-for="IdAlmacen" class="text-danger small"></span>
+                <small class="text-muted">De donde se surtirá el material</small>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="FechaRequerida" class="form-label fw-semibold">Fecha requerida</label>
+                <input asp-for="FechaRequerida" type="date" class="form-control form-control-lg" />
+                <small class="text-muted">Para priorizar faltantes</small>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Justificacion" class="form-label fw-semibold">Justificación</label>
+                <input asp-for="Justificacion" class="form-control form-control-lg"
+                       placeholder="Motivo de la requisición…" />
+                <span asp-validation-for="Justificacion" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+</div>

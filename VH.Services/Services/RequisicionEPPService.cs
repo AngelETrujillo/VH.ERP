@@ -28,7 +28,8 @@ namespace VH.Services.Services
         /// </summary>
         private const string IncludeCompleto =
             "UsuarioSolicita,Almacen,UsuarioAprueba," +
-            "Detalles.Material.UnidadMedida,Detalles.EmpleadoDestino,Detalles.CompraDetalle";
+            "Detalles.Material.UnidadMedida,Detalles.EmpleadoDestino,Detalles.CompraDetalle," +
+            "Detalles.ProyectoDestino,Detalles.ConceptoPartida";
 
         public RequisicionEPPService(
             IUnitOfWork unitOfWork,
