@@ -34,9 +34,34 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CantidadEstimada" class="form-label">Cantidad Estimada *</label>
-                                <input asp-for="CantidadEstimada" type="number" step="0.0001" min="0.01" class="form-control" />
+                                <input asp-for="CantidadEstimada" type="number" step="0.0001" min="0.01"
+                                       class="form-control js-cantidad" />
                                 <span asp-validation-for="CantidadEstimada" class="text-danger"></span>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PrecioUnitarioEstimado" class="form-label">
+                                    Precio unitario estimado
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="PrecioUnitarioEstimado" type="number" step="0.01" min="0.01"
+                                           class="form-control js-precio" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="PrecioUnitarioEstimado" class="text-danger"></span>
+                                <small class="text-muted">
+                                    Costo de material por unidad de obra. Opcional: sin él la partida
+                                    se registra igual, pero no habrá contra qué comparar lo consumido.
+                                </small>
+                            </div>
+                        </div>
+
+                        @* El total no se captura: se sigue de la cantidad y el precio.
+                           Se muestra mientras se escribe para que quien presupuesta vea
+                           el importe al que está comprometiendo la obra. *@
+                        <div class="alert alert-light border d-none" id="avisoTotal">
+                            <i class="bi bi-calculator me-2"></i>
+                            Presupuesto de la partida:
+                            <strong id="lblTotal">$0.00</strong>
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -58,4 +83,26 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        (function () {
+            const cantidad = document.querySelector('.js-cantidad');
+            const precio = document.querySelector('.js-precio');
+            const aviso = document.getElementById('avisoTotal');
+            const total = document.getElementById('lblTotal');
+            const money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+
+            function recalcular() {
+                const c = parseFloat(cantidad.value);
+                const p = parseFloat(precio.value);
+                const hay = c > 0 && p > 0;
+
+                aviso.classList.toggle('d-none', !hay);
+                if (hay) total.textContent = money.format(c * p);
+            }
+
+            cantidad.addEventListener('input', recalcular);
+            precio.addEventListener('input', recalcular);
+            recalcular();
+        })();
+    </script>
 }

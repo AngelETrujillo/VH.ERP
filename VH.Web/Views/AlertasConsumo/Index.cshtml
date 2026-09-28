@@ -18,7 +18,7 @@
     };
     ViewData["FiltrosPaginador"] = filtrosAlertas;
     ViewData["FiltrosOcultos"] = filtrosAlertas;
-    ViewData["BuscarPlaceholder"] = "Buscar por material, trabajador o nómina…";
+    ViewData["BuscarPlaceholder"] = "Buscar por material, trabajador, nómina o partida…";
 }
 
 <div class="container-fluid">
@@ -204,11 +204,24 @@
                                         </td>
                                         <td><small>@alerta.TipoAlertaTexto</small></td>
                                         <td>
-                                            <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@alerta.IdEmpleado" 
-                                               class="text-decoration-none">
-                                                @alerta.NombreEmpleado
-                                            </a>
-                                            <br><small class="text-muted">@alerta.NumeroNomina</small>
+                                            @* No toda alerta es de alguien: una partida sobregirada
+                                               es del presupuesto. Antes esta celda llevaba al perfil
+                                               del empleado numero cero. *@
+                                            @if (alerta.EsDePartida)
+                                            {
+                                                <span class="badge bg-warning-subtle text-dark">
+                                                    <i class="bi bi-bookmark me-1"></i>Partida
+                                                </span>
+                                                <br /><small class="text-muted">@alerta.Sujeto</small>
+                                            }
+                                            else
+                                            {
+                                                <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@alerta.IdEmpleado"
+                                                   class="text-decoration-none">
+                                                    @alerta.NombreEmpleado
+                                                </a>
+                                                <br /><small class="text-muted">@alerta.NumeroNomina</small>
+                                            }
                                         </td>
                                         <td><small>@alerta.NombreMaterial</small></td>
                                         <td>

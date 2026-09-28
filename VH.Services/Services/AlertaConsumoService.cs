@@ -29,6 +29,14 @@ namespace VH.Services.Services
 
             var idMaterial = compra.IdMaterial;
 
+            // Lo que se carga a una partida se mide contra su presupuesto, que es
+            // la única regla que aplica a material que no recibió nadie.
+            if (entrega.IdConceptoPartida.HasValue)
+            {
+                var alertaPresupuesto = await EvaluarPresupuestoPartidaAsync(entrega.IdConceptoPartida.Value);
+                if (alertaPresupuesto != null) alertas.Add(alertaPresupuesto);
+            }
+
             // Las tres reglas -pidió antes de tiempo, pidió de más, pidió muy
             // seguido- hablan del consumo de una persona. Lo que se carga a la obra
             // no tiene de quién sospechar.
@@ -246,6 +254,76 @@ namespace VH.Services.Services
             return alerta;
         }
 
+        /// <summary>
+        /// Avisa cuando lo consumido contra una partida se pasó de lo
+        /// presupuestado.
+        ///
+        /// Avisa y ya: el despacho no se detiene. El almacén no puede quedarse
+        /// sin surtir material porque el presupuesto se quedó corto; quien tiene
+        /// que enterarse es quien lleva el costo de la obra, y para eso está la
+        /// alerta.
+        ///
+        /// Una partida sin precio no se evalúa: sin estimado no hay de qué
+        /// pasarse, y tratar el nulo como cero convertiría cada salida en un
+        /// sobregiro.
+        /// </summary>
+        public async Task<AlertaConsumo?> EvaluarPresupuestoPartidaAsync(int idPartida)
+        {
+            var partida = await _unitOfWork.ConceptosPartidas.GetByIdAsync(idPartida);
+            if (partida?.CostoTotalEstimado == null) return null;
+
+            var presupuesto = partida.CostoTotalEstimado.Value;
+            if (presupuesto <= 0) return null;
+
+            var salidas = await _unitOfWork.EntregasEPP.FindAsync(
+                filter: e => e.IdConceptoPartida == idPartida,
+                includeProperties: "CompraDetalle");
+
+            var consumido = salidas.Sum(e =>
+                e.CantidadEntregada * (e.CompraDetalle != null ? e.CompraDetalle.PrecioUnitario : 0m));
+
+            if (consumido <= presupuesto) return null;
+
+            // Una alerta viva por partida. Si no, cada salida posterior al
+            // sobregiro generaria otra y la pantalla se llenaria de avisos del
+            // mismo problema.
+            var yaAvisada = await _unitOfWork.AlertasConsumo.FindAsync(
+                a => a.IdPartida == idPartida &&
+                     a.TipoAlerta == TipoAlerta.DesviacionPresupuestal &&
+                     a.EstadoAlerta == EstadoAlerta.Pendiente);
+
+            if (yaAvisada.Any()) return null;
+
+            var exceso = consumido - presupuesto;
+            var desviacion = Math.Round(exceso / presupuesto * 100m, 2);
+
+            var alerta = new AlertaConsumo
+            {
+                TipoAlerta = TipoAlerta.DesviacionPresupuestal,
+                // Pasarse un poco no es lo mismo que duplicar el presupuesto.
+                Severidad = desviacion >= 50m ? SeveridadAlerta.Critica
+                    : desviacion >= 20m ? SeveridadAlerta.Alta
+                    : SeveridadAlerta.Media,
+                IdEmpleado = null,
+                IdPartida = idPartida,
+                IdProyecto = partida.IdProyecto,
+                Descripcion = $"La partida «{partida.Descripcion}» se pasó de lo presupuestado. " +
+                              $"Presupuesto: {presupuesto:C2}. Consumido: {consumido:C2}. " +
+                              $"Exceso: {exceso:C2}.",
+                ValorEsperado = presupuesto.ToString("C2"),
+                ValorReal = consumido.ToString("C2"),
+                Desviacion = desviacion,
+                CostoEstimado = exceso,
+                FechaGeneracion = DateTime.Now,
+                EstadoAlerta = EstadoAlerta.Pendiente
+            };
+
+            await _unitOfWork.AlertasConsumo.AddAsync(alerta);
+            await _unitOfWork.CompleteAsync();
+
+            return alerta;
+        }
+
         #endregion
 
         #region Consultas
@@ -270,11 +348,14 @@ namespace VH.Services.Services
                     (!filtros.SoloCriticas || a.Severidad == SeveridadAlerta.Critica) &&
                     (texto == null ||
                      (a.Material != null && a.Material.Nombre.Contains(texto)) ||
+                     // También por partida: una alerta de presupuesto no tiene
+                     // empleado por el que buscarla, y sin esto no aparecía.
+                     (a.Partida != null && a.Partida.Descripcion.Contains(texto)) ||
                      (a.Empleado != null && (a.Empleado.Nombre.Contains(texto) ||
                                              a.Empleado.ApellidoPaterno.Contains(texto) ||
                                              a.Empleado.NumeroNomina.Contains(texto)))),
                 orden: q => q.OrderByDescending(a => a.FechaGeneracion).ThenByDescending(a => a.IdAlerta),
-                includeProperties: "Empleado.Proyecto,Material,UsuarioReviso");
+                includeProperties: "Empleado.Proyecto,Material,UsuarioReviso,Proyecto,Partida");
 
             return pagina.Convertir(MapToResponseDto);
         }
@@ -292,14 +373,14 @@ namespace VH.Services.Services
                      (!filtros.Estado.HasValue || a.EstadoAlerta == filtros.Estado) &&
                      (!filtros.SoloPendientes || a.EstadoAlerta == EstadoAlerta.Pendiente) &&
                      (!filtros.SoloCriticas || a.Severidad == SeveridadAlerta.Critica),
-                "Empleado.Proyecto,Material,UsuarioReviso");
+                "Empleado.Proyecto,Material,UsuarioReviso,Proyecto,Partida");
 
             return alertas.Select(MapToResponseDto).OrderByDescending(a => a.FechaGeneracion);
         }
 
         public async Task<AlertaConsumoResponseDto?> GetAlertaByIdAsync(int id)
         {
-            var alerta = await _unitOfWork.AlertasConsumo.GetByIdAsync(id, "Empleado.Proyecto,Material,UsuarioReviso");
+            var alerta = await _unitOfWork.AlertasConsumo.GetByIdAsync(id, "Empleado.Proyecto,Material,UsuarioReviso,Proyecto,Partida");
             return alerta != null ? MapToResponseDto(alerta) : null;
         }
 
@@ -492,7 +573,14 @@ namespace VH.Services.Services
                 IdMaterial = alerta.IdMaterial,
                 NombreMaterial = alerta.Material?.Nombre ?? "",
                 IdProyecto = alerta.IdProyecto,
-                NombreProyecto = alerta.Empleado?.Proyecto?.Nombre ?? "",
+                // La obra propia de la alerta manda; la del empleado es el
+                // respaldo. Al revés, una alerta sin empleado -como la de una
+                // partida sobregirada- se quedaba sin obra que mostrar.
+                NombreProyecto = alerta.Proyecto?.Nombre
+                                 ?? alerta.Empleado?.Proyecto?.Nombre
+                                 ?? "",
+                IdPartida = alerta.IdPartida,
+                DescripcionPartida = alerta.Partida?.Descripcion,
                 Descripcion = alerta.Descripcion,
                 ValorEsperado = alerta.ValorEsperado,
                 ValorReal = alerta.ValorReal,

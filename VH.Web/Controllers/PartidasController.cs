@@ -50,6 +50,17 @@ namespace VH.Web.Controllers
                 ViewBag.ProyectoNombre = proyecto?.Nombre;
                 ViewBag.PresupuestoTotal = proyecto?.PresupuestoTotal;
 
+                // El resumen suma todas las partidas de la obra, no sólo la página
+                // que se está viendo: un total que cambiara al pasar de página no
+                // sería el presupuesto de nada.
+                var resumenResponse = await _httpClient.GetAsync(
+                    $"api/proyectos/{idProyecto}/partidas/resumen-costos");
+                if (resumenResponse.IsSuccessStatusCode)
+                {
+                    ViewBag.Resumen = await resumenResponse.Content
+                        .ReadFromJsonAsync<ResumenCostosProyectoDto>();
+                }
+
                 var url = $"api/proyectos/{idProyecto}/partidas/paginado" +
                           $"?pagina={consulta.Pagina}&tamano={consulta.Tamano}";
                 if (consulta.HayBusqueda) url += $"&buscar={Uri.EscapeDataString(consulta.TextoLimpio!)}";
@@ -123,7 +134,8 @@ namespace VH.Web.Controllers
             var partidaRequest = new ConceptoPartidaRequestDto(
                 partida!.Descripcion,
                 partida.IdUnidadMedida,
-                partida.CantidadEstimada
+                partida.CantidadEstimada,
+                partida.PrecioUnitarioEstimado
             );
 
             ViewBag.IdProyecto = idProyecto;

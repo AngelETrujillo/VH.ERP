@@ -92,21 +92,47 @@
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>Empleado</h5>
+            @* Una alerta de presupuesto no tiene empleado, nomina ni puesto:
+               habla de una partida. *@
+            @if (Model.EsDePartida)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-bookmark me-2"></i>Partida</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>@Model.DescripcionPartida</strong></p>
+                        <p class="mb-1 text-muted">Presupuesto: @Model.ValorEsperado</p>
+                        <p class="mb-1 text-muted">Consumido: @Model.ValorReal</p>
+                        @if (Model.IdProyecto.HasValue)
+                        {
+                            <hr />
+                            <a asp-controller="Partidas" asp-action="Index" asp-route-idProyecto="@Model.IdProyecto"
+                               class="btn btn-outline-primary btn-sm w-100">
+                                <i class="bi bi-list-columns me-1"></i>Ver las partidas de la obra
+                            </a>
+                        }
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p class="mb-1"><strong>@Model.NombreEmpleado</strong></p>
-                    <p class="mb-1 text-muted">@Model.NumeroNomina</p>
-                    <p class="mb-1 text-muted">@Model.PuestoEmpleado</p>
-                    <hr>
-                    <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@Model.IdEmpleado" 
-                       class="btn btn-outline-primary btn-sm w-100">
-                        <i class="bi bi-person-lines-fill me-1"></i>Ver Perfil Completo
-                    </a>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-person me-2"></i>Empleado</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>@Model.NombreEmpleado</strong></p>
+                        <p class="mb-1 text-muted">@Model.NumeroNomina</p>
+                        <p class="mb-1 text-muted">@Model.PuestoEmpleado</p>
+                        <hr>
+                        <a asp-controller="DashboardAnalytics" asp-action="PerfilEmpleado" asp-route-id="@Model.IdEmpleado"
+                           class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-person-lines-fill me-1"></i>Ver Perfil Completo
+                        </a>
+                    </div>
                 </div>
-            </div>
+            }
 
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white py-3">

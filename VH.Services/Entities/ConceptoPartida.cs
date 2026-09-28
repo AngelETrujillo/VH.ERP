@@ -22,6 +22,28 @@ namespace VH.Services.Entities
         [Required]
         public decimal CantidadEstimada { get; set; }
 
+        /// <summary>
+        /// Costo de material presupuestado por unidad de obra: lo que se estima
+        /// gastar en material por cada castillo, por cada metro de junta.
+        ///
+        /// Se guarda el precio y no el total porque el total se sigue de él: si
+        /// mañana cambia la cantidad estimada, un importe capturado a mano se
+        /// quedaría describiendo un alcance que ya no es.
+        ///
+        /// Opcional: las partidas que se dieron de alta antes de que esto
+        /// existiera no tienen precio, y una partida sin presupuestar todavía es
+        /// una partida válida. Sin él no hay contra qué comparar y la pantalla
+        /// lo dice en vez de inventar un cero.
+        /// </summary>
+        public decimal? PrecioUnitarioEstimado { get; set; }
+
+        /// <summary>Lo presupuestado para la partida. Nulo mientras no tenga precio.</summary>
+        [NotMapped]
+        public decimal? CostoTotalEstimado =>
+            PrecioUnitarioEstimado.HasValue
+                ? PrecioUnitarioEstimado.Value * CantidadEstimada
+                : null;
+
         // Navigation Properties
         [ForeignKey("IdProyecto")]
         public virtual Proyecto? Proyecto { get; set; }

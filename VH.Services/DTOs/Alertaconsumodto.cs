@@ -63,11 +63,22 @@ namespace VH.Services.DTOs.Analytics
         public string ColorSeveridad { get; set; } = string.Empty;
         public string IconoTipo { get; set; } = string.Empty;
 
-        // Empleado
-        public int IdEmpleado { get; set; }
+        // Empleado. Opcional: una partida sobregirada no es de nadie.
+        public int? IdEmpleado { get; set; }
         public string NumeroNomina { get; set; } = string.Empty;
         public string NombreEmpleado { get; set; } = string.Empty;
         public string PuestoEmpleado { get; set; } = string.Empty;
+
+        // Partida, cuando la alerta habla del presupuesto
+        public int? IdPartida { get; set; }
+        public string? DescripcionPartida { get; set; }
+
+        public bool EsDePartida => IdPartida.HasValue;
+
+        /// <summary>De quién o de qué avisa: la persona, o la partida.</summary>
+        public string Sujeto => EsDePartida
+            ? (DescripcionPartida ?? "Partida del presupuesto")
+            : NombreEmpleado;
 
         // Material
         public int? IdMaterial { get; set; }

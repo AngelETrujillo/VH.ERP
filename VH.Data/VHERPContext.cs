@@ -752,6 +752,15 @@ namespace VH.Data
                     .HasForeignKey(a => a.IdRequisicion)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                // La partida sobre la que avisa, cuando la alerta es del
+                // presupuesto y no de una persona.
+                entity.HasIndex(a => a.IdPartida);
+
+                entity.HasOne(a => a.Partida)
+                    .WithMany()
+                    .HasForeignKey(a => a.IdPartida)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasOne(a => a.UsuarioReviso)
                     .WithMany()
                     .HasForeignKey(a => a.IdUsuarioReviso)
@@ -812,6 +821,10 @@ namespace VH.Data
                 entity.HasKey(cp => cp.IdPartida);
                 entity.Property(cp => cp.Descripcion).IsRequired().HasMaxLength(500);
                 entity.Property(cp => cp.CantidadEstimada).HasPrecision(18, 4);
+
+                // Dinero con dos decimales, como el resto del sistema; las
+                // cantidades llevan cuatro.
+                entity.Property(cp => cp.PrecioUnitarioEstimado).HasPrecision(18, 2);
 
                 entity.HasOne(cp => cp.UnidadMedida)
                     .WithMany()

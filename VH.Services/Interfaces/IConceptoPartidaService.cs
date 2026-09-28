@@ -12,6 +12,23 @@ public interface IConceptoPartidaService
 
     Task<IEnumerable<ConceptoPartida>> GetPartidasByProyectoAsync(int idProyecto);
     Task<ConceptoPartida?> GetPartidaByIdAsync(int idPartida);
+
+    /// <summary>
+    /// Lo gastado contra cada una de las partidas indicadas, al costo del lote
+    /// del que salió cada material.
+    ///
+    /// Va por lista y no de una en una porque quien lo llama tiene una página de
+    /// partidas enfrente: preguntarlo renglón por renglón serían veinticinco
+    /// consultas para pintar una tabla.
+    /// </summary>
+    Task<Dictionary<int, (decimal Costo, int Salidas)>> GetConsumoPorPartidaAsync(
+        IEnumerable<int> idsPartida);
+
+    /// <summary>
+    /// Lo contratado, lo repartido en partidas y lo gastado en una obra. Los
+    /// tres números se calculan al consultar; ninguno se guarda.
+    /// </summary>
+    Task<ResumenCostosProyectoDto?> GetResumenCostosAsync(int idProyecto);
     Task<ConceptoPartida?> CreatePartidaAsync(int idProyecto, ConceptoPartida nuevaPartida);
     Task<bool> UpdatePartidaAsync(ConceptoPartida partidaActualizada);
     Task<bool> DeletePartidaAsync(int idPartida);

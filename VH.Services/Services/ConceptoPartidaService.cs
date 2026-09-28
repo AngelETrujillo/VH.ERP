@@ -70,9 +70,6 @@ namespace VH.Services.Services
             await _unitOfWork.ConceptosPartidas.AddAsync(nuevaPartida);
             await _unitOfWork.CompleteAsync(); // Guardar cambios en la DB
 
-            // 4. Recalcular presupuesto total del proyecto
-            await RecalcularPresupuestoTotalAsync(idProyecto);
-
             return nuevaPartida;
         }
 
@@ -97,14 +94,13 @@ namespace VH.Services.Services
 
             // Mapear los campos permitidos para la actualización
             partidaExistente.Descripcion = partidaActualizada.Descripcion;
-            partidaExistente.IdUnidadMedida = partidaActualizada.IdUnidadMedida; // ✅ CORREGIDO: Era string, ahora es int
+            partidaExistente.IdUnidadMedida = partidaActualizada.IdUnidadMedida;
             partidaExistente.CantidadEstimada = partidaActualizada.CantidadEstimada;
+            partidaExistente.PrecioUnitarioEstimado = partidaActualizada.PrecioUnitarioEstimado;
             // NOTA: No se debe permitir cambiar IdProyecto aquí
 
             _unitOfWork.ConceptosPartidas.Update(partidaExistente);
             await _unitOfWork.CompleteAsync();
-
-            await RecalcularPresupuestoTotalAsync(partidaExistente.IdProyecto);
 
             return true;
         }
@@ -117,33 +113,83 @@ namespace VH.Services.Services
                 return false;
             }
 
-            int idProyecto = partida.IdProyecto;
             _unitOfWork.ConceptosPartidas.Remove(partida);
             await _unitOfWork.CompleteAsync();
-
-            await RecalcularPresupuestoTotalAsync(idProyecto);
 
             return true;
         }
 
-        private async Task RecalcularPresupuestoTotalAsync(int idProyecto)
+        /*
+         * Aquí vivía RecalcularPresupuestoTotalAsync, y hacía dos cosas mal a la
+         * vez. Sumaba CantidadEstimada -cantidades- y guardaba el resultado en
+         * Proyecto.PresupuestoTotal, que las pantallas muestran como dinero: 340
+         * piezas más 120 kilos daban un "presupuesto" de $460.00. Y ese campo lo
+         * captura el usuario al dar de alta la obra, así que la primera partida
+         * que alguien creara se llevaba por delante el importe contratado sin
+         * avisar.
+         *
+         * Son dos números distintos y ninguno se deriva del otro: lo contratado
+         * se captura, y lo repartido en partidas se calcula al consultarlo, en
+         * GetResumenCostosAsync. Guardar el segundo sólo servía para que se
+         * desfasara.
+         */
+
+        public async Task<Dictionary<int, (decimal Costo, int Salidas)>> GetConsumoPorPartidaAsync(
+            IEnumerable<int> idsPartida)
         {
-            // 1. Obtener todas las partidas del proyecto
-            var partidas = await GetPartidasByProyectoAsync(idProyecto);
+            var ids = idsPartida.Distinct().ToList();
+            if (ids.Count == 0) return new Dictionary<int, (decimal, int)>();
 
-            // 2. Calcular la suma total
-            decimal nuevoTotal = partidas.Sum(cp => cp.CantidadEstimada);
+            // El costo de cada salida es el del lote del que salió, no el costo
+            // estimado del material: es lo que de verdad se pagó por esa pieza.
+            var salidas = await _unitOfWork.EntregasEPP.FindAsync(
+                filter: e => e.IdConceptoPartida != null && ids.Contains(e.IdConceptoPartida.Value),
+                includeProperties: "CompraDetalle");
 
-            // 3. Obtener el proyecto padre
+            return salidas
+                .GroupBy(e => e.IdConceptoPartida!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (
+                        Costo: g.Sum(e => e.CantidadEntregada *
+                                          (e.CompraDetalle != null ? e.CompraDetalle.PrecioUnitario : 0m)),
+                        Salidas: g.Count()));
+        }
+
+        public async Task<ResumenCostosProyectoDto?> GetResumenCostosAsync(int idProyecto)
+        {
             var proyecto = await _unitOfWork.Proyectos.GetByIdAsync(idProyecto);
+            if (proyecto == null) return null;
 
-            if (proyecto != null)
+            var partidas = (await _unitOfWork.ConceptosPartidas.FindAsync(
+                cp => cp.IdProyecto == idProyecto)).ToList();
+
+            var consumos = await GetConsumoPorPartidaAsync(partidas.Select(p => p.IdPartida));
+
+            // El consumo cargado a la obra sin partida no aparece en el avance de
+            // ninguna, pero es gasto de la obra igual y tiene que verse.
+            var sueltas = await _unitOfWork.EntregasEPP.FindAsync(
+                filter: e => e.IdProyectoDestino == idProyecto && e.IdConceptoPartida == null,
+                includeProperties: "CompraDetalle");
+
+            var resumen = new ResumenCostosProyectoDto
             {
-                // 4. Actualizar el campo y persistir los cambios
-                proyecto.PresupuestoTotal = nuevoTotal;
-                _unitOfWork.Proyectos.Update(proyecto);
-                await _unitOfWork.CompleteAsync();
-            }
+                IdProyecto = idProyecto,
+                NombreProyecto = proyecto.Nombre,
+                PresupuestoObra = proyecto.PresupuestoTotal,
+                PresupuestadoEnPartidas = partidas.Sum(p => p.CostoTotalEstimado ?? 0m),
+                PartidasSinPresupuesto = partidas.Count(p => !p.PrecioUnitarioEstimado.HasValue),
+                ConsumidoEnPartidas = consumos.Values.Sum(v => v.Costo),
+                ConsumidoSinPartida = sueltas.Sum(e =>
+                    e.CantidadEntregada * (e.CompraDetalle != null ? e.CompraDetalle.PrecioUnitario : 0m))
+            };
+
+            resumen.PartidasSobregiradas = partidas.Count(p =>
+                p.CostoTotalEstimado.HasValue &&
+                consumos.TryGetValue(p.IdPartida, out var c) &&
+                c.Costo > p.CostoTotalEstimado.Value);
+
+            return resumen;
         }
     }
 }

@@ -1,4 +1,4 @@
-@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.ConceptoPartidaResponseDto>
+﻿@model VH.Services.DTOs.ResultadoPaginado<VH.Services.DTOs.ConceptoPartidaResponseDto>
 
 @{
     ViewData["Title"] = $"Partidas del Proyecto: {ViewBag.ProyectoNombre}";
@@ -20,10 +20,7 @@
             <h2 class="mb-1 fw-bold text-dark">
                 <i class="bi bi-list-columns text-primary me-2"></i>Partidas
             </h2>
-            <p class="text-muted mb-0">
-                @ViewBag.ProyectoNombre · presupuesto actual
-                <strong>@(((decimal?)ViewBag.PresupuestoTotal ?? 0m).ToString("C2"))</strong>
-            </p>
+            <p class="text-muted mb-0">@ViewBag.ProyectoNombre</p>
         </div>
         <div>
             <a asp-controller="Proyectos" asp-action="Index" class="btn btn-outline-secondary me-2">
@@ -41,6 +38,78 @@
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @*
+        Tres numeros distintos que el sistema tenia confundidos en una sola
+        columna: lo contratado para la obra lo captura quien la da de alta, lo
+        repartido en partidas es la suma de sus presupuestos, y lo consumido es
+        lo que de verdad salio del almacen. Ninguno se deriva de los otros.
+    *@
+    @if (ViewBag.Resumen is VH.Services.DTOs.ResumenCostosProyectoDto r)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Presupuesto de la obra</small>
+                        <div class="fs-4 fw-bold">@r.PresupuestoObra.ToString("C2")</div>
+                        <small class="text-muted">Lo contratado</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Repartido en partidas</small>
+                        <div class="fs-4 fw-bold">@r.PresupuestadoEnPartidas.ToString("C2")</div>
+                        @if (r.PartidasSinPresupuesto > 0)
+                        {
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>@r.PartidasSinPresupuesto sin precio
+                            </small>
+                        }
+                        else if (r.DisponibleDelPresupuesto.HasValue)
+                        {
+                            <small class="text-@(r.DisponibleDelPresupuesto.Value < 0 ? "danger" : "muted")">
+                                Quedan @r.DisponibleDelPresupuesto.Value.ToString("C2") por repartir
+                            </small>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Consumido</small>
+                        <div class="fs-4 fw-bold">@r.ConsumidoTotal.ToString("C2")</div>
+                        @if (r.ConsumidoSinPartida > 0)
+                        {
+                            <small class="text-muted">
+                                @r.ConsumidoSinPartida.ToString("C2") sin partida
+                            </small>
+                        }
+                        else
+                        {
+                            <small class="text-muted">Material salido del almacen</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 @(r.PartidasSobregiradas > 0 ? "border-danger" : "")">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Sobregiros</small>
+                        <div class="fs-4 fw-bold text-@(r.PartidasSobregiradas > 0 ? "danger" : "success")">
+                            @r.PartidasSobregiradas
+                        </div>
+                        <small class="text-muted">
+                            @(r.PartidasSobregiradas > 0 ? "Partidas pasadas del estimado" : "Ninguna partida pasada")
+                        </small>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 
@@ -64,7 +133,10 @@
                             <th class="ps-4">Descripción</th>
                             <th>Unidad</th>
                             <th class="text-end">Cantidad estimada</th>
-                            <th class="text-end">Costo estimado</th>
+                            <th class="text-end">Presupuestado</th>
+                            <th class="text-end">Consumido</th>
+                            <th class="text-end">Diferencia</th>
+                            <th style="width:150px;">Avance</th>
                             <th class="text-center" style="width:150px;">Acciones</th>
                         </tr>
                     </thead>
@@ -86,9 +158,76 @@
                                     </td>
                                     <td class="text-end">@item.CantidadEstimada.FormatoCantidad()</td>
                                     <td class="text-end">
-                                        @(item.CostoTotalEstimado.HasValue
-                                            ? item.CostoTotalEstimado.Value.ToString("C2")
-                                            : "—")
+                                        @if (item.TienePresupuesto)
+                                        {
+                                            <span class="fw-semibold">@item.CostoTotalEstimado!.Value.ToString("C2")</span>
+                                            <br />
+                                            <small class="text-muted">@item.PrecioUnitarioEstimado!.Value.ToString("C2") / @item.AbreviaturaUnidadMedida</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (item.CostoConsumido > 0)
+                                        {
+                                            <span class="fw-semibold">@item.CostoConsumido.ToString("C2")</span>
+                                            <br />
+                                            <small class="text-muted">@item.SalidasConsumidas salida(s)</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Sin consumo</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @* Sin presupuesto no hay diferencia que mostrar: un cero
+                                           ahi se leeria como "ya se gasto todo". *@
+                                        @if (item.Diferencia.HasValue)
+                                        {
+                                            <span class="fw-bold text-@(item.EstaSobregirada ? "danger" : "success")">
+                                                @item.Diferencia.Value.ToString("C2")
+                                            </span>
+                                            @if (item.EstaSobregirada)
+                                            {
+                                                <br />
+                                                <span class="badge bg-danger">Sobregirada</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.PorcentajeConsumido.HasValue)
+                                        {
+                                            var pct = item.PorcentajeConsumido.Value;
+                                            // Con la barra casi vacia el numero no cabe dentro y se
+                                            // pierde: un 0% se veia como una barra gris sin explicar.
+                                            var cabeDentro = pct >= 15m;
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" style="height: 18px;" role="progressbar"
+                                                     aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"
+                                                     aria-label="Avance de @item.Descripcion">
+                                                    @* La barra se topa en 100 para no desbordar la celda;
+                                                       el porcentaje real se sigue leyendo en la etiqueta. *@
+                                                    <div class="progress-bar bg-@item.ClaseSemaforo"
+                                                         style="width: @(Math.Min(pct, 100m).ToString(System.Globalization.CultureInfo.InvariantCulture))%">
+                                                        @(cabeDentro ? $"{pct:0.#}%" : "")
+                                                    </div>
+                                                </div>
+                                                @if (!cabeDentro)
+                                                {
+                                                    <small class="text-muted">@pct.ToString("0.#")%</small>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted fst-italic">Sin presupuestar</small>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
@@ -110,7 +249,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     @if (Model.Buscado != null)
                                     {
                                         <span>Ninguna partida coincide con «@Model.Buscado» en este proyecto.</span>

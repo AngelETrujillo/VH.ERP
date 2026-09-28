@@ -28,7 +28,11 @@ namespace VH.API.Controllers
         public async Task<ActionResult<IEnumerable<ConceptoPartidaResponseDto>>> GetByProyecto(int idProyecto)
         {
             var partidas = await _partidaService.GetPartidasByProyectoAsync(idProyecto);
-            return Ok(_mapper.Map<IEnumerable<ConceptoPartidaResponseDto>>(partidas));
+            var renglones = _mapper.Map<List<ConceptoPartidaResponseDto>>(partidas);
+
+            await LlenarConsumoAsync(renglones);
+
+            return Ok(renglones);
         }
 
         [HttpGet("paginado")]
@@ -36,7 +40,41 @@ namespace VH.API.Controllers
             int idProyecto, [FromQuery] ConsultaPaginada consulta)
         {
             var pagina = await _partidaService.GetPaginadoAsync(consulta, idProyecto);
-            return Ok(pagina.ConLos(_mapper.Map<IEnumerable<ConceptoPartidaResponseDto>>(pagina.Renglones)));
+            var renglones = _mapper.Map<List<ConceptoPartidaResponseDto>>(pagina.Renglones);
+
+            await LlenarConsumoAsync(renglones);
+
+            return Ok(pagina.ConLos(renglones));
+        }
+
+        // GET: api/proyectos/1/partidas/resumen-costos
+        // Lo contratado, lo repartido en partidas y lo gastado.
+        [HttpGet("resumen-costos")]
+        public async Task<ActionResult<ResumenCostosProyectoDto>> GetResumenCostos(int idProyecto)
+        {
+            var resumen = await _partidaService.GetResumenCostosAsync(idProyecto);
+            if (resumen == null) return NotFound();
+            return Ok(resumen);
+        }
+
+        /// <summary>
+        /// Cuelga de cada partida lo gastado contra ella. En una sola consulta
+        /// para toda la página: preguntarlo renglón por renglón eran veinticinco
+        /// viajes a la base para pintar una tabla.
+        /// </summary>
+        private async Task LlenarConsumoAsync(List<ConceptoPartidaResponseDto> renglones)
+        {
+            if (renglones.Count == 0) return;
+
+            var consumos = await _partidaService.GetConsumoPorPartidaAsync(
+                renglones.Select(r => r.IdPartida));
+
+            foreach (var r in renglones)
+            {
+                if (!consumos.TryGetValue(r.IdPartida, out var c)) continue;
+                r.CostoConsumido = c.Costo;
+                r.SalidasConsumidas = c.Salidas;
+            }
         }
 
         // GET: api/proyectos/1/partidas/5

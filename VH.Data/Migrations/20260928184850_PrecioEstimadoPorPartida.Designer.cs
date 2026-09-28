@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VH.Data;
 
@@ -11,9 +12,11 @@ using VH.Data;
 namespace VH.Data.Migrations
 {
     [DbContext(typeof(VHERPContext))]
-    partial class VHERPContextModelSnapshot : ModelSnapshot
+    [Migration("20260928184850_PrecioEstimadoPorPartida")]
+    partial class PrecioEstimadoPorPartida
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,16 +161,13 @@ namespace VH.Data.Migrations
                     b.Property<DateTime?>("FechaRevision")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("IdEmpleado")
+                    b.Property<int>("IdEmpleado")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdEntrega")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdMaterial")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("IdPartida")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdProyecto")
@@ -210,8 +210,6 @@ namespace VH.Data.Migrations
                     b.HasIndex("IdEntrega");
 
                     b.HasIndex("IdMaterial");
-
-                    b.HasIndex("IdPartida");
 
                     b.HasIndex("IdProyecto");
 
@@ -1820,7 +1818,8 @@ namespace VH.Data.Migrations
                     b.HasOne("VH.Services.Entities.Empleado", "Empleado")
                         .WithMany("Alertas")
                         .HasForeignKey("IdEmpleado")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("VH.Services.Entities.EntregaEPP", "Entrega")
                         .WithMany()
@@ -1830,11 +1829,6 @@ namespace VH.Data.Migrations
                     b.HasOne("VH.Services.Entities.Material", "Material")
                         .WithMany("Alertas")
                         .HasForeignKey("IdMaterial")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("VH.Services.Entities.ConceptoPartida", "Partida")
-                        .WithMany()
-                        .HasForeignKey("IdPartida")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("VH.Services.Entities.Proyecto", "Proyecto")
@@ -1857,8 +1851,6 @@ namespace VH.Data.Migrations
                     b.Navigation("Entrega");
 
                     b.Navigation("Material");
-
-                    b.Navigation("Partida");
 
                     b.Navigation("Proyecto");
 

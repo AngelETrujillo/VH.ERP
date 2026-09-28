@@ -13,6 +13,12 @@ namespace VH.Services.Interfaces
         Task<AlertaConsumo?> EvaluarExcesoCantidadAsync(int idEmpleado, int idMaterial, decimal cantidad, int? idEntrega = null);
         Task<AlertaConsumo?> EvaluarExcesoFrecuenciaAsync(int idEmpleado, int idMaterial);
 
+        /// <summary>
+        /// Avisa si lo consumido contra una partida se pasó de lo presupuestado.
+        /// No detiene nada: el despacho ya ocurrió y el material salió.
+        /// </summary>
+        Task<AlertaConsumo?> EvaluarPresupuestoPartidaAsync(int idPartida);
+
         // ===== CONSULTAS =====
         /// <summary>Una página de alertas, con los mismos filtros del listado completo.</summary>
         Task<ResultadoPaginado<AlertaConsumoResponseDto>> GetPaginadoAsync(

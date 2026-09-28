@@ -13,12 +13,22 @@ namespace VH.Services.Entities
         public TipoAlerta TipoAlerta { get; set; }
         [Required]
         public SeveridadAlerta Severidad { get; set; }
-        [Required]
-        public int IdEmpleado { get; set; }
+        /// <summary>
+        /// De quién se sospecha, cuando la alerta habla del consumo de una
+        /// persona.
+        ///
+        /// Opcional desde que hay alertas que no son de nadie: una partida
+        /// sobregirada es un problema del presupuesto, no de un trabajador.
+        /// Mientras fue obligatorio, ese aviso no cabía en la tabla.
+        /// </summary>
+        public int? IdEmpleado { get; set; }
         public int? IdMaterial { get; set; }
         public int? IdProyecto { get; set; }
         public int? IdEntrega { get; set; }
         public int? IdRequisicion { get; set; }
+
+        /// <summary>Partida del presupuesto, cuando la alerta habla de ella.</summary>
+        public int? IdPartida { get; set; }
         [Required]
         [MaxLength(1000)]
         public string Descripcion { get; set; } = string.Empty;
@@ -53,6 +63,9 @@ namespace VH.Services.Entities
 
         [ForeignKey("IdRequisicion")]
         public virtual RequisicionEPP? Requisicion { get; set; }
+
+        [ForeignKey("IdPartida")]
+        public virtual ConceptoPartida? Partida { get; set; }
 
         [ForeignKey("IdUsuarioReviso")]
         public virtual Usuario? UsuarioReviso { get; set; }
