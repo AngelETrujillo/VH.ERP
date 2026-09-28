@@ -56,6 +56,16 @@ namespace VH.Services.Interfaces
             string? observaciones,
             List<(int IdDetalle, int? IdCompraDetalle, decimal CantidadEntregada)> detalles);
 
+        /// <summary>
+        /// Despacha los renglones que se cargan a una obra o partida, sin firma:
+        /// ese material se consume en la obra y no lo recibe ninguna persona.
+        /// </summary>
+        Task<(bool Success, string? Error)> EntregarAObraAsync(
+            int id,
+            string userId,
+            string? observaciones,
+            List<(int IdDetalle, int? IdCompraDetalle, decimal CantidadEntregada)> detalles);
+
         Task<bool> CancelarAsync(int id, string userId);
 
         // Utilidades

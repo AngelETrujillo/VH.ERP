@@ -330,6 +330,12 @@ namespace VH.Web.Controllers
             var pendientes = requisicion.EmpleadosPorSurtir;
             if (pendientes.Count == 0)
             {
+                // Un documento de puro consumible no tiene a quién entregarle, pero
+                // sí tiene material por salir. Antes caía en el mensaje de abajo y
+                // se quedaba encerrado: la única puerta pedía un trabajador.
+                if (requisicion.TieneConsumoDeObraPorSurtir)
+                    return RedirectToAction(nameof(EntregarObra), new { id });
+
                 // Distinguir por qué no hay nada que entregar: no es lo mismo un documento
                 // ya surtido que uno cuyo material todavía no llega.
                 var esperando = requisicion.Detalles.Count(d =>
@@ -398,6 +404,89 @@ namespace VH.Web.Controllers
             }
 
             return RedirectToAction(nameof(Entregar), new { id });
+        }
+
+        // GET: RequisicionesEPP/EntregarObra/5
+        // Despacha lo que se carga a la obra. Sin firma y de una sola vez: no hay
+        // trabajadores entre los cuales repartir el documento.
+        [RequierePermiso("REQUISICIONES_EPP", "editar")]
+        public async Task<IActionResult> EntregarObra(int id)
+        {
+            SetAuthHeader();
+            var response = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
+            if (!response.IsSuccessStatusCode)
+                return NotFound();
+
+            var requisicion = await response.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+            if (requisicion == null)
+                return NotFound();
+
+            if (requisicion.EstadoRequisicion != EstadoRequisicion.Aprobada &&
+                requisicion.EstadoRequisicion != EstadoRequisicion.Parcial)
+            {
+                TempData["Error"] = "Solo se puede surtir material de requisiciones autorizadas";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!requisicion.TieneConsumoDeObraPorSurtir)
+            {
+                // Si lo que queda va a personas, la puerta es la otra.
+                if (requisicion.EmpleadosPorSurtir.Count > 0)
+                    return RedirectToAction(nameof(Entregar), new { id });
+
+                var esperando = requisicion.Detalles.Count(d =>
+                    d.EstadoRenglon == EstadoRenglonRequisicion.PorComprar ||
+                    d.EstadoRenglon == EstadoRenglonRequisicion.EnOrdenCompra);
+
+                TempData["Error"] = esperando > 0
+                    ? $"Todavía no hay material listo para cargar a la obra: {esperando} renglón(es) esperan compra o recepción."
+                    : "Esta requisición ya no tiene consumo de obra por despachar.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            await CargarLotesDisponibles(requisicion);
+
+            return View(requisicion);
+        }
+
+        // POST: RequisicionesEPP/EntregarObra/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("REQUISICIONES_EPP", "editar")]
+        public async Task<IActionResult> EntregarObra(int id, EntregarAObraRequestDto dto)
+        {
+            SetAuthHeader();
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"api/requisicionesepp/{id}/despachar-obra", dto);
+                if (response.IsSuccessStatusCode)
+                {
+                    // Puede quedar material para trabajadores en el mismo documento:
+                    // no es lo normal, pero nada lo impide.
+                    var actual = await _httpClient.GetAsync($"api/requisicionesepp/{id}");
+                    if (actual.IsSuccessStatusCode)
+                    {
+                        var req = await actual.Content.ReadFromJsonAsync<RequisicionEPPResponseDto>();
+                        if (req != null && req.EmpleadosPorSurtir.Count > 0)
+                        {
+                            TempData["Mensaje"] = "Consumo cargado a la obra. Quedan trabajadores por recibir su material.";
+                            return RedirectToAction(nameof(Entregar), new { id });
+                        }
+                    }
+
+                    TempData["Mensaje"] = "Consumo cargado a la obra.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                TempData["Error"] = ExtraerMensaje(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar consumo a la obra");
+                TempData["Error"] = "Error al procesar el despacho";
+            }
+
+            return RedirectToAction(nameof(EntregarObra), new { id });
         }
 
         // POST: RequisicionesEPP/Cancelar/5

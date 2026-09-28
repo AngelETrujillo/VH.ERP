@@ -189,6 +189,11 @@ namespace VH.Services.Mapping
                         : string.Empty))
                 .ForMember(dest => dest.NumeroNominaEmpleado, opt => opt.MapFrom(src =>
                     src.Empleado != null ? src.Empleado.NumeroNomina : string.Empty))
+                // Destino de obra, cuando la salida no fue a una persona
+                .ForMember(dest => dest.NombreProyectoDestino, opt => opt.MapFrom(src =>
+                    src.ProyectoDestino != null ? src.ProyectoDestino.Nombre : null))
+                .ForMember(dest => dest.DescripcionPartida, opt => opt.MapFrom(src =>
+                    src.ConceptoPartida != null ? src.ConceptoPartida.Descripcion : null))
                 // El lote del que salió: un renglón de compra
                 .ForMember(dest => dest.IdCompraDetalle, opt => opt.MapFrom(src => src.IdCompraDetalle))
                 .ForMember(dest => dest.IdCompra, opt => opt.MapFrom(src =>
@@ -262,10 +267,21 @@ namespace VH.Services.Mapping
                     src.Material != null ? src.Material.Nombre : string.Empty))
                 .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src =>
                     src.Material != null && src.Material.UnidadMedida != null ? src.Material.UnidadMedida.Abreviatura : string.Empty))
+                // Sin talla no se cuelga el guión: un consumible salía descrito
+                // como "Lote #15018 - " y el guión suelto parecía un dato perdido.
                 .ForMember(dest => dest.DescripcionLote, opt => opt.MapFrom(src =>
-                    src.CompraDetalle != null
-                        ? $"Lote #{src.CompraDetalle.IdCompraDetalle} - {(src.CompraDetalle.Talla ?? "")}"
-                        : null))
+                    src.CompraDetalle == null
+                        ? null
+                        : string.IsNullOrWhiteSpace(src.CompraDetalle.Talla)
+                            ? $"Lote #{src.CompraDetalle.IdCompraDetalle}"
+                            : $"Lote #{src.CompraDetalle.IdCompraDetalle} - {src.CompraDetalle.Talla}"))
+                // Cuándo salió el consumo de obra: la más reciente de las salidas
+                // de este renglón que no llevan firma.
+                .ForMember(dest => dest.FechaConsumoObra, opt => opt.MapFrom(src =>
+                    src.Salidas
+                        .Where(s => s.IdRequisicionEntrega == null)
+                        .Select(s => (DateTime?)s.FechaEntrega)
+                        .Max()))
                 // Destino del renglón: la persona, o la obra/partida
                 .ForMember(dest => dest.NombreEmpleadoDestino, opt => opt.MapFrom(src =>
                     src.EmpleadoDestino != null ? src.EmpleadoDestino.NombreCompleto : string.Empty))

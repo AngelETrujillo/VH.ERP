@@ -74,6 +74,20 @@ namespace VH.Services.DTOs
         List<EntregarRequisicionDetalleDto> Detalles
     );
 
+    /// <summary>
+    /// Despacho de los renglones que se cargan a la obra. No lleva empleado ni
+    /// firma: ese material se consume en la construcción y no lo recibe nadie en
+    /// particular. La obra y la partida ya vienen en cada renglón desde que se
+    /// pidió, así que aquí sólo se dice cuánto sale y de qué lote.
+    /// </summary>
+    public record EntregarAObraRequestDto(
+        [MaxLength(500, ErrorMessage = "Las observaciones no pueden exceder 500 caracteres")]
+        string? Observaciones,
+
+        [Required(ErrorMessage = "Debe especificar los materiales a despachar")]
+        List<EntregarRequisicionDetalleDto> Detalles
+    );
+
     public record EntregarRequisicionDetalleDto(
         [Required]
         int IdRequisicionDetalle,
@@ -197,6 +211,23 @@ namespace VH.Services.DTOs
             .Select(d => d.IdEmpleadoDestino!.Value)
             .Distinct()
             .ToList();
+
+        /// <summary>
+        /// Renglones de consumo de obra listos para despachar.
+        ///
+        /// Van por separado de <see cref="EmpleadosPorSurtir"/> porque salen por
+        /// otra puerta: sin firma y contra la obra. Mientras esta lista no existió,
+        /// un documento de puro consumible quedaba autorizado y sin forma de
+        /// surtirse, porque la única salida pedía un trabajador que firmara.
+        /// </summary>
+        public List<int> RenglonesObraPorSurtir => Detalles
+            .Where(d => !d.IdEmpleadoDestino.HasValue &&
+                        d.IdProyectoDestino.HasValue &&
+                        d.ListoParaEntregar)
+            .Select(d => d.IdRequisicionDetalle)
+            .ToList();
+
+        public bool TieneConsumoDeObraPorSurtir => RenglonesObraPorSurtir.Count > 0;
     }
 
     public class RequisicionEPPDetalleResponseDto
@@ -273,6 +304,12 @@ namespace VH.Services.DTOs
 
         /// <summary>Firma que amparó este renglón, cuando ya se surtió.</summary>
         public int? IdRequisicionEntrega { get; set; }
+
+        /// <summary>
+        /// Cuándo salió del almacén el consumo cargado a la obra. Nulo en los
+        /// renglones que van a una persona: ésos llevan la fecha de su firma.
+        /// </summary>
+        public DateTime? FechaConsumoObra { get; set; }
 
         // Calculados
         public bool Entregado => EstadoRenglon == EstadoRenglonRequisicion.Surtido;

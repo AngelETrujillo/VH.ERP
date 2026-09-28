@@ -119,10 +119,25 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div>
-                                            <span class="fw-semibold">@item.NombreCompletoEmpleado</span>
-                                            <br><small class="text-muted"><i class="bi bi-credit-card me-1"></i>@item.NumeroNominaEmpleado</small>
-                                        </div>
+                                        @* No toda salida va a una persona: el consumible que se
+                                           gasta en la obra no lo recibe nadie. Antes esta celda
+                                           quedaba en blanco y la fila parecía un dato perdido. *@
+                                        @if (item.EsConsumoDeObra)
+                                        {
+                                            <div>
+                                                <span class="badge bg-warning-subtle text-dark">
+                                                    <i class="bi bi-bricks me-1"></i>Consumo de obra
+                                                </span>
+                                                <br><small class="text-muted"><i class="bi bi-building me-1"></i>@item.Destino</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                <span class="fw-semibold">@item.NombreCompletoEmpleado</span>
+                                                <br><small class="text-muted"><i class="bi bi-credit-card me-1"></i>@item.NumeroNominaEmpleado</small>
+                                            </div>
+                                        }
                                     </td>
                                     <td>
                                         <span class="badge bg-primary-subtle text-primary">
@@ -154,7 +169,11 @@
                                                class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            @if (puedeEditar)
+                                            @* El formulario de edición pide un trabajador, así que
+                                               no sirve para una salida cargada a la obra: llevaba a
+                                               una pantalla que no se podía guardar. Ese consumo se
+                                               corrige desde la requisición que lo originó. *@
+                                            @if (puedeEditar && !item.EsConsumoDeObra)
                                             {
                                                 @if (Html.PuedeEditar("ENTREGAS_EPP"))
                                                 {

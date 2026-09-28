@@ -42,10 +42,26 @@ namespace VH.Services.DTOs
         public string TallaEntregada { get; set; } = string.Empty;
         public string Observaciones { get; set; } = string.Empty;
 
-        // Información del Empleado
+        // Información del Empleado. Viene en cero cuando la salida no fue a una
+        // persona sino a una obra; para saberlo se usa EsConsumoDeObra.
         public int IdEmpleado { get; set; }
         public string NombreCompletoEmpleado { get; set; } = string.Empty;
         public string NumeroNominaEmpleado { get; set; } = string.Empty;
+
+        // Destino de obra, cuando el material se consumió en la construcción en
+        // vez de entregarse a alguien. Sin estos campos el listado de entregas
+        // mostraba esas salidas con la columna del trabajador en blanco.
+        public int? IdProyectoDestino { get; set; }
+        public string? NombreProyectoDestino { get; set; }
+        public int? IdConceptoPartida { get; set; }
+        public string? DescripcionPartida { get; set; }
+
+        public bool EsConsumoDeObra => IdProyectoDestino.HasValue;
+
+        /// <summary>A quién o a qué se fue: la persona, o la obra y su partida.</summary>
+        public string Destino => EsConsumoDeObra
+            ? (DescripcionPartida ?? NombreProyectoDestino ?? "Cargo a obra")
+            : NombreCompletoEmpleado;
 
         // Información del Lote/Compra
         public int IdCompraDetalle { get; set; }

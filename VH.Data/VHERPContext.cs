@@ -336,6 +336,16 @@ namespace VH.Data
                     .WithMany(f => f.Salidas)
                     .HasForeignKey(e => e.IdRequisicionEntrega)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // El renglón que cada salida surtió. La columna ya existía; se le
+                // da el lado inverso para poder llegar a las salidas que no cuelgan
+                // de una firma, que son las del consumo cargado a la obra.
+                entity.HasIndex(e => e.IdRequisicionDetalle);
+
+                entity.HasOne(e => e.RequisicionDetalle)
+                    .WithMany(d => d.Salidas)
+                    .HasForeignKey(e => e.IdRequisicionDetalle)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 

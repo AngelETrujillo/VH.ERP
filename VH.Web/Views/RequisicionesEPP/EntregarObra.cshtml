@@ -1,0 +1,251 @@
+@model VH.Services.DTOs.RequisicionEPPResponseDto
+@using VH.Services.Entities
+@using VH.Web.Extensions
+@{
+    ViewData["Title"] = "Cargar consumo a la obra";
+
+    var lotes = ViewBag.LotesDisponibles as Dictionary<int, List<VH.Services.DTOs.CompraEPPSimpleDto>>
+                ?? new Dictionary<int, List<VH.Services.DTOs.CompraEPPSimpleDto>>();
+
+    // Sólo los renglones que se cargan a la obra. Los que van a una persona
+    // salen por la otra puerta, con su firma.
+    var renglones = Model.Detalles
+        .Where(d => !d.IdEmpleadoDestino.HasValue && d.IdProyectoDestino.HasValue && d.ListoParaEntregar)
+        .ToList();
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Details" asp-route-id="@Model.IdRequisicion" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-bricks text-warning me-2"></i>Cargar consumo a la obra
+            </h2>
+            <p class="text-muted mb-0">
+                @Model.NumeroRequisicion · @Model.NombreAlmacen
+            </p>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form asp-action="EntregarObra" asp-route-id="@Model.IdRequisicion" method="post" id="formDespacho">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-warning py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-box-arrow-right me-2"></i>Qué sale del almacén
+                            <span class="badge bg-dark ms-2">@renglones.Count renglón(es)</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3" style="min-width:210px;">Material</th>
+                                        <th style="min-width:210px;">Se carga a</th>
+                                        <th class="text-center" style="width:110px;">Pedido</th>
+                                        <th style="min-width:260px;">De dónde sale</th>
+                                        <th style="width:130px;">A despachar <span class="text-danger">*</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < renglones.Count; i++)
+                                    {
+                                        var d = renglones[i];
+                                        var lotesMaterial = lotes.ContainsKey(d.IdMaterial)
+                                            ? lotes[d.IdMaterial]
+                                            : new List<VH.Services.DTOs.CompraEPPSimpleDto>();
+
+                                        var disponibleTotal = lotesMaterial.Sum(l => l.CantidadDisponible);
+                                        var falta = Math.Max(0, d.CantidadSolicitada - (d.CantidadEntregada ?? 0));
+
+                                        // El tope es lo apartado a este renglón: el resto de la
+                                        // existencia puede estar apartada para otro.
+                                        var suyo = Math.Max(0, d.CantidadApartada - (d.CantidadEntregada ?? 0));
+                                        var aDespachar = Math.Min(Math.Min(falta, disponibleTotal), suyo);
+
+                                        // De qué lotes va a salir, en el mismo orden en que el
+                                        // servidor los va a consumir.
+                                        var reparto = new List<(VH.Services.DTOs.CompraEPPSimpleDto Lote, decimal Cantidad)>();
+                                        var porRepartir = aDespachar;
+                                        foreach (var l in lotesMaterial)
+                                        {
+                                            if (porRepartir <= 0) break;
+                                            var toma = Math.Min(porRepartir, l.CantidadDisponible);
+                                            if (toma <= 0) continue;
+                                            reparto.Add((l, toma));
+                                            porRepartir -= toma;
+                                        }
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="fw-semibold">@d.NombreMaterial</span>
+                                                <br />
+                                                <small class="text-muted">@d.UnidadMedida</small>
+                                                <input type="hidden" name="Detalles[@i].IdRequisicionDetalle" value="@d.IdRequisicionDetalle" />
+                                            </td>
+                                            <td>
+                                                @* La partida es el dato fino; la obra siempre se
+                                                   muestra, porque es contra la que se registra el
+                                                   consumo aunque no se haya elegido partida. *@
+                                                @if (!string.IsNullOrWhiteSpace(d.DescripcionPartida))
+                                                {
+                                                    <span class="badge bg-warning-subtle text-dark">
+                                                        <i class="bi bi-bookmark me-1"></i>@d.DescripcionPartida
+                                                    </span>
+                                                    <br />
+                                                }
+                                                <small class="text-muted">
+                                                    <i class="bi bi-building me-1"></i>@d.NombreProyectoDestino
+                                                </small>
+                                                @if (string.IsNullOrWhiteSpace(d.DescripcionPartida))
+                                                {
+                                                    <br />
+                                                    <small class="text-muted fst-italic">Sin partida: se carga a la obra</small>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary fs-6">@d.CantidadSolicitada.FormatoCantidad()</span>
+                                            </td>
+                                            <td>
+                                                @if (disponibleTotal <= 0)
+                                                {
+                                                    <span class="badge bg-danger-subtle text-danger">
+                                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                                        Sin existencia en este almacén
+                                                    </span>
+                                                    <input type="hidden" name="Detalles[@i].IdCompraDetalle" value="" />
+                                                }
+                                                else
+                                                {
+                                                    <select name="Detalles[@i].IdCompraDetalle" class="form-select form-select-sm">
+                                                        <option value="" selected>Automático · lo que caduca primero</option>
+                                                        @foreach (var l in lotesMaterial)
+                                                        {
+                                                            <option value="@l.IdCompraDetalle">
+                                                                Lote #@l.IdCompraDetalle · @l.NombreProveedor · quedan @l.CantidadDisponible.FormatoCantidad()
+                                                            </option>
+                                                        }
+                                                    </select>
+
+                                                    <small class="text-muted d-block mt-1">
+                                                        @if (reparto.Count > 1)
+                                                        {
+                                                            <i class="bi bi-diagram-2 me-1"></i>
+                                                            <span>Saldrá de @reparto.Count lotes: </span>
+                                                            @string.Join(" + ", reparto.Select(r => $"#{r.Lote.IdCompraDetalle} ({r.Cantidad.FormatoCantidad()})"))
+                                                        }
+                                                        else if (reparto.Count == 1)
+                                                        {
+                                                            <i class="bi bi-box me-1"></i>
+                                                            <span>Saldrá del lote #@reparto[0].Lote.IdCompraDetalle</span>
+                                                        }
+                                                        <span class="d-block">Apartado a este renglón: @suyo.FormatoCantidad() · en bodega: @disponibleTotal.FormatoCantidad()</span>
+                                                    </small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <input type="number" name="Detalles[@i].CantidadEntregada"
+                                                       class="form-control form-control-sm js-cantidad"
+                                                       step="0.01" min="0.01"
+                                                       max="@aDespachar.FormatoInput()"
+                                                       value="@aDespachar.FormatoInput()"
+                                                       required @(disponibleTotal > 0 ? "" : "disabled") />
+                                                @if (aDespachar < falta)
+                                                {
+                                                    <small class="text-warning d-block mt-1">
+                                                        Faltan @((falta - aDespachar).FormatoCantidad()) por llegar del proveedor
+                                                    </small>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <label for="Observaciones" class="form-label fw-semibold">Observaciones</label>
+                        <textarea name="Observaciones" id="Observaciones" rows="2" maxlength="500"
+                                  class="form-control" placeholder="Quién lo recogió, a qué frente se llevó…"></textarea>
+                        <small class="text-muted">
+                            Opcional. Queda anotado en el documento: sin firma, no hay dónde más guardarlo.
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Esta salida no lleva firma</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            El material se consume en la obra: no lo recibe ninguna persona,
+                            así que no hay a quién pedirle firma. En el kardex queda como
+                            <strong>consumo de obra</strong>, con el nombre de la obra y la
+                            partida a la que se cargó.
+                        </p>
+                        <p class="small text-muted mb-0">
+                            Quien despacha queda registrado en la bitácora.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-action="Details" asp-route-id="@Model.IdRequisicion" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-warning btn-lg px-4" id="btnDespachar">
+                        <i class="bi bi-box-arrow-right me-2"></i>Cargar a la obra
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Sin nada que despachar el botón no sirve: todos los renglones se
+        // quedaron sin existencia y el servidor rechazaría la petición entera.
+        (function () {
+            const form = document.getElementById('formDespacho');
+            const boton = document.getElementById('btnDespachar');
+
+            function hayAlgo() {
+                return [...document.querySelectorAll('.js-cantidad')]
+                    .some(i => !i.disabled && parseFloat(i.value) > 0);
+            }
+
+            function revisar() {
+                boton.disabled = !hayAlgo();
+                boton.title = boton.disabled
+                    ? 'No hay existencia disponible para ninguno de los renglones'
+                    : '';
+            }
+
+            form.addEventListener('input', revisar);
+            revisar();
+        })();
+    </script>
+}

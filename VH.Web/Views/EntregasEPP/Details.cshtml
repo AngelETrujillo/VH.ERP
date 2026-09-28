@@ -32,7 +32,9 @@
                                 <h3 class="mb-1 fw-bold">@Model.NombreMaterial</h3>
                                 <p class="mb-0 opacity-75">
                                     <i class="bi bi-calendar3 me-1"></i>@Model.FechaEntrega.ToString("dd/MM/yyyy")
-                                    <span class="ms-3"><i class="bi bi-person me-1"></i>@Model.NombreCompletoEmpleado</span>
+                                    <span class="ms-3">
+                                        <i class="bi @(Model.EsConsumoDeObra ? "bi-bricks" : "bi-person") me-1"></i>@Model.Destino
+                                    </span>
                                 </p>
                             </div>
                             <div class="text-end">
@@ -45,26 +47,67 @@
                     <!-- Detalles -->
                     <div class="p-4">
                         <div class="row g-4">
-                            <!-- Datos del Empleado -->
-                            <div class="col-12">
-                                <h6 class="text-muted text-uppercase small fw-bold mb-3">
-                                    <i class="bi bi-person-badge me-2"></i>Datos del Empleado
-                                </h6>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="text-muted small text-uppercase fw-semibold">Nombre Completo</label>
-                                    <p class="fs-5 mb-0 fw-semibold">@Model.NombreCompletoEmpleado</p>
+                            @* Una salida a la obra no tiene empleado, nómina ni firma:
+                               lo que la respalda es la obra y la partida a las que se
+                               cargó el consumo. *@
+                            @if (Model.EsConsumoDeObra)
+                            {
+                                <div class="col-12">
+                                    <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                                        <i class="bi bi-bricks me-2"></i>Consumo cargado a la obra
+                                    </h6>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="text-muted small text-uppercase fw-semibold">Número de Nómina</label>
-                                    <p class="fs-5 mb-0">
-                                        <code class="bg-dark text-white px-3 py-1 rounded">@Model.NumeroNominaEmpleado</code>
-                                    </p>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">Obra</label>
+                                        <p class="fs-5 mb-0 fw-semibold">@Model.NombreProyectoDestino</p>
+                                    </div>
                                 </div>
-                            </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">Partida</label>
+                                        @if (!string.IsNullOrWhiteSpace(Model.DescripcionPartida))
+                                        {
+                                            <p class="fs-5 mb-0">@Model.DescripcionPartida</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="fs-6 mb-0 text-muted fst-italic">
+                                                Sin partida: se cargó a la obra completa
+                                            </p>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="alert alert-secondary mb-0">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Este material se consumió en la obra y no lo recibió ninguna
+                                        persona, así que no hay firma que mostrar.
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-12">
+                                    <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                                        <i class="bi bi-person-badge me-2"></i>Datos del Empleado
+                                    </h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">Nombre Completo</label>
+                                        <p class="fs-5 mb-0 fw-semibold">@Model.NombreCompletoEmpleado</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="text-muted small text-uppercase fw-semibold">Número de Nómina</label>
+                                        <p class="fs-5 mb-0">
+                                            <code class="bg-dark text-white px-3 py-1 rounded">@Model.NumeroNominaEmpleado</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            }
 
                             <!-- Datos del Material -->
                             <div class="col-12 mt-4">
@@ -178,12 +221,29 @@
                         <i class="bi bi-link-45deg me-2"></i>Acciones Rápidas
                     </h6>
                     <div class="d-grid gap-2">
-                        <a asp-action="Index" asp-route-idEmpleado="@Model.IdEmpleado" class="btn btn-outline-primary">
-                            <i class="bi bi-person me-2"></i>Ver Entregas del Empleado
-                        </a>
-                        <a asp-controller="Empleado" asp-action="Details" asp-route-id="@Model.IdEmpleado" class="btn btn-outline-secondary">
-                            <i class="bi bi-person-badge me-2"></i>Ver Perfil del Empleado
-                        </a>
+                        @* Sin empleado estos dos atajos llevaban al perfil del
+                           trabajador número cero. *@
+                        @if (Model.EsConsumoDeObra)
+                        {
+                            <a asp-controller="Kardex" asp-action="Index"
+                               asp-route-idMaterial="@Model.IdMaterial" asp-route-idAlmacen="@Model.IdAlmacen"
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-journals me-2"></i>Ver en el kardex
+                            </a>
+                            <a asp-controller="Proyectos" asp-action="Details" asp-route-id="@Model.IdProyectoDestino"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-building me-2"></i>Ver la obra
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" asp-route-idEmpleado="@Model.IdEmpleado" class="btn btn-outline-primary">
+                                <i class="bi bi-person me-2"></i>Ver Entregas del Empleado
+                            </a>
+                            <a asp-controller="Empleado" asp-action="Details" asp-route-id="@Model.IdEmpleado" class="btn btn-outline-secondary">
+                                <i class="bi bi-person-badge me-2"></i>Ver Perfil del Empleado
+                            </a>
+                        }
                     </div>
                 </div>
             </div>

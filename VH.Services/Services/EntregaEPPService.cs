@@ -20,7 +20,10 @@ namespace VH.Services.Services
             _movimientoService = movimientoService;
         }
 
-        private const string IncludeProperties = "Empleado.Proyecto,CompraDetalle.Material.UnidadMedida,CompraDetalle.Almacen,CompraDetalle.Compra.Proveedor";
+        // ProyectoDestino y ConceptoPartida van aquí porque el listado tiene que
+        // poder nombrar el destino de las salidas que no fueron a una persona:
+        // sin ellos esas filas salían con la columna del trabajador en blanco.
+        private const string IncludeProperties = "Empleado.Proyecto,CompraDetalle.Material.UnidadMedida,CompraDetalle.Almacen,CompraDetalle.Compra.Proveedor,ProyectoDestino,ConceptoPartida";
 
         /// <summary>
         /// Obtiene el registro de inventario del par material/almacén, o falla.
@@ -111,6 +114,29 @@ namespace VH.Services.Services
                     throw new ArgumentException($"El empleado con ID {entrega.IdEmpleado} no existe.");
             }
 
+            // El destino de obra se valida igual que la persona: un id que no
+            // existe dejaría el consumo colgando de una obra fantasma, y el
+            // costo por partida se calcularía sobre algo que no está.
+            Proyecto? proyecto = null;
+            ConceptoPartida? partida = null;
+
+            if (entrega.IdConceptoPartida.HasValue)
+            {
+                partida = await _unitOfWork.ConceptosPartidas.GetByIdAsync(entrega.IdConceptoPartida.Value);
+                if (partida == null)
+                    throw new ArgumentException($"La partida con ID {entrega.IdConceptoPartida} no existe.");
+
+                // La obra se deriva de la partida para que no puedan contradecirse.
+                entrega.IdProyectoDestino = partida.IdProyecto;
+            }
+
+            if (entrega.IdProyectoDestino.HasValue)
+            {
+                proyecto = await _unitOfWork.Proyectos.GetByIdAsync(entrega.IdProyectoDestino.Value);
+                if (proyecto == null)
+                    throw new ArgumentException($"La obra con ID {entrega.IdProyectoDestino} no existe.");
+            }
+
             var compra = await _unitOfWork.ComprasEPPDetalle.GetByIdAsync(entrega.IdCompraDetalle, includeProperties: "Material,Almacen");
             if (compra == null)
                 throw new ArgumentException($"El lote con ID {entrega.IdCompraDetalle} no existe.");
@@ -129,13 +155,31 @@ namespace VH.Services.Services
             var inventario = await GetInventarioObligatorioAsync(
                 compra.IdMaterial, compra.IdAlmacen, compra.Material?.Nombre, compra.Almacen?.Nombre);
 
+            // Las dos salidas descuentan igual, pero no son lo mismo y el kardex
+            // tiene que poder separarlas: una es equipo que trae puesto un
+            // trabajador, la otra es material que se gastó en la obra y cuyo
+            // costo va contra el presupuesto. Hasta ahora las dos se grababan
+            // como Salida, y el tipo Consumo de obra existía sin que nadie lo
+            // escribiera.
+            var esConsumoDeObra = !entrega.IdEmpleado.HasValue;
+
+            var tipoMovimiento = esConsumoDeObra
+                ? TipoMovimientoInventario.SalidaObra
+                : TipoMovimientoInventario.Salida;
+
+            var haciaDonde = esConsumoDeObra
+                ? (partida != null
+                    ? $"Consumo de obra: {proyecto!.Nombre} - {partida.Descripcion}"
+                    : $"Consumo de obra: {proyecto!.Nombre}")
+                : $"Entrega a empleado {empleado!.NombreCompleto}";
+
             var movimiento = await _movimientoService.RegistrarAsync(
                 compra.IdMaterial, compra.IdAlmacen,
-                TipoMovimientoInventario.Salida, -entrega.CantidadEntregada, userId,
+                tipoMovimiento, -entrega.CantidadEntregada, userId,
                 costoUnitario: compra.PrecioUnitario,
                 idCompraDetalle: compra.IdCompraDetalle,
                 documentoTipo: "EntregaEPP",
-                observaciones: $"Entrega a empleado {empleado.NombreCompleto}");
+                observaciones: haciaDonde);
 
             await _unitOfWork.EntregasEPP.AddAsync(entrega);
             await _unitOfWork.CompleteAsync();

@@ -161,6 +161,59 @@ namespace VH.API.Controllers
             }
         }
 
+        // POST: api/requisicionesepp/5/despachar-obra
+        // Saca el material que se carga a la obra. Sin empleado y sin firma: no
+        // lo recibe nadie, se consume en la construcción.
+        [HttpPost("{id}/despachar-obra")]
+        [RequierePermisoApi("REQUISICIONES_EPP", "editar")]
+        public async Task<IActionResult> DespacharObra(int id, [FromBody] EntregarAObraRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // Un lote en 0 o ausente significa "repártelo tú".
+                var detalles = dto.Detalles
+                    .Select(d => (d.IdRequisicionDetalle,
+                                  d.IdCompraDetalle is > 0 ? d.IdCompraDetalle : null,
+                                  d.CantidadEntregada))
+                    .ToList();
+
+                var (success, error) = await _requisicionService.EntregarAObraAsync(
+                    id,
+                    GetUserId(),
+                    dto.Observaciones,
+                    detalles);
+
+                if (!success)
+                    return BadRequest(new { mensaje = error });
+
+                var requisicion = await _requisicionService.GetByIdAsync(id);
+                var estado = requisicion?.EstadoRequisicion;
+
+                await _logService.RegistrarAsync(
+                    GetUserId(),
+                    "DespacharObra",
+                    "RequisicionEPP",
+                    id,
+                    $"Consumo cargado a obra: {detalles.Count} renglón(es)",
+                    GetUserIP());
+
+                return Ok(new
+                {
+                    mensaje = estado == EstadoRequisicion.Entregada
+                        ? "Consumo cargado a la obra. La requisición queda surtida por completo."
+                        : "Consumo cargado a la obra. Quedan materiales por surtir.",
+                    estado = estado?.ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
+
         // POST: api/requisicionesepp/5/entregar
         // Entrega lo que recibe UNA persona, con su firma. Un documento con
         // renglones para varios obreros se surte con una llamada por obrero.

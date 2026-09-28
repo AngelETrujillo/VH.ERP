@@ -34,9 +34,18 @@
             }
             @if (puedeEditar && Model.EstadoRequisicion is VH.Services.Entities.EstadoRequisicion.Aprobada or VH.Services.Entities.EstadoRequisicion.Parcial)
             {
-                <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success flex-fill">
-                    <i class="bi bi-box-arrow-right me-1"></i>Entregar
-                </a>
+                @if (Model.EmpleadosPorSurtir.Any())
+                {
+                    <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success flex-fill">
+                        <i class="bi bi-box-arrow-right me-1"></i>Entregar
+                    </a>
+                }
+                @if (Model.TieneConsumoDeObraPorSurtir)
+                {
+                    <a asp-action="EntregarObra" asp-route-id="@Model.IdRequisicion" class="btn btn-warning flex-fill">
+                        <i class="bi bi-bricks me-1"></i>Cargar a obra
+                    </a>
+                }
             }
             @if (Model.PuedeCancelarse)
             {
@@ -315,12 +324,95 @@
                 </div>
             }
 
+            @* Consumo cargado a la obra: lo que salió sin que nadie firmara.
+               Va en su propio panel y no entre las firmas, porque no hay firma
+               que mostrar; lo que respalda la salida es la obra y la partida a
+               las que se cargó. *@
+            @{
+                var consumoObra = Model.Detalles
+                    .Where(d => !d.IdEmpleadoDestino.HasValue && d.IdProyectoDestino.HasValue
+                                && (d.CantidadEntregada ?? 0) > 0)
+                    .ToList();
+            }
+            @if (consumoObra.Any())
+            {
+                <div class="card shadow-sm border-0 mb-3 mb-md-4">
+                    <div class="card-header bg-warning py-3">
+                        <h5 class="mb-0 fs-6 fs-md-5">
+                            <i class="bi bi-bricks me-2"></i>Consumo cargado a la obra
+                            <span class="badge bg-dark ms-2">@consumoObra.Count</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-3 p-md-4">
+                        @foreach (var c in consumoObra)
+                        {
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">@c.NombreMaterial</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-building me-1"></i>@c.NombreProyectoDestino
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary fs-6">
+                                            @((c.CantidadEntregada ?? 0).FormatoCantidad()) @c.UnidadMedida
+                                        </span>
+                                        @if (c.FechaConsumoObra.HasValue)
+                                        {
+                                            <small class="text-muted d-block mt-1">
+                                                @c.FechaConsumoObra.Value.ToString("dd/MM/yyyy HH:mm")
+                                            </small>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(c.DescripcionPartida))
+                                {
+                                    <p class="small mb-1">
+                                        <i class="bi bi-bookmark text-warning me-1"></i>
+                                        Partida: <strong>@c.DescripcionPartida</strong>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="small text-muted fst-italic mb-1">
+                                        <i class="bi bi-dash me-1"></i>
+                                        Sin partida: el consumo queda cargado a la obra completa.
+                                    </p>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(c.DescripcionLote))
+                                {
+                                    <p class="small text-muted mb-0">Salió de @c.DescripcionLote</p>
+                                }
+
+                                <p class="small text-muted mb-0 mt-2">
+                                    <i class="bi bi-pen-fill me-1"></i>
+                                    Sin firma: este material se consume en la obra y no lo recibe
+                                    ninguna persona. La salida está en el kardex como consumo de obra.
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             @if (Model.EmpleadosPorSurtir.Any())
             {
                 <div class="alert alert-warning">
                     <i class="bi bi-hourglass-split me-2"></i>
                     Quedan <strong>@Model.EmpleadosPorSurtir.Count trabajador(es)</strong> por recibir su material.
                     <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="alert-link">Continuar la entrega</a>.
+                </div>
+            }
+
+            @if (Model.TieneConsumoDeObraPorSurtir)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    Quedan <strong>@Model.RenglonesObraPorSurtir.Count renglón(es)</strong> de consumo por cargar a la obra.
+                    <a asp-action="EntregarObra" asp-route-id="@Model.IdRequisicion" class="alert-link">Despacharlos</a>.
                 </div>
             }
 
@@ -348,13 +440,30 @@
                                 </div>
                             </div>
                         }
-                        @foreach (var ent in Model.Entregas.OrderBy(e => e.FechaEntrega))
+                        @* Las dos salidas en la misma línea de tiempo y en orden.
+                           Mientras sólo se listaron las firmas, un documento de puro
+                           consumible decía "Entregada" arriba y el historial se
+                           quedaba en "Aprobada", como si nunca hubiera salido nada. *@
+                        @{
+                            var hitos = Model.Entregas
+                                .Select(e => (Fecha: e.FechaEntrega,
+                                              Texto: $"Firmó {e.NombreEmpleado}",
+                                              Color: "success"))
+                                .Concat(Model.Detalles
+                                    .Where(d => d.FechaConsumoObra.HasValue)
+                                    .Select(d => (Fecha: d.FechaConsumoObra!.Value,
+                                                  Texto: $"Cargado a la obra: {d.NombreMaterial}",
+                                                  Color: "warning")))
+                                .OrderBy(h => h.Fecha)
+                                .ToList();
+                        }
+                        @foreach (var h in hitos)
                         {
                             <div class="timeline-item">
-                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-marker bg-@h.Color"></div>
                                 <div class="timeline-content">
-                                    <strong>Firmó @ent.NombreEmpleado</strong>
-                                    <p class="small text-muted mb-0">@ent.FechaEntrega.ToString("dd/MM/yyyy HH:mm")</p>
+                                    <strong>@h.Texto</strong>
+                                    <p class="small text-muted mb-0">@h.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
                                 </div>
                             </div>
                         }
@@ -384,11 +493,24 @@
                                 <i class="bi bi-check-circle me-2"></i>Aprobar / Rechazar (@Model.RenglonesPorDecidir)
                             </a>
                         }
+                        @* Las dos salidas son distintas y cada una tiene su botón: una
+                           recoge firma, la otra carga el consumo a la obra. Mientras
+                           hubo un solo botón, un documento de puro consumible mandaba
+                           a una pantalla que pedía un trabajador inexistente. *@
                         @if (puedeEditar && Model.EstadoRequisicion is VH.Services.Entities.EstadoRequisicion.Aprobada or VH.Services.Entities.EstadoRequisicion.Parcial)
                         {
-                            <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success btn-lg">
-                                <i class="bi bi-box-arrow-right me-2"></i>Registrar Entrega
-                            </a>
+                            @if (Model.EmpleadosPorSurtir.Any())
+                            {
+                                <a asp-action="Entregar" asp-route-id="@Model.IdRequisicion" class="btn btn-success btn-lg">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Registrar Entrega
+                                </a>
+                            }
+                            @if (Model.TieneConsumoDeObraPorSurtir)
+                            {
+                                <a asp-action="EntregarObra" asp-route-id="@Model.IdRequisicion" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-bricks me-2"></i>Cargar a la obra (@Model.RenglonesObraPorSurtir.Count)
+                                </a>
+                            }
                         }
                         @if (Model.PuedeCancelarse)
                         {

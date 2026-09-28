@@ -130,6 +130,16 @@ namespace VH.Services.Entities
 
         /// <summary>De dónde saldrá lo que pide: existencia apartada u orden de compra.</summary>
         public virtual ICollection<RequisicionCobertura> Coberturas { get; set; } = new List<RequisicionCobertura>();
+
+        /// <summary>
+        /// Las salidas de almacén que surtieron este renglón.
+        ///
+        /// La columna que las ata ya existía; lo que faltaba era el lado inverso.
+        /// Sin él, el consumo cargado a una obra no tenía por dónde alcanzarse: no
+        /// cuelga de ninguna firma, así que la ficha no podía decir ni cuándo
+        /// había salido el material.
+        /// </summary>
+        public virtual ICollection<EntregaEPP> Salidas { get; set; } = new List<EntregaEPP>();
     }
 
     /// <summary>
